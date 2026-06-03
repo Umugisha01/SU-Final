@@ -40,6 +40,8 @@ node_modules/
 /Front-End/node_modules/
 /Front-End/dist/
 /Front-End/dist-ssr/
+.vite/
+/Front-End/.vite/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
