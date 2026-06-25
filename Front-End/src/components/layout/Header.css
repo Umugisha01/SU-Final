@@ -24,7 +24,13 @@
 .mobile-menu-btn { display: none; }
 @media (max-width: 768px) {
   .mobile-menu-btn { display: flex; }
-  .header { left: 0; padding: 0 16px; }
+  .header { left: 0; padding: 0 12px; gap: 8px; }
+  .header-left { gap: 8px; }
+  .header-right { gap: 4px; }
+}
+@media (max-width: 480px) {
+  /* Hide search bar text on very small screens — show only icon */
+  .header .search-wrapper input { font-size: 0.8rem; }
 }
 
 /* Notifications */
@@ -49,7 +55,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 380px;
+  width: min(380px, calc(100vw - 32px));
   background: var(--bg-card);
   border-radius: var(--radius-xl);
   border: 1px solid var(--border-light);

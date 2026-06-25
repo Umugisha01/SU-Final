@@ -39,7 +39,7 @@ class PrayerRequestSerializer(serializers.ModelSerializer):
         
         # Mask details for anonymous prayers unless request_user is admin/manager or owner
         if obj.visibility == 'anonymous':
-            if request_user.is_authenticated and (request_user.role in ['admin', 'manager'] or obj.requester_id == request_user.id):
+            if request_user.is_authenticated and (request_user.role in ['administrator', 'national_manager'] or obj.requester_id == request_user.id):
                 return UserSerializer(obj.requester).data
             return {
                 "name": "Anonymous Member",

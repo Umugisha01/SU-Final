@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Leaf, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Auth.css';
 
@@ -14,17 +14,22 @@ export default function Login() {
   const [mfaRequired, setMfaRequired] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [pendingUser, setPendingUser] = useState(null);
+  const [showResend, setShowResend] = useState(false);
+  const [resendStatus, setResendStatus] = useState('');
+  const [emailStatus, setEmailStatus] = useState('');
 
   const DEMO_CREDS = [
-    { role: 'Admin', email: 'admin@su.rw', pw: 'Admin@123', color: '#dc2626' },
-    { role: 'Manager', email: 'manager@su.rw', pw: 'Manager@123', color: '#1565c0' },
-    { role: 'Staff', email: 'staff@su.rw', pw: 'Staff@123', color: '#2e7d32' },
-    { role: 'Coordinator', email: 'coordinator@su.rw', pw: 'Coord@123', color: '#6a1b9a' },
+    { role: 'Admin', email: 'admin@su.rw', pw: '1234', color: '#dc2626' },
+    { role: 'Manager', email: 'pierre@su.rw', pw: '1234', color: '#1565c0' },
+    { role: 'Staff', email: 'patrick@su.rw', pw: '1234', color: '#2e7d32' },
+    { role: 'Coordinator', email: 'sarah@su.rw', pw: '1234', color: '#6a1b9a' },
   ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setShowResend(false);
+    setResendStatus('');
     if (!form.email || !form.password) { setError('Please fill in all fields.'); return; }
     const res = await login(form.email, form.password);
     if (res.success) {
@@ -37,6 +42,25 @@ export default function Login() {
       }
     } else {
       setError(res.error);
+      if (res.unverified || res.error?.toLowerCase().includes('verify')) {
+        setShowResend(true);
+      }
+    }
+  };
+
+  const handleEmailMfa = async () => {
+    setError('');
+    setEmailStatus('');
+    try {
+      const { authService } = await import('../../services/api');
+      const res = await authService.sendMfaEmail();
+      if (res.success) {
+        setEmailStatus('MFA code sent to your email address!');
+      } else {
+        setError(res.error || 'Failed to send verification code.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to send verification code.');
     }
   };
 
@@ -59,9 +83,26 @@ export default function Login() {
     }
   };
 
+  const handleResend = async () => {
+    try {
+      const { authService } = await import('../../services/api');
+      const res = await authService.resendVerification(form.email);
+      if (res.success) {
+        setResendStatus('Verification email sent! Please check your inbox.');
+        setShowResend(false);
+      } else {
+        setError(res.error || 'Failed to resend verification email');
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to resend verification email');
+    }
+  };
+
   const quickLogin = async (email, pw) => {
     setForm({ email, password: pw });
     setError('');
+    setShowResend(false);
+    setResendStatus('');
     const res = await login(email, pw);
     if (res.success) {
       if (res.mfaRequired) {
@@ -73,6 +114,9 @@ export default function Login() {
       }
     } else {
       setError(res.error);
+      if (res.unverified || res.error?.toLowerCase().includes('verify')) {
+        setShowResend(true);
+      }
     }
   };
 
@@ -80,7 +124,7 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-left">
         <div className="auth-brand">
-          <div className="auth-logo"><Leaf size={28} /></div>
+          <div className="auth-logo"><img src="/SU-Logo.png" alt="SU Logo" /></div>
           <h1>SU Connect</h1>
           <p>AI-Powered Reporting & Support System</p>
         </div>
@@ -109,9 +153,40 @@ export default function Login() {
                 </div>
               )}
 
+              {emailStatus && (
+                <div className="alert alert-success" style={{ marginBottom: 16 }}>
+                  <CheckCircle size={16} />{emailStatus}
+                </div>
+              )}
+
               <form onSubmit={handleMfaSubmit}>
                 <div className="form-group">
-                  <label className="form-label">OTP Verification Code <span>*</span></label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <label className="form-label" style={{ margin: 0 }}>OTP Verification Code <span>*</span></label>
+                    <button 
+                      type="button" 
+                      onClick={handleEmailMfa} 
+                      style={{ 
+                        fontSize: '0.8rem', 
+                        background: 'transparent', 
+                        border: 'none', 
+                        color: 'var(--primary)', 
+                        cursor: 'pointer', 
+                        fontWeight: 600, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 6,
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--primary-50)'}
+                      onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <Mail size={14} />
+                      Send code to my email
+                    </button>
+                  </div>
                   <div className="input-with-icon">
                     <Lock size={16} className="input-icon" />
                     <input className="form-control" type="text" maxLength={6} placeholder="000000"
@@ -135,8 +210,22 @@ export default function Login() {
               </div>
 
               {error && (
-                <div className="alert alert-danger" style={{ marginBottom: 16 }}>
-                  <AlertCircle size={16} />{error}
+                <div className="alert alert-danger" style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                    <span>{error}</span>
+                  </div>
+                  {showResend && (
+                    <button type="button" onClick={handleResend} className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start', padding: '4px 8px', fontSize: '0.78rem', textDecoration: 'underline', color: '#fca5a5', cursor: 'pointer', background: 'transparent', border: 'none' }}>
+                      Resend Verification Email
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {resendStatus && (
+                <div className="alert alert-success" style={{ marginBottom: 16 }}>
+                  <CheckCircle size={16} />{resendStatus}
                 </div>
               )}
 

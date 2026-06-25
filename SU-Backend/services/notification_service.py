@@ -11,6 +11,30 @@ class NotificationService:
     """
     @staticmethod
     def create_notification(user, type_name, title, message, icon=None):
+        # Check user notification preferences first
+        prefs = getattr(user, 'notif_prefs', {})
+        
+        # Map database notification types to notif_prefs keys
+        type_pref_map = {
+            'report': 'reportUpdates',
+            'deadline': 'deadlineReminders',
+            'support': 'supportUpdates',
+            'prayer': 'prayerResponses',
+            'system': 'systemAlerts',
+            'other': 'otherNotifications',
+        }
+        
+        pref_key = type_pref_map.get(type_name)
+        if pref_key:
+            # Check default from User.DEFAULT_NOTIF_PREFS if key is missing in prefs
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            default_val = User.DEFAULT_NOTIF_PREFS.get(pref_key, True)
+            
+            if not prefs.get(pref_key, default_val):
+                # User disabled this type of notification
+                return None
+
         # Create notification in database
         notification = Notification.objects.create(
             user=user,

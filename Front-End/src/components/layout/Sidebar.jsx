@@ -3,39 +3,37 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Brain, BarChart3, LifeBuoy, MapPin,
   Bell, FolderOpen, TrendingUp, Heart, Users, Shield, Settings,
-  ChevronLeft, ChevronRight, LogOut, Leaf
+  ChevronLeft, ChevronRight, LogOut
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Sidebar.css';
 
 const ALL_NAV = [
-  { to: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard',        roles: ['admin','manager','staff','coordinator'] },
-  { to: '/reports',       icon: FileText,        label: 'Reports',          roles: ['admin','manager','staff','coordinator'] },
-  { to: '/ai-analysis',   icon: Brain,           label: 'AI Analysis',      roles: ['admin','manager'] },
-  { to: '/consolidation', icon: BarChart3,        label: 'Consolidation',    roles: ['admin','manager'] },
-  { to: '/support',       icon: LifeBuoy,        label: 'Support Requests', roles: ['admin','manager','staff','coordinator'] },
-  { to: '/regions',       icon: MapPin,          label: 'Regions',          roles: ['admin','manager'] },
-  { to: '/notifications', icon: Bell,            label: 'Notifications',    roles: ['admin','manager','staff','coordinator'] },
-  { to: '/documents',     icon: FolderOpen,      label: 'Documents',        roles: ['admin','manager','staff','coordinator'] },
-  { to: '/analytics',     icon: TrendingUp,      label: 'Analytics',        roles: ['admin','manager'] },
-  { to: '/prayer',        icon: Heart,           label: 'Prayer Requests',  roles: ['admin','manager','staff','coordinator'] },
-  { to: '/users',         icon: Users,           label: 'User Management',  roles: ['admin'] },
-  { to: '/security',      icon: Shield,          label: 'Security & Audit', roles: ['admin'] },
-  { to: '/settings',      icon: Settings,        label: 'Settings',         roles: ['admin','manager','staff','coordinator'] },
+  { to: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard',        roles: ['administrator','national_manager','field_officer','regional_coordinator'] },
+  { to: '/reports',       icon: FileText,        label: 'Reports',          roles: ['administrator','national_manager','field_officer','regional_coordinator'] },
+  { to: '/ai-analysis',   icon: Brain,           label: 'AI & Analytics',   roles: ['administrator','national_manager','regional_coordinator'] },
+  { to: '/support',       icon: LifeBuoy,        label: 'Support Requests', roles: ['administrator','national_manager','field_officer','regional_coordinator'] },
+  { to: '/regions',       icon: MapPin,          label: 'Regions',          roles: ['administrator'] },
+  { to: '/notifications', icon: Bell,            label: 'Notifications',    roles: ['administrator','national_manager','field_officer','regional_coordinator'] },
+  { to: '/documents',     icon: FolderOpen,      label: 'Documents',        roles: ['administrator','national_manager','field_officer','regional_coordinator'] },
+  { to: '/prayer',        icon: Heart,           label: 'Prayer Requests',  roles: ['administrator','national_manager','field_officer','regional_coordinator'] },
+  { to: '/users',         icon: Users,           label: 'User Management',  roles: ['administrator'] },
+  { to: '/security',      icon: Shield,          label: 'Security & Audit', roles: ['administrator'] },
+  { to: '/settings',      icon: Settings,        label: 'Settings',         roles: ['administrator','national_manager','field_officer','regional_coordinator'] },
 ];
 
-export default function Sidebar({ collapsed, setCollapsed }) {
+export default function Sidebar({ collapsed, setCollapsed, mobileOpen }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const role = user?.role || 'staff';
+  const role = user?.role || 'field_officer';
   const navItems = ALL_NAV.filter(n => n.roles.includes(role));
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
       <div className="sidebar-logo">
-        <div className="logo-icon"><Leaf size={20} /></div>
+        <div className="logo-icon"><img src="/SU-Logo.png" alt="SU Logo" /></div>
         {!collapsed && (
           <div className="logo-text">
             <span className="logo-name">SU Connect</span>

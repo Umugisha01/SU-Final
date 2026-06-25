@@ -13,30 +13,30 @@
 
 -- Admin Users
 INSERT INTO accounts_user (id, username, email, name, role, region, department, position, phone, is_active, is_superuser, is_staff, mfa_enabled, password, date_joined, created_at, updated_at, first_name, last_name, avatar) VALUES 
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'emmanuel.h', 'admin@su.rw', 'Emmanuel Habimana', 'admin', 'Kigali City', 'Administration', 'National Director', '+250788001001', true, true, true, true, 'pbkdf2_sha256$600000$hash123', NOW(), NOW(), NOW(), '', '', ''),
-('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'alice.m', 'alice@su.rw', 'Alice Mukamana', 'admin', 'Kigali City', 'Finance', 'Finance Director', '+250788001002', true, false, true, false, 'pbkdf2_sha256$600000$hash456', NOW(), NOW(), NOW(), '', '', '') ON CONFLICT (id) DO NOTHING;
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'emmanuel.h', 'admin@su.rw', 'Emmanuel Habimana', 'administrator', 'Kigali City', 'Administration', 'National Director', '+250788001001', true, true, true, true, 'pbkdf2_sha256$600000$hash123', NOW(), NOW(), NOW(), '', '', ''),
+('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'alice.m', 'alice@su.rw', 'Alice Mukamana', 'administrator', 'Kigali City', 'Finance', 'Finance Director', '+250788001002', true, false, true, false, 'pbkdf2_sha256$600000$hash456', NOW(), NOW(), NOW(), '', '', '') ON CONFLICT (id) DO NOTHING;
 
 -- Manager Users
 INSERT INTO accounts_user (id, username, email, name, role, region, department, position, phone, is_active, is_superuser, is_staff, mfa_enabled, password, date_joined, created_at, updated_at, first_name, last_name, avatar) VALUES 
-('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'pierre.n', 'pierre@su.rw', 'Pierre Nkurunziza', 'manager', 'Northern Province', 'Field Operations', 'Regional Manager', '+250788001003', true, false, true, false, 'pbkdf2_sha256$600000$hash789', NOW(), NOW(), NOW(), '', '', ''),
-('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'claudine.u', 'claudine@su.rw', 'Claudine Uwase', 'manager', 'Southern Province', 'Field Operations', 'Regional Manager', '+250788001004', true, false, true, false, 'pbkdf2_sha256$600000$hash012', NOW(), NOW(), NOW(), '', '', ''),
-('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55', 'john.m', 'john@su.rw', 'John Mugabo', 'manager', 'Eastern Province', 'Youth Ministry', 'Youth Director', '+250788001005', true, false, true, false, 'pbkdf2_sha256$600000$hash345', NOW(), NOW(), NOW(), '', '', '') ON CONFLICT (id) DO NOTHING;
+('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'pierre.n', 'pierre@su.rw', 'Pierre Nkurunziza', 'national_manager', 'Northern Province', 'Field Operations', 'Regional Manager', '+250788001003', true, false, true, false, 'pbkdf2_sha256$600000$hash789', NOW(), NOW(), NOW(), '', '', ''),
+('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'claudine.u', 'claudine@su.rw', 'Claudine Uwase', 'national_manager', 'Southern Province', 'Field Operations', 'Regional Manager', '+250788001004', true, false, true, false, 'pbkdf2_sha256$600000$hash012', NOW(), NOW(), NOW(), '', '', ''),
+('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55', 'john.m', 'john@su.rw', 'John Mugabo', 'national_manager', 'Eastern Province', 'Youth Ministry', 'Youth Director', '+250788001005', true, false, true, false, 'pbkdf2_sha256$600000$hash345', NOW(), NOW(), NOW(), '', '', '') ON CONFLICT (id) DO NOTHING;
 
 -- Staff Users
 INSERT INTO accounts_user (id, username, email, name, role, region, department, position, phone, is_active, is_superuser, is_staff, mfa_enabled, password, date_joined, created_at, updated_at, first_name, last_name, avatar) VALUES 
-('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'jean.h', 'jean@su.rw', 'Jean Habimana', 'staff', 'Southern Province', 'Outreach', 'Field Staff', '+250788001006', true, false, false, false, 'pbkdf2_sha256$600000$hash678', NOW(), NOW(), NOW(), '', '', ''),
-('a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a77', 'marie.u', 'marie@su.rw', 'Marie Uwase', 'staff', 'Eastern Province', 'Youth Ministry', 'Youth Worker', '+250788001007', true, false, false, false, 'pbkdf2_sha256$600000$hash901', NOW(), NOW(), NOW(), '', '', ''),
-('b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a88', 'patrick.n', 'patrick@su.rw', 'Patrick Nkurunziza', 'staff', 'Kigali City', 'Administration', 'Admin Assistant', '+250788001008', true, false, false, false, 'pbkdf2_sha256$600000$hash234', NOW(), NOW(), NOW(), '', '', ''),
-('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a99', 'grace.u', 'grace@su.rw', 'Grace Uwimana', 'staff', 'Western Province', 'Field Operations', 'Field Staff', '+250788001009', true, false, false, false, 'pbkdf2_sha256$600000$hash567', NOW(), NOW(), NOW(), '', '', ''),
-('d1eebc99-9c0b-4ef8-bb6d-6bb9bd380aaa', 'david.k', 'david.k@su.rw', 'David Kagame', 'staff', 'Northern Province', 'Outreach', 'Community Worker', '+250788001010', false, false, false, false, 'pbkdf2_sha256$600000$hash890', NOW(), NOW(), NOW(), '', '', '') ON CONFLICT (id) DO NOTHING;
+('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'jean.h', 'jean@su.rw', 'Jean Habimana', 'field_officer', 'Southern Province', 'Outreach', 'Field Staff', '+250788001006', true, false, false, false, 'pbkdf2_sha256$600000$hash678', NOW(), NOW(), NOW(), '', '', ''),
+('a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a77', 'marie.u', 'marie@su.rw', 'Marie Uwase', 'field_officer', 'Eastern Province', 'Youth Ministry', 'Youth Worker', '+250788001007', true, false, false, false, 'pbkdf2_sha256$600000$hash901', NOW(), NOW(), NOW(), '', '', ''),
+('b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a88', 'patrick.n', 'patrick@su.rw', 'Patrick Nkurunziza', 'field_officer', 'Kigali City', 'Administration', 'Admin Assistant', '+250788001008', true, false, false, false, 'pbkdf2_sha256$600000$hash234', NOW(), NOW(), NOW(), '', '', ''),
+('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a99', 'grace.u', 'grace@su.rw', 'Grace Uwimana', 'field_officer', 'Western Province', 'Field Operations', 'Field Staff', '+250788001009', true, false, false, false, 'pbkdf2_sha256$600000$hash567', NOW(), NOW(), NOW(), '', '', ''),
+('d1eebc99-9c0b-4ef8-bb6d-6bb9bd380aaa', 'david.k', 'david.k@su.rw', 'David Kagame', 'field_officer', 'Northern Province', 'Outreach', 'Community Worker', '+250788001010', false, false, false, false, 'pbkdf2_sha256$600000$hash890', NOW(), NOW(), NOW(), '', '', '') ON CONFLICT (id) DO NOTHING;
 
 -- Coordinator Users
 INSERT INTO accounts_user (id, username, email, name, role, region, department, position, phone, is_active, is_superuser, is_staff, mfa_enabled, password, date_joined, created_at, updated_at, first_name, last_name, avatar) VALUES 
-('e1eebc99-9c0b-4ef8-bb6d-6bb9bd380abb', 'david.m', 'david.m@su.rw', 'David Mugabo', 'coordinator', 'Western Province', 'Field Operations', 'Field Coordinator', '+250788001011', true, false, false, false, 'pbkdf2_sha256$600000$hash1234', NOW(), NOW(), NOW(), '', '', ''),
-('f1eebc99-9c0b-4ef8-bb6d-6bb9bd380acc', 'sarah.u', 'sarah@su.rw', 'Sarah Uwitonze', 'coordinator', 'Kigali City', 'Youth Ministry', 'Youth Coordinator', '+250788001012', true, false, false, false, 'pbkdf2_sha256$600000$hash5678', NOW(), NOW(), NOW(), '', '', ''),
-('a2eebc99-9c0b-4ef8-bb6d-6bb9bd380add', 'peter.n', 'peter@su.rw', 'Peter Niyonshuti', 'coordinator', 'Eastern Province', 'Field Operations', 'Field Coordinator', '+250788001013', true, false, false, false, 'pbkdf2_sha256$600000$hash9012', NOW(), NOW(), NOW(), '', '', ''),
-('b2eebc99-9c0b-4ef8-bb6d-6bb9bd380aee', 'esther.m', 'esther@su.rw', 'Esther Mukamana', 'coordinator', 'Northern Province', 'Youth Ministry', 'Youth Coordinator', '+250788001014', true, false, false, false, 'pbkdf2_sha256$600000$hash3456', NOW(), NOW(), NOW(), '', '', ''),
-('c2eebc99-9c0b-4ef8-bb6d-6bb9bd380aff', 'joseph.h', 'joseph@su.rw', 'Joseph Habineza', 'coordinator', 'Southern Province', 'Field Operations', 'Field Coordinator', '+250788001015', false, false, false, false, 'pbkdf2_sha256$600000$hash7890', NOW(), NOW(), NOW(), '', '', '') ON CONFLICT (id) DO NOTHING;
+('e1eebc99-9c0b-4ef8-bb6d-6bb9bd380abb', 'david.m', 'david.m@su.rw', 'David Mugabo', 'regional_coordinator', 'Western Province', 'Field Operations', 'Field Coordinator', '+250788001011', true, false, false, false, 'pbkdf2_sha256$600000$hash1234', NOW(), NOW(), NOW(), '', '', ''),
+('f1eebc99-9c0b-4ef8-bb6d-6bb9bd380acc', 'sarah.u', 'sarah@su.rw', 'Sarah Uwitonze', 'regional_coordinator', 'Kigali City', 'Youth Ministry', 'Youth Coordinator', '+250788001012', true, false, false, false, 'pbkdf2_sha256$600000$hash5678', NOW(), NOW(), NOW(), '', '', ''),
+('a2eebc99-9c0b-4ef8-bb6d-6bb9bd380add', 'peter.n', 'peter@su.rw', 'Peter Niyonshuti', 'regional_coordinator', 'Eastern Province', 'Field Operations', 'Field Coordinator', '+250788001013', true, false, false, false, 'pbkdf2_sha256$600000$hash9012', NOW(), NOW(), NOW(), '', '', ''),
+('b2eebc99-9c0b-4ef8-bb6d-6bb9bd380aee', 'esther.m', 'esther@su.rw', 'Esther Mukamana', 'regional_coordinator', 'Northern Province', 'Youth Ministry', 'Youth Coordinator', '+250788001014', true, false, false, false, 'pbkdf2_sha256$600000$hash3456', NOW(), NOW(), NOW(), '', '', ''),
+('c2eebc99-9c0b-4ef8-bb6d-6bb9bd380aff', 'joseph.h', 'joseph@su.rw', 'Joseph Habineza', 'regional_coordinator', 'Southern Province', 'Field Operations', 'Field Coordinator', '+250788001015', false, false, false, false, 'pbkdf2_sha256$600000$hash7890', NOW(), NOW(), NOW(), '', '', '') ON CONFLICT (id) DO NOTHING;
 
 -- =============================================
 -- PART 2: INSERT REPORTS (20+ reports)
@@ -146,13 +146,13 @@ INSERT INTO prayer_requests (title, request, requester_id, region, status, visib
 -- =============================================
 
 INSERT INTO audit_logs (user_id, user_snapshot, action, resource, ip, severity, created_at) VALUES 
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Database Setup', 'SU Connect database initialized with sample data', '127.0.0.1', 'info', NOW()),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'User Created', 'Created admin user: emmanuel.h', '196.12.1.5', 'info', '2025-01-01 09:00:00+00'),
-('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'Report Submitted', 'Report #1: Kigali Youth Outreach Program', '196.12.1.15', 'info', '2025-01-15 16:30:00+00'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Report Approved', 'Report #1 approved', '196.12.1.5', 'info', '2025-01-18 10:15:00+00'),
-('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'Support Approved', 'Support Request #1: Bible Study Workbooks', '196.12.1.10', 'info', '2025-02-05 09:30:00+00'),
-(NULL, 'Unknown', 'Failed Login Attempt', 'Invalid password for admin@su.rw', '203.0.113.5', 'high', '2025-01-15 22:15:30+00'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Document Uploaded', 'Document #7: Strategic Plan 2025-2030.pdf', '196.12.1.5', 'info', '2025-04-10 09:00:00+00');
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Emmanuel Habimana', 'Database Setup', 'SU Connect database initialized with sample data', '127.0.0.1', 'info', NOW()),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Emmanuel Habimana', 'User Created', 'Created admin user: emmanuel.h', '196.12.1.5', 'info', '2025-01-01 09:00:00+00'),
+('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'Pierre Nkurunziza', 'Report Submitted', 'Report #1: Kigali Youth Outreach Program', '196.12.1.15', 'info', '2025-01-15 16:30:00+00'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Emmanuel Habimana', 'Report Approved', 'Report #1 approved', '196.12.1.5', 'info', '2025-01-18 10:15:00+00'),
+('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'Alice Mukamana', 'Support Approved', 'Support Request #1: Bible Study Workbooks', '196.12.1.10', 'info', '2025-02-05 09:30:00+00'),
+(NULL, 'Unknown', 'Failed Login Attempt', 'Invalid password for admin@su.rw', '203.0.113.5', 'danger', '2025-01-15 22:15:30+00'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Emmanuel Habimana', 'Document Uploaded', 'Document #7: Strategic Plan 2025-2030.pdf', '196.12.1.5', 'info', '2025-04-10 09:00:00+00');
 
 -- =============================================
 -- PART 9: INSERT NOTIFICATIONS

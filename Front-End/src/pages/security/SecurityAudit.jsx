@@ -16,10 +16,10 @@ const ENCRYPTION_STATUS = [
 ];
 
 const MFA_STATUS = [
-  { name: 'Emmanuel Habimana', email: 'admin@su.rw', role: 'Admin', mfaEnabled: true },
-  { name: 'Grace Uwimana', email: 'manager@su.rw', role: 'Manager', mfaEnabled: true },
-  { name: 'Patrick Nkurunziza', email: 'staff@su.rw', role: 'Staff', mfaEnabled: false },
-  { name: 'Alice Mukamana', email: 'coordinator@su.rw', role: 'Coordinator', mfaEnabled: false },
+  { name: 'Emmanuel Habimana', email: 'admin@su.rw', role: 'Administrator', mfaEnabled: true },
+  { name: 'Grace Uwimana', email: 'manager@su.rw', role: 'National Manager', mfaEnabled: true },
+  { name: 'Patrick Nkurunziza', email: 'staff@su.rw', role: 'Field Officer', mfaEnabled: false },
+  { name: 'Alice Mukamana', email: 'coordinator@su.rw', role: 'Regional Coordinator', mfaEnabled: false },
 ];
 
 export default function SecurityAudit() {
@@ -29,7 +29,17 @@ export default function SecurityAudit() {
   const [logs] = useState(mockAuditLogs);
 
   const filteredLogs = logs.filter(l => {
-    if (search && !l.user.toLowerCase().includes(search.toLowerCase()) && !l.action.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      const sevLabel = SEVERITY_CONFIG[l.severity]?.label || '';
+      const matchUser = (l.user || '').toLowerCase().includes(s);
+      const matchAction = (l.action || '').toLowerCase().includes(s);
+      const matchResource = (l.resource || '').toLowerCase().includes(s);
+      const matchIp = (l.ip || '').toLowerCase().includes(s);
+      const matchTime = (l.time || '').toLowerCase().includes(s);
+      const matchSeverity = (l.severity || '').toLowerCase().includes(s) || sevLabel.toLowerCase().includes(s);
+      if (!matchUser && !matchAction && !matchResource && !matchIp && !matchTime && !matchSeverity) return false;
+    }
     if (filterSeverity !== 'all' && l.severity !== filterSeverity) return false;
     return true;
   });

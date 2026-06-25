@@ -13,9 +13,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'email', 'role', 'region', 'department', 
             'position', 'phone', 'avatar', 'status', 'mfa_enabled', 
-            'join_date', 'notif_prefs', 'created_at'
+            'join_date', 'notif_prefs', 'created_at', 'location', 
+            'email_verified', 'last_login'
         ]
-        read_only_fields = ['id', 'role', 'avatar', 'status', 'mfa_enabled', 'join_date', 'created_at']
+        read_only_fields = ['id', 'role', 'avatar', 'status', 'mfa_enabled', 'join_date', 'created_at', 'email_verified', 'last_login']
 
     def validate_name(self, value):
         if len(value) < 2 or len(value) > 255:
@@ -29,10 +30,14 @@ class RegisterSerializer(serializers.ModelSerializer):
     """
     password = serializers.CharField(write_only=True)
     fullName = serializers.CharField(source='name', min_length=2, max_length=255)
+    phone = serializers.CharField(required=True, allow_blank=False)
+    location = serializers.CharField(required=True, allow_blank=False)
+    department = serializers.CharField(required=True, allow_blank=False)
+    position = serializers.CharField(required=True, allow_blank=False)
 
     class Meta:
         model = User
-        fields = ['fullName', 'email', 'password', 'role', 'region', 'department', 'position', 'phone']
+        fields = ['fullName', 'email', 'password', 'role', 'region', 'department', 'position', 'phone', 'location']
 
     def validate_password(self, value):
         if len(value) < 8:

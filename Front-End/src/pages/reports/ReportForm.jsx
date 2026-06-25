@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Save, Send, Upload, X, Plus, FileText, MapPin, Calendar, Clock, Users, CheckCircle } from 'lucide-react';
 import { ACTIVITY_TYPES, REGIONS, DEPARTMENTS } from '../../data/mockData';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { reportService, userService } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { reportService, userService, documentService } from '../../services/api';
 
 const INITIAL = {
   title: '', type: '', region: '', location: '', date: '', duration: '',
@@ -15,6 +16,7 @@ const INITIAL = {
 export default function ReportForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
   const { addNotification } = useNotifications();
   const [form, setForm] = useState(INITIAL);
   const [userSearch, setUserSearch] = useState('');
@@ -69,6 +71,9 @@ export default function ReportForm() {
             status: report.status || 'draft',
             recipientIds: report.recipients ? report.recipients.map(r => r.id) : [],
           });
+          if (report.attachments && Array.isArray(report.attachments)) {
+            setFiles(report.attachments);
+          }
           setLoading(false);
         })
         .catch(err => {
@@ -76,8 +81,12 @@ export default function ReportForm() {
           addNotification({ type: 'error', title: 'Load Error', message: 'Failed to load report details.', icon: 'x' });
           setLoading(false);
         });
+    } else {
+      if (user && user.region) {
+        setForm(f => ({ ...f, region: user.region }));
+      }
     }
-  }, [id, addNotification]);
+  }, [id, addNotification, user]);
 
   const validate = () => {
     const e = {};
@@ -85,13 +94,35 @@ export default function ReportForm() {
     if (!form.type) e.type = 'Activity type required';
     if (!form.department) e.department = 'Department required';
     if (!form.region) e.region = 'Region required';
-    if (!form.date) e.date = 'Date required';
+    if (!form.date) {
+      e.date = 'Date required';
+    } else {
+      const selectedDate = new Date(form.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate > today) {
+        e.date = 'Activity date cannot be in the future';
+      }
+    }
     if (!form.description.trim()) e.description = 'Description required';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (asDraft = false) => {
+    // Prevent future date choice under all conditions (even drafts)
+    if (form.date) {
+      const selectedDate = new Date(form.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate > today) {
+        setErrors(prev => ({ ...prev, date: 'Activity date cannot be in the future' }));
+        addNotification({ type: 'warning', title: 'Invalid Date', message: 'Activity date cannot be in the future.', icon: 'alert-triangle' });
+        setStep(1);
+        return;
+      }
+    }
+
     if (!asDraft && !validate()) {
       addNotification({ type: 'warning', title: 'Missing Information', message: 'Please fill in all required fields before submitting.', icon: 'alert-triangle' });
       if (!form.title.trim() || !form.type || !form.department || !form.region || !form.date) {
@@ -103,8 +134,22 @@ export default function ReportForm() {
     }
     setSubmitting(true);
     try {
+      // Upload new files and compile all attachment IDs
+      const attachmentIds = [];
+      for (const file of files) {
+        if (file.id) {
+          attachmentIds.push(file.id);
+        } else {
+          const formData = new FormData();
+          formData.append('file', file);
+          const uploadedDoc = await documentService.upload(formData);
+          attachmentIds.push(uploadedDoc.id);
+        }
+      }
+
       const payload = {
         ...form,
+        attachmentIds,
         status: asDraft ? 'draft' : 'submitted'
       };
       
@@ -142,7 +187,7 @@ export default function ReportForm() {
 
   const handleDrop = (e) => {
     e.preventDefault(); setDragOver(false);
-    const dropped = Array.from(e.dataTransfer.files).map(f => ({ name: f.name, size: f.size, type: f.type }));
+    const dropped = Array.from(e.dataTransfer.files);
     setFiles(prev => [...prev, ...dropped]);
   };
 
@@ -173,7 +218,7 @@ export default function ReportForm() {
         </div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: '1fr 300px', gap: 20 }}>
+      <div className="page-layout-grid">
         {/* Form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {step === 1 && (
@@ -218,7 +263,12 @@ export default function ReportForm() {
                 <div className="grid grid-2">
                   <div className="form-group">
                     <label className="form-label"><MapPin size={13} style={{ marginRight: 4 }} />Region <span>*</span></label>
-                    <select className={`form-select ${fieldCls('region')}`} value={form.region} onChange={e => set('region', e.target.value)}>
+                    <select 
+                      className={`form-select ${fieldCls('region')}`} 
+                      value={form.region} 
+                      onChange={e => set('region', e.target.value)}
+                      disabled={(user?.role === 'field_officer' || user?.role === 'regional_coordinator')}
+                    >
                       <option value="">Select region...</option>
                       {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
@@ -305,7 +355,7 @@ export default function ReportForm() {
                     <p style={{ fontWeight: 600, marginBottom: 4 }}>Drop files here or click to upload</p>
                     <p className="text-muted text-sm">Photos, attendance lists, materials (PDF, DOCX, JPG, PNG)</p>
                     <input id="file-input" type="file" multiple hidden
-                      onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files).map(f => ({ name: f.name, size: f.size }))])} />
+                      onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files)])} />
                   </div>
                   {files.length > 0 && (
                     <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -331,10 +381,10 @@ export default function ReportForm() {
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: 12 }}>Select individuals or roles to send this report to directly.</p>
                   
                   <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectRole('admin')}>All Admins</button>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectRole('manager')}>All Managers</button>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectRole('coordinator')}>All Coordinators</button>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectRole('staff')}>All Staff</button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectRole('administrator')}>All Admins</button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectRole('national_manager')}>All Managers</button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectRole('regional_coordinator')}>All Coordinators</button>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => selectRole('field_officer')}>All Staff</button>
                     <button type="button" className="btn btn-secondary btn-sm" onClick={() => set('recipientIds', [])} style={{ color: 'var(--danger)' }}>Clear All</button>
                   </div>
 

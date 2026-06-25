@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Leaf, Mail, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Mail, CheckCircle, ArrowLeft } from 'lucide-react';
 import './Auth.css';
 
 export default function ForgotPassword() {
@@ -21,7 +21,7 @@ export default function ForgotPassword() {
     <div className="auth-page">
       <div className="auth-left">
         <div className="auth-brand">
-          <div className="auth-logo"><Leaf size={28} /></div>
+          <div className="auth-logo"><img src="/SU-Logo.png" alt="SU Logo" /></div>
           <h1>SU Connect</h1>
           <p>AI-Powered Reporting & Support System</p>
         </div>

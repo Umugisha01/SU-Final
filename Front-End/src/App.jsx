@@ -8,18 +8,18 @@ import Layout from './components/layout/Layout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
+import VerifyEmail from './pages/auth/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import ReportList from './pages/reports/ReportList';
 import ReportForm from './pages/reports/ReportForm';
 import ReportDetail from './pages/reports/ReportDetail';
 import AIAnalysisDashboard from './pages/ai-analysis/AIAnalysisDashboard';
-import ConsolidationDashboard from './pages/consolidation/ConsolidationDashboard';
 import SupportRequests from './pages/support/SupportRequests';
 import SupportForm from './pages/support/SupportForm';
 import RegionsDashboard from './pages/regions/RegionsDashboard';
 import NotificationCenter from './pages/notifications/NotificationCenter';
 import DocumentRepository from './pages/documents/DocumentRepository';
-import AnalyticsDashboard from './pages/analytics/AnalyticsDashboard';
 import PrayerRequests from './pages/prayer/PrayerRequests';
 import UserManagement from './pages/users/UserManagement';
 import SecurityAudit from './pages/security/SecurityAudit';
@@ -40,6 +40,8 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
 
               {/* Protected — wrapped in Layout */}
               <Route element={<Layout />}>
@@ -54,13 +56,14 @@ export default function App() {
 
                 {/* Modules */}
                 <Route path="/ai-analysis" element={<AIAnalysisDashboard />} />
-                <Route path="/consolidation" element={<ConsolidationDashboard />} />
+                <Route path="/consolidation" element={<Navigate to="/ai-analysis" replace />} />
                 <Route path="/support" element={<SupportRequests />} />
                 <Route path="/support/new" element={<SupportForm />} />
+                <Route path="/support/:id/edit" element={<SupportForm />} />
                 <Route path="/regions" element={<RegionsDashboard />} />
                 <Route path="/notifications" element={<NotificationCenter />} />
                 <Route path="/documents" element={<DocumentRepository />} />
-                <Route path="/analytics" element={<AnalyticsDashboard />} />
+                <Route path="/analytics" element={<Navigate to="/ai-analysis" replace />} />
                 <Route path="/prayer" element={<PrayerRequests />} />
                 <Route path="/users" element={<UserManagement />} />
                 <Route path="/security" element={<SecurityAudit />} />

@@ -16,7 +16,7 @@ class PrayerRequestManager(models.Manager):
             return super().get_queryset().none()
             
         # Admin and manager see everything
-        if user.role in ['admin', 'manager']:
+        if user.role in ['administrator', 'national_manager']:
             return super().get_queryset()
             
         # Staff and coordinators: see public, anonymous, or regional matching their region

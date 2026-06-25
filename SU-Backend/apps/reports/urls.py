@@ -1,7 +1,8 @@
 from django.urls import path
 from apps.reports.views import (
     ReportListCreateView, ReportDetailView, ReportStatusUpdateView,
-    QueueAIAnalyzeView, AIOverrideView, DashboardSummaryView, ConsolidatedReportView
+    QueueAIAnalyzeView, AIOverrideView, DashboardSummaryView, ConsolidatedReportView,
+    AIChatView, OllamaHealthView
 )
 
 urlpatterns = [
@@ -12,4 +13,6 @@ urlpatterns = [
     path('<int:id>/ai-override', AIOverrideView.as_view(), name='report_ai_override'),
     path('analytics/summary', DashboardSummaryView.as_view(), name='report_analytics_summary'),
     path('consolidated', ConsolidatedReportView.as_view(), name='report_consolidated'),
+    path('ai-chat', AIChatView.as_view(), name='report_ai_chat'),
+    path('ai-status', OllamaHealthView.as_view(), name='report_ai_status'),
 ]

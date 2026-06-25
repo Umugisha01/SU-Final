@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Clock, Edit, RotateCcw, MapPin, Calendar, Users, FileText, Heart, MessageSquare, Download, ThumbsUp, ThumbsDown, Sparkles } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Edit, RotateCcw, MapPin, Calendar, Users, FileText, Heart, MessageSquare, Download, ThumbsUp, ThumbsDown, Sparkles, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { reportService } from '../../services/api';
+import toast from 'react-hot-toast';
 
 const STATUS_CONFIG = {
   approved: { cls: 'badge-success', icon: CheckCircle, label: 'Approved' },
@@ -23,6 +24,7 @@ export default function ReportDetail() {
   const [activeTab, setActiveTab] = useState('details');
   const [status, setStatus] = useState('draft');
   const [analyzing, setAnalyzing] = useState(false);
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
 
   const fetchReport = () => {
     reportService.get(id)
@@ -56,7 +58,7 @@ export default function ReportDetail() {
 
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
   const Icon = cfg.icon;
-  const canApprove = user?.role === 'admin' || user?.role === 'manager';
+  const canApprove = user?.role === 'administrator' || user?.role === 'national_manager' || (user?.role === 'regional_coordinator' && user?.region === report.region);
 
   const approve = async () => {
     try {
@@ -88,7 +90,7 @@ export default function ReportDetail() {
     setAnalyzing(true);
     try {
       await reportService.analyze(id);
-      addNotification({ type: 'success', title: 'AI Job Queued', message: 'Gemini analysis has been started.', icon: 'check' });
+      addNotification({ type: 'success', title: 'AI Job Queued', message: 'SU-Connect AI analysis has been started.', icon: 'check' });
       setTimeout(() => {
         fetchReport();
         setAnalyzing(false);
@@ -100,6 +102,13 @@ export default function ReportDetail() {
     }
   };
 
+  const handleRevealAndAnalyze = () => {
+    setShowAiAnalysis(true);
+    if (!report?.ai_category && !report?.aiCategory) {
+      runAnalysis();
+    }
+  };
+
   const handleOverride = async (category) => {
     try {
       await reportService.aiOverride(id, category);
@@ -108,6 +117,235 @@ export default function ReportDetail() {
     } catch (err) {
       console.error(err);
       addNotification({ type: 'error', title: 'Override Failed', message: err.response?.data?.error || 'Could not override category.', icon: 'x' });
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (!report) return;
+    const printWindow = window.open('', '_blank');
+    const reportTitle = report.title;
+    
+    const html = `
+      <html>
+      <head>
+        <title>${reportTitle}</title>
+        <style>
+          body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1a2e1a;
+            margin: 40px;
+            line-height: 1.6;
+          }
+          .header {
+            border-bottom: 2px solid #2e7d32;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+          }
+          .logo {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #2e7d32;
+            margin-bottom: 4px;
+          }
+          .title-area {
+            margin-top: 15px;
+          }
+          .report-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #1a2e1a;
+            margin: 0 0 8px 0;
+          }
+          .subtitle {
+            font-size: 0.95rem;
+            color: #6b7280;
+            margin: 0;
+          }
+          .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+          }
+          .meta-card {
+            background: #f4f6f4;
+            border: 1px solid #e2e8e2;
+            padding: 12px 16px;
+            border-radius: 8px;
+          }
+          .meta-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            color: #6b7280;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+          }
+          .meta-value {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-top: 4px;
+            color: #1a2e1a;
+          }
+          h3 {
+            color: #2e7d32;
+            border-bottom: 1.5px solid #2e7d32;
+            padding-bottom: 6px;
+            margin-top: 30px;
+            margin-bottom: 12px;
+            font-size: 1.15rem;
+          }
+          .content-block {
+            background: #fff;
+            border: 1px solid #e2e8e2;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            line-height: 1.7;
+          }
+          .demographics-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-bottom: 30px;
+          }
+          .demographics-table th, .demographics-table td {
+            border: 1px solid #e2e8e2;
+            padding: 10px 12px;
+            text-align: left;
+          }
+          .demographics-table th {
+            background: #f4f6f4;
+            font-weight: 600;
+            color: #2e7d32;
+          }
+          .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+          }
+          .badge-success { background: #e8f5e9; color: #2e7d32; }
+          .badge-info { background: #e3f2fd; color: #1565c0; }
+          .badge-gray { background: #f5f5f5; color: #616161; }
+          .badge-danger { background: #ffebee; color: #c62828; }
+          @media print {
+            body { margin: 20px; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">Scripture Union Rwanda</div>
+          <div class="title-area">
+            <h1 class="report-title">${report.title}</h1>
+            <p class="subtitle">${report.type} · ${report.region} · <span class="badge ${report.status === 'approved' ? 'badge-success' : report.status === 'submitted' ? 'badge-info' : report.status === 'returned' ? 'badge-danger' : 'badge-gray'}">${report.status}</span></p>
+          </div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-card">
+            <div class="meta-label">Date</div>
+            <div class="meta-value">${report.date}</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-label">Duration</div>
+            <div class="meta-value">${report.duration || 'N/A'}</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-label">Location</div>
+            <div class="meta-value">${report.location || 'N/A'}</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-label">Participants</div>
+            <div class="meta-value">${report.participants.toLocaleString()}</div>
+          </div>
+        </div>
+
+        <h3>Activity Description</h3>
+        <div class="content-block">
+          ${report.description || 'No description provided.'}
+        </div>
+
+        <h3>Outcomes & Impact</h3>
+        <div class="content-block">
+          ${report.outcomes || 'No outcomes provided.'}
+        </div>
+
+        <h3>Challenges Encountered</h3>
+        <div class="content-block">
+          ${report.challenges || 'No challenges listed.'}
+        </div>
+
+        ${report.prayerRequests ? `
+          <h3>Prayer Requests</h3>
+          <div class="content-block" style="font-style: italic; background: #fdf2f8; border-left: 4px solid #db2777;">
+            ${report.prayerRequests}
+          </div>
+        ` : ''}
+
+        <h3>Attendance & Demographics</h3>
+        <table class="demographics-table">
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Count</th>
+              <th>Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Male Participants</strong></td>
+              <td>${report.male}</td>
+              <td>${report.participants > 0 ? Math.round((report.male / report.participants) * 100) : 0}%</td>
+            </tr>
+            <tr>
+              <td><strong>Female Participants</strong></td>
+              <td>${report.female}</td>
+              <td>${report.participants > 0 ? Math.round((report.female / report.participants) * 100) : 0}%</td>
+            </tr>
+            <tr>
+              <td><strong>Youth (under 25)</strong></td>
+              <td>${report.youth}</td>
+              <td>${report.participants > 0 ? Math.round((report.youth / report.participants) * 100) : 0}%</td>
+            </tr>
+            <tr>
+              <td><strong>Adults (25+)</strong></td>
+              <td>${report.adults}</td>
+              <td>${report.participants > 0 ? Math.round((report.adults / report.participants) * 100) : 0}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+    
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+    printWindow.onafterprint = () => {
+      printWindow.close();
+    };
+  };
+
+  const handleDeleteReport = async () => {
+    if (!window.confirm(`Are you sure you want to delete the report "${report.title}"?`)) return;
+    try {
+      const res = await reportService.delete(report.id);
+      if (res.success) {
+        toast.success(res.message || "Report deleted successfully");
+        navigate('/reports');
+      } else {
+        toast.error(res.error || "Failed to delete report");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || "An error occurred while deleting the report");
     }
   };
 
@@ -129,12 +367,17 @@ export default function ReportDetail() {
               <button className="btn btn-danger btn-sm" onClick={returnReport}><ThumbsDown size={14} />Return</button>
             </>
           )}
-          {report.submitted_by?.id === user?.id && ['draft', 'returned'].includes(status) && (
+          {report.submitted_by?.id === user?.id && ['draft', 'returned', 'submitted'].includes(status) && (
             <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/reports/${report.id}/edit`)}>
               <Edit size={14} />Edit
             </button>
           )}
-          <button className="btn btn-secondary btn-sm"><Download size={14} />Export PDF</button>
+          <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}><Download size={14} />Export PDF</button>
+          {(report.submitted_by?.id === user?.id || user?.role === 'administrator') && (
+            <button className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={handleDeleteReport}>
+              <Trash2 size={14} />Delete
+            </button>
+          )}
         </div>
       </div>
 
@@ -158,7 +401,7 @@ export default function ReportDetail() {
         ))}
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: '1fr 320px', gap: 20 }}>
+      <div className="page-layout-grid" style={{ gap: 20 }}>
         <div>
           {/* Tabs */}
           <div className="tabs" style={{ marginBottom: 20 }}>
@@ -183,6 +426,57 @@ export default function ReportDetail() {
                   </div>
                 </div>
               ))}
+              
+              {/* Supporting Documents Card */}
+              <div className="card">
+                <div className="card-header" style={{ paddingBottom: 12 }}>
+                  <h3 style={{ fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <FileText size={16} /> Supporting Documents
+                  </h3>
+                </div>
+                <div className="card-body" style={{ paddingTop: 8 }}>
+                  {report.attachments && report.attachments.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {report.attachments.map(doc => (
+                        <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'var(--bg-input)', borderRadius: 'var(--radius)', border: '1px solid var(--border-light)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: '1.2rem' }}>
+                              {doc.type?.toLowerCase() === 'pdf' ? '📄' : doc.type?.toLowerCase() === 'docx' ? '📝' : doc.type?.toLowerCase() === 'xlsx' ? '📊' : doc.type?.toLowerCase() === 'zip' ? '🗜️' : ['jpg', 'jpeg', 'png'].includes(doc.type?.toLowerCase()) ? '🖼️' : '📄'}
+                            </span>
+                            <div>
+                              <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{doc.name}</p>
+                              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{(doc.size / 1024).toFixed(1)} KB · {doc.type?.toUpperCase()}</p>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <a 
+                              href={`http://localhost:8000/api/documents/${doc.id}/download`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="btn btn-secondary btn-xs"
+                              style={{ display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none', padding: '4px 8px', fontSize: '0.75rem' }}
+                              title="View Document"
+                            >
+                              <FileText size={12} /> View
+                            </a>
+                            <a 
+                              href={`http://localhost:8000/api/documents/${doc.id}/download?download=1`} 
+                              download={doc.name}
+                              className="btn btn-secondary btn-xs"
+                              style={{ display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none', padding: '4px 8px', fontSize: '0.75rem' }}
+                              title="Download to Device"
+                            >
+                              <Download size={12} /> Download
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No supporting documents uploaded.</p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -255,7 +549,7 @@ export default function ReportDetail() {
                 { label: 'Submitted by', val: report.submittedBy },
                 { label: 'Department', val: report.department },
                 { label: 'Region', val: report.region },
-                { label: 'Attachments', val: `${report.attachments} files` },
+                { label: 'Attachments', val: `${report.attachmentsCount || 0} files` },
               ].map(({ label, val }) => (
                 <div key={label} style={{ padding: '8px 0', borderBottom: '1px solid var(--border-light)', fontSize: '0.82rem' }}>
                   <span style={{ color: 'var(--text-muted)', display: 'block' }}>{label}</span>
@@ -265,93 +559,143 @@ export default function ReportDetail() {
             </div>
           </div>
 
-          {/* Gemini AI Analysis Card */}
-          {(status === 'submitted' || status === 'approved' || report.ai_category || report.aiCategory) && (
-            <div className="card" style={{ border: '1px solid var(--primary-100)', background: 'linear-gradient(to bottom right, var(--primary-50), white)' }}>
-              <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12 }}>
-                <h3 style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--primary-dark)', margin: 0 }}>
-                  <Sparkles size={16} /> Gemini AI Analysis
-                </h3>
-                {analyzing && <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>Analyzing...</span>}
-              </div>
-              <div className="card-body" style={{ paddingTop: 8 }}>
-                {report.ai_category || report.aiCategory ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Category Classification</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                        <span className="badge badge-primary" style={{ textTransform: 'capitalize', fontSize: '0.85rem' }}>
-                          {report.ai_category || report.aiCategory}
-                        </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          ({report.confidence || 0}% confidence)
+          {/* Recipients Card */}
+          <div className="card">
+            <div className="card-header"><h3 style={{ fontSize: '0.9rem' }}>Share Recipients</h3></div>
+            <div className="card-body" style={{ paddingTop: 12 }}>
+              {report.recipients && report.recipients.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {report.recipients.map(r => (
+                    <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div className="avatar" style={{ width: 28, height: 28, fontSize: '0.65rem' }}>
+                        {r.avatar || r.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block' }}>{r.name}</span>
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block', textTransform: 'capitalize' }}>
+                          {r.role ? r.role.replace('_', ' ') : ''}
                         </span>
                       </div>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No direct recipients selected.</p>
+              )}
+            </div>
+          </div>
 
-                    {report.ai_summary && (
-                      <div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Executive Summary</span>
-                        <p style={{ fontSize: '0.8rem', lineHeight: 1.5, marginTop: 4, fontStyle: 'italic', color: 'var(--text-secondary)' }}>
-                          "{report.ai_summary}"
-                        </p>
-                      </div>
-                    )}
-
-                    {report.keywords && (
-                      <div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Keywords</span>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                          {(Array.isArray(report.keywords) ? report.keywords : (() => {
-                            try {
-                              return typeof report.keywords === 'string' ? JSON.parse(report.keywords) : [];
-                            } catch(e) {
-                              return typeof report.keywords === 'string' ? report.keywords.split(',').map(k => k.trim()) : [];
-                            }
-                          })()).map(kw => (
-                            <span key={kw} className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{kw}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {canApprove && (
-                      <div style={{ marginTop: 8, borderTop: '1px solid var(--border-light)', paddingTop: 12 }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Override Category</span>
-                        <select 
-                          className="form-control" 
-                          style={{ fontSize: '0.8rem', padding: '4px 8px', height: 'auto' }}
-                          value={report.ai_category || report.aiCategory || ''}
-                          onChange={(e) => handleOverride(e.target.value)}
-                        >
-                          <option value="Outreach">Outreach</option>
-                          <option value="Bible Study">Bible Study</option>
-                          <option value="Training">Training</option>
-                          <option value="Meeting">Meeting</option>
-                          <option value="Community Event">Community Event</option>
-                          <option value="Prayer Meeting">Prayer Meeting</option>
-                          <option value="Youth Program">Youth Program</option>
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 12 }}>
-                      No AI analysis is available for this report yet.
-                    </p>
+          {/* Gemini AI Analysis Card */}
+          {(status === 'submitted' || status === 'approved' || report.ai_category || report.aiCategory) && (
+            <>
+              {!showAiAnalysis ? (
+                <div className="card" style={{ border: '1px dashed var(--primary-100)', background: 'linear-gradient(to bottom right, var(--primary-50), white)', padding: '16px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 12 }}>
+                    SU-Connect AI Analysis is hidden.
+                  </p>
+                  <button 
+                    className="btn btn-secondary btn-sm" 
+                    onClick={handleRevealAndAnalyze}
+                    disabled={analyzing}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  >
+                    <Sparkles size={14} /> {analyzing ? 'Analyzing...' : (report.ai_category || report.aiCategory ? 'Show SU-Connect AI Analysis' : 'Run SU-Connect AI Analysis')}
+                  </button>
+                </div>
+              ) : (
+                <div className="card" style={{ border: '1px solid var(--primary-100)', background: 'linear-gradient(to bottom right, var(--primary-50), white)' }}>
+                  <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12 }}>
+                    <h3 style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--primary-dark)', margin: 0 }}>
+                      <Sparkles size={16} /> SU-Connect AI Analysis
+                    </h3>
                     <button 
-                      className="btn btn-secondary btn-sm" 
-                      onClick={runAnalysis}
-                      disabled={analyzing}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                      className="btn btn-ghost btn-xs" 
+                      onClick={() => setShowAiAnalysis(false)} 
+                      style={{ padding: '2px 6px', fontSize: '0.7rem' }}
                     >
-                      <Sparkles size={14} /> {analyzing ? 'Analyzing...' : 'Run Gemini Analysis'}
+                      Hide
                     </button>
                   </div>
-                )}
-              </div>
-            </div>
+                  <div className="card-body" style={{ paddingTop: 8 }}>
+                    {report.ai_category || report.aiCategory ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Category Classification</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                            <span className="badge badge-primary" style={{ textTransform: 'capitalize', fontSize: '0.85rem' }}>
+                              {report.ai_category || report.aiCategory}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              ({report.confidence || 0}% confidence)
+                            </span>
+                          </div>
+                        </div>
+
+                        {report.ai_summary && (
+                          <div>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Executive Summary</span>
+                            <p style={{ fontSize: '0.8rem', lineHeight: 1.5, marginTop: 4, fontStyle: 'italic', color: 'var(--text-secondary)' }}>
+                              "{report.ai_summary}"
+                            </p>
+                          </div>
+                        )}
+
+                        {report.keywords && (
+                          <div>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Keywords</span>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                              {(Array.isArray(report.keywords) ? report.keywords : (() => {
+                                try {
+                                  return typeof report.keywords === 'string' ? JSON.parse(report.keywords) : [];
+                                } catch(e) {
+                                  return typeof report.keywords === 'string' ? report.keywords.split(',').map(k => k.trim()) : [];
+                                }
+                              })()).map(kw => (
+                                <span key={kw} className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{kw}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {canApprove && (
+                          <div style={{ marginTop: 8, borderTop: '1px solid var(--border-light)', paddingTop: 12 }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Override Category</span>
+                            <select 
+                              className="form-control" 
+                              style={{ fontSize: '0.8rem', padding: '4px 8px', height: 'auto' }}
+                              value={report.ai_category || report.aiCategory || ''}
+                              onChange={(e) => handleOverride(e.target.value)}
+                            >
+                              <option value="Outreach">Outreach</option>
+                              <option value="Bible Study">Bible Study</option>
+                              <option value="Training">Training</option>
+                              <option value="Meeting">Meeting</option>
+                              <option value="Community Event">Community Event</option>
+                              <option value="Prayer Meeting">Prayer Meeting</option>
+                              <option value="Youth Program">Youth Program</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 12 }}>
+                          No AI analysis is available for this report yet.
+                        </p>
+                        <button 
+                          className="btn btn-secondary btn-sm" 
+                          onClick={runAnalysis}
+                          disabled={analyzing}
+                          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                        >
+                          <Sparkles size={14} /> {analyzing ? 'Analyzing...' : 'Run SU-Connect AI Analysis'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Status timeline */}
@@ -359,21 +703,65 @@ export default function ReportDetail() {
             <div className="card-header"><h3 style={{ fontSize: '0.9rem' }}>Status Timeline</h3></div>
             <div className="card-body" style={{ paddingTop: 12 }}>
               <div className="timeline">
-                {[
-                  { label: 'Report Created', time: `${report.date} · 09:00`, done: true },
-                  { label: 'Submitted for Review', time: `${report.date} · 10:30`, done: status !== 'draft' },
-                  { label: status === 'approved' ? 'Approved' : status === 'returned' ? 'Returned for Revision' : 'Awaiting Review', time: status !== 'submitted' && status !== 'draft' ? 'Completed' : 'Pending', done: status === 'approved' || status === 'returned' },
-                ].map((s, i) => (
-                  <div key={i} className="timeline-item">
-                    <div className="timeline-dot" style={{ background: s.done ? 'var(--primary-50)' : 'var(--border)' }}>
-                      <CheckCircle size={14} color={s.done ? 'var(--primary)' : 'var(--text-light)'} />
+                {(() => {
+                  const formatTimelineDate = (dateTimeStr) => {
+                    if (!dateTimeStr) return '';
+                    const date = new Date(dateTimeStr);
+                    const pad = (n) => String(n).padStart(2, '0');
+                    const y = date.getFullYear();
+                    const m = pad(date.getMonth() + 1);
+                    const d = pad(date.getDate());
+                    const hr = pad(date.getHours());
+                    const min = pad(date.getMinutes());
+                    return `${y}-${m}-${d} · ${hr}:${min}`;
+                  };
+
+                  const timelineItems = [
+                    { label: 'Report Created', time: formatTimelineDate(report.created_at || report.createdAt), done: true }
+                  ];
+
+                  if (report.updated_at || report.updatedAt) {
+                    const cTime = new Date(report.created_at || report.createdAt).getTime();
+                    const uTime = new Date(report.updated_at || report.updatedAt).getTime();
+                    if (Math.abs(uTime - cTime) > 10000) {
+                      timelineItems.push({ 
+                        label: 'Report Updated', 
+                        time: formatTimelineDate(report.updated_at || report.updatedAt), 
+                        done: true 
+                      });
+                    }
+                  }
+
+                  timelineItems.push({ 
+                    label: 'Submitted for Review', 
+                    time: (report.submitted_at || report.submittedAt) 
+                      ? formatTimelineDate(report.submitted_at || report.submittedAt) 
+                      : 'Pending', 
+                    done: status !== 'draft' 
+                  });
+
+                  timelineItems.push({ 
+                    label: status === 'approved' ? 'Approved' : status === 'returned' ? 'Returned for Revision' : 'Awaiting Review', 
+                    time: status === 'approved' && (report.approved_at || report.approvedAt)
+                      ? formatTimelineDate(report.approved_at || report.approvedAt)
+                      : status === 'returned' && (report.returned_at || report.returnedAt)
+                        ? formatTimelineDate(report.returned_at || report.returnedAt)
+                        : 'Pending', 
+                    done: status === 'approved' || status === 'returned' 
+                  });
+
+                  return timelineItems.map((s, i) => (
+                    <div key={i} className="timeline-item">
+                      <div className="timeline-dot" style={{ background: s.done ? 'var(--primary-50)' : 'var(--border)' }}>
+                        <CheckCircle size={14} color={s.done ? 'var(--primary)' : 'var(--text-light)'} />
+                      </div>
+                      <div className="timeline-content">
+                        <p style={{ fontSize: '0.8rem', fontWeight: 600 }}>{s.label}</p>
+                        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{s.time}</p>
+                      </div>
                     </div>
-                    <div className="timeline-content">
-                      <p style={{ fontSize: '0.8rem', fontWeight: 600 }}>{s.label}</p>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{s.time}</p>
-                    </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           </div>

@@ -34,8 +34,21 @@ class SupportRequest(models.Model):
     urgency = models.CharField(max_length=50, choices=URGENCY_CHOICES, default='medium')
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='submitted')
     
+    # AI Classification Fields
+    ai_priority = models.CharField(
+        max_length=20,
+        choices=[('urgent', 'Urgent'), ('high', 'High'), ('medium', 'Medium'), ('low', 'Low')],
+        null=True, blank=True,
+        help_text="AI-assigned priority based on content analysis"
+    )
+    ai_priority_confidence = models.IntegerField(null=True, blank=True, help_text="Confidence score 0-100")
+    ai_priority_reason = models.TextField(null=True, blank=True, help_text="Why AI assigned this priority")
+    ai_analyzed_at = models.DateTimeField(null=True, blank=True)
+    manual_priority_override = models.BooleanField(default=False)
+    
     requester = models.ForeignKey('accounts.User', on_delete=models.RESTRICT, related_name='submitted_support_requests')
     assigned_to = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_support_requests')
+    recipients = models.ManyToManyField('accounts.User', related_name='received_support_requests', blank=True)
     
     deadline = models.DateField(blank=True, null=True)
     region = models.CharField(max_length=100, blank=True)

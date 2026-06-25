@@ -26,13 +26,16 @@ class TOTPHelper:
     @staticmethod
     def verify_code(secret, code):
         try:
-            # Decode key from base32
+            # Ensure proper base32 padding
+            missing_padding = len(secret) % 8
+            if missing_padding:
+                secret += '=' * (8 - missing_padding)
             key = base64.b32decode(secret, casefold=True)
             # Fetch current time step (30s intervals)
             time_step = int(time.time() / 30)
             
-            # Check window (-1, 0, +1) to allow for minor time drift
-            for offset in [-1, 0, 1]:
+            # Check window to allow for 1 minute (2 steps) time drift
+            for offset in [-2, -1, 0, 1, 2]:
                 counter = struct.pack(">Q", time_step + offset)
                 hmac_hash = hmac.new(key, counter, hashlib.sha1).digest()
                 
@@ -48,6 +51,24 @@ class TOTPHelper:
             return False
         except Exception:
             return False
+
+    @staticmethod
+    def get_current_code(secret):
+        try:
+            # Ensure proper base32 padding
+            missing_padding = len(secret) % 8
+            if missing_padding:
+                secret += '=' * (8 - missing_padding)
+            key = base64.b32decode(secret, casefold=True)
+            time_step = int(time.time() / 30)
+            counter = struct.pack(">Q", time_step)
+            hmac_hash = hmac.new(key, counter, hashlib.sha1).digest()
+            offset_idx = hmac_hash[-1] & 0x0F
+            code_bytes = hmac_hash[offset_idx:offset_idx + 4]
+            val = struct.unpack(">I", code_bytes)[0] & 0x7FFFFFFF
+            return str(val % 1000000).zfill(6)
+        except Exception:
+            return None
 
 def urllib_parse_quote(val):
     import urllib.parse

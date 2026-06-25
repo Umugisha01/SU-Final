@@ -59,7 +59,7 @@ class PrayerRequestDetailView(generics.RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.requester_id != request.user.id and request.user.role not in ['admin', 'manager']:
+        if instance.requester_id != request.user.id and request.user.role not in ['administrator', 'national_manager']:
             return Response({"success": False, "error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
             
         serializer = self.get_serializer(instance, data=request.data, partial=True)
@@ -79,7 +79,7 @@ class PrayerRequestStatusView(APIView):
         except PrayerRequest.DoesNotExist:
             return Response({"success": False, "error": "Prayer request not found"}, status=status.HTTP_404_NOT_FOUND)
             
-        if req.requester_id != request.user.id and request.user.role not in ['admin', 'manager']:
+        if req.requester_id != request.user.id and request.user.role not in ['administrator', 'national_manager']:
             return Response({"success": False, "error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
             
         new_status = request.data.get('status')

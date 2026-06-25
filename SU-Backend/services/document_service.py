@@ -8,14 +8,16 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db.models import F
 
-ALLOWED_EXTENSIONS = ['pdf', 'docx', 'xlsx', 'zip', 'jpg', 'png']
+ALLOWED_EXTENSIONS = ['pdf', 'docx', 'xlsx', 'zip', 'jpg', 'jpeg', 'png', 'txt', 'csv']
 ALLOWED_MIME_TYPES = {
     'application/pdf': 'pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
     'application/zip': 'zip',
     'image/jpeg': 'jpg',
-    'image/png': 'png'
+    'image/png': 'png',
+    'text/plain': 'txt',
+    'text/csv': 'csv'
 }
 
 class DocumentService:
@@ -44,20 +46,19 @@ class DocumentService:
         
         try:
             mime = magic.from_buffer(chunk, mime=True)
-            # Normalize jpeg/jpg
-            if mime == 'image/jpeg':
-                mime_ext = 'jpg'
-            elif mime == 'image/png':
-                mime_ext = 'png'
-            else:
-                mime_ext = ALLOWED_MIME_TYPES.get(mime)
-                
-            if not mime_ext or (mime_ext != ext and ext not in ['jpg', 'jpeg']):
+            mime_ext = ALLOWED_MIME_TYPES.get(mime)
+            
+            # Both jpg and jpeg map to image/jpeg — both are valid
+            image_exts = {'jpg', 'jpeg'}
+            if ext in image_exts:
+                if mime not in ('image/jpeg',):
+                    raise ValidationError(f"MIME type '{mime}' does not match image extension '.{ext}'")
+            elif not mime_ext or mime_ext != ext:
                 raise ValidationError(f"MIME type '{mime}' does not match file extension '.{ext}'")
         except Exception as e:
             if isinstance(e, ValidationError):
                 raise
-            # If magic is not configured/installed correctly on local OS, fall back to simple logging
+            # If magic is not configured/installed correctly on local OS, fall back to extension-only validation
             pass
 
     @staticmethod
@@ -70,9 +71,12 @@ class DocumentService:
     @staticmethod
     def generate_presigned_url(document):
         try:
-            return default_storage.url(document.storage_key)
+            url = default_storage.url(document.storage_key)
+            if url.startswith('/'):
+                return f"http://localhost:8000{url}"
+            return url
         except Exception:
-            return f"/media/{document.storage_key}"
+            return f"http://localhost:8000/media/{document.storage_key}"
 
     @staticmethod
     def increment_downloads(document_id):

@@ -10,8 +10,8 @@ class SupportService:
     """
     @staticmethod
     def assign_request(support_request, assigned_user, manager):
-        if manager.role not in ['admin', 'manager']:
-            raise PermissionDenied("Only administrators and managers can assign support requests.")
+        if manager.role not in ['administrator', 'national_manager', 'regional_coordinator']:
+            raise PermissionDenied("Only administrators, national managers, and regional coordinators can assign support requests.")
         
         support_request.assigned_to = assigned_user
         if support_request.status == 'submitted':
@@ -31,11 +31,11 @@ class SupportService:
     @staticmethod
     def update_status(support_request, status, user):
         # Validate permissions
-        if user.role not in ['admin', 'manager'] and support_request.requester_id != user.id:
+        if user.role not in ['administrator', 'national_manager', 'regional_coordinator'] and support_request.requester_id != user.id:
             raise PermissionDenied("You do not have permission to modify this support request.")
         
-        # Staff/coordinator requesters can only transition to 'closed'
-        if user.role not in ['admin', 'manager'] and status != 'closed':
+        # Field officer / other non-assigner requesters can only transition to 'closed'
+        if user.role not in ['administrator', 'national_manager', 'regional_coordinator'] and status != 'closed':
             raise PermissionDenied("Requesters can only transition requests to 'closed'.")
         
         support_request.status = status

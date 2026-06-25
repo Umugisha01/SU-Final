@@ -53,30 +53,22 @@ export function AuthProvider({ children }) {
   const register = async (data) => {
     setLoading(true);
     try {
-      // Map fullName to matching serializer fullName field
       const registrationPayload = {
         fullName: data.fullName,
         email: data.email,
         password: data.password,
-        role: data.role || 'coordinator',
+        role: data.role || 'field_officer',
         region: data.region || 'Kigali City',
         department: data.department || 'Outreach',
-        position: data.position || 'Regional Coordinator',
+        position: data.position || 'Field Coordinator',
         phone: data.phone || '',
+        location: data.location || '',
       };
       const res = await authService.register(registrationPayload);
-      if (res.success) {
-        setUser(res.user);
-        localStorage.setItem('su-user', JSON.stringify(res.user));
-        localStorage.setItem('su-access-token', res.token);
-        setLoading(false);
-        return { success: true };
-      } else {
-        throw new Error(res.error || 'Registration failed');
-      }
+      setLoading(false);
+      return res;
     } catch (err) {
       setLoading(false);
-      // DRF errors might be objects, extract first error string
       let errorMsg = 'Registration failed';
       if (err.response?.data?.error) {
         const errObj = err.response.data.error;

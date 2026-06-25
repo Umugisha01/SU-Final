@@ -1,10 +1,11 @@
+from django.http import StreamingHttpResponse
 from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import datetime, timedelta
-from core.permissions import IsManagerOrAdmin, CanApproveReport
+from core.permissions import IsManagerOrAdmin, IsCoordinatorOrManagerOrAdmin, CanApproveReport
 from core.throttling import AIRateThrottle
 from apps.reports.models import Report
 from apps.reports.serializers import ReportSerializer
@@ -23,6 +24,10 @@ class ReportListCreateView(generics.ListCreateAPIView):
         # but we also support user query filters.
         queryset = Report.objects.all().order_by('-date')
         
+        # Exclude deleted reports for non-admins
+        if self.request.user.role != 'administrator':
+            queryset = queryset.filter(is_deleted=False)
+        
         region = self.request.query_params.get('region')
         department = self.request.query_params.get('department')
         status_param = self.request.query_params.get('status')
@@ -32,7 +37,7 @@ class ReportListCreateView(generics.ListCreateAPIView):
         
         # Staff and coordinators cannot view other regions even if they query for them.
         # But for managers/admins, they can filter by region.
-        if self.request.user.role in ['admin', 'manager'] and region and region != 'all':
+        if self.request.user.role in ['administrator', 'national_manager'] and region and region != 'all':
             queryset = queryset.filter(region=region)
             
         if department and department != 'all':
@@ -84,13 +89,19 @@ class ReportListCreateView(generics.ListCreateAPIView):
         return Response({"success": False, "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ReportDetailView(generics.RetrieveUpdateAPIView):
+class ReportDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET /api/reports/{id} - details of report
     PUT /api/reports/{id} - update draft only
+    DELETE /api/reports/{id} - soft delete report
     """
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
+
+    def get_queryset(self):
+        if self.request.user.role == 'administrator':
+            return Report.objects.all()
+        return Report.objects.filter(is_deleted=False)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -113,12 +124,23 @@ class ReportDetailView(generics.RetrieveUpdateAPIView):
             return Response(ReportSerializer(report).data, status=status.HTTP_200_OK)
         return Response({"success": False, "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Owner or Admin only can delete
+        if instance.submitted_by_id != request.user.id and request.user.role != 'administrator':
+            return Response({"success": False, "error": "You do not have permission to delete this report."}, status=status.HTTP_403_FORBIDDEN)
+            
+        instance.is_deleted = True
+        instance.save()
+        return Response({"success": True, "message": "Report deleted successfully"}, status=status.HTTP_200_OK)
+
 
 class ReportStatusUpdateView(APIView):
     """
     PATCH /api/reports/{id}/status - approve or return (Manager/Admin only)
     """
-    permission_classes = [IsManagerOrAdmin]
+    permission_classes = [IsCoordinatorOrManagerOrAdmin]
 
     def patch(self, request, id):
         try:
@@ -136,6 +158,10 @@ class ReportStatusUpdateView(APIView):
         if report.submitted_by_id == request.user.id:
             return Response({"success": False, "error": "Segregation of duties: You cannot approve or return your own report."}, status=status.HTTP_403_FORBIDDEN)
             
+        # Regional isolation check for coordinators
+        if request.user.role == 'regional_coordinator' and report.region != request.user.region:
+            return Response({"success": False, "error": "Regional isolation: You can only approve or return reports in your own region."}, status=status.HTTP_403_FORBIDDEN)
+            
         try:
             if new_status == 'approved':
                 ReportService.approve_report(report, request.user, comments)
@@ -149,9 +175,9 @@ class ReportStatusUpdateView(APIView):
 
 class QueueAIAnalyzeView(APIView):
     """
-    POST /api/reports/ai-analyze - queue report classification (Admin/Manager only)
+    POST /api/reports/ai-analyze - queue report classification
     """
-    permission_classes = [IsManagerOrAdmin]
+    permission_classes = [IsCoordinatorOrManagerOrAdmin]
     throttle_classes = [AIRateThrottle]
 
     def post(self, request):
@@ -159,6 +185,9 @@ class QueueAIAnalyzeView(APIView):
         if not report_id:
             # Analyze all submitted reports without AI categorization
             pending_reports = Report.objects.filter(status='submitted', ai_category__isnull=True)
+            if request.user.role == 'regional_coordinator':
+                pending_reports = pending_reports.filter(region=request.user.region)
+                
             for r in pending_reports:
                 from su_connect.tasks import analyze_report_task
                 analyze_report_task.delay(r.id)
@@ -166,6 +195,11 @@ class QueueAIAnalyzeView(APIView):
             
         try:
             report = Report.objects.get(id=report_id)
+            
+            # Regional isolation check for coordinators
+            if request.user.role == 'regional_coordinator' and report.region != request.user.region:
+                return Response({"success": False, "error": "Regional isolation: You can only trigger analysis for reports in your own region."}, status=status.HTTP_403_FORBIDDEN)
+                
             from su_connect.tasks import analyze_report_task
             analyze_report_task.delay(report.id)
             return Response({"success": True, "message": "AI analysis job queued", "jobId": f"job-rep-{report.id}"}, status=status.HTTP_202_ACCEPTED)
@@ -177,13 +211,17 @@ class AIOverrideView(APIView):
     """
     PATCH /api/reports/{id}/ai-override - override category classification
     """
-    permission_classes = [IsManagerOrAdmin]
+    permission_classes = [IsCoordinatorOrManagerOrAdmin]
 
     def patch(self, request, id):
         try:
             report = Report.objects.get(id=id)
         except Report.DoesNotExist:
             return Response({"success": False, "error": "Report not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Regional isolation check for coordinators
+        if request.user.role == 'regional_coordinator' and report.region != request.user.region:
+            return Response({"success": False, "error": "Regional isolation: You can only override reports in your own region."}, status=status.HTTP_403_FORBIDDEN)
             
         new_category = request.data.get('aiCategory')
         if not new_category:
@@ -197,18 +235,91 @@ class AIOverrideView(APIView):
         return Response({"success": True, "message": "AI classification overridden", "reportId": report.id}, status=status.HTTP_200_OK)
 
 
+class AIChatView(APIView):
+    """
+    POST /api/reports/ai-chat - query local Ollama model using RAG context with optional streaming
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        message = request.data.get('message')
+        document_ids = request.data.get('documentIds', [])
+        report_ids = request.data.get('reportIds', [])
+        stream_param = request.data.get('stream', False)  # Stream only if explicitly requested
+        model_param = request.data.get('model')  # Custom selected model if any
+        
+        if not message:
+            return Response({"success": False, "error": "message is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        kwargs = {}
+        if model_param:
+            kwargs['model_override'] = model_param
+            
+        if stream_param:
+            stream_generator = AIService.chat_assistant(
+                request.user, message, document_ids, report_ids, stream=True, **kwargs
+            )
+            response = StreamingHttpResponse(
+                stream_generator,
+                content_type="application/x-ndjson"
+            )
+            response['X-Accel-Buffering'] = 'no'
+            return response
+        else:
+            reply = AIService.chat_assistant(request.user, message, document_ids, report_ids, **kwargs)
+            return Response({"success": True, "reply": reply}, status=status.HTTP_200_OK)
+
+
+class OllamaHealthView(APIView):
+    """
+    GET /api/reports/ai-status - check if local Ollama is reachable and which models are available
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        import requests
+        from django.conf import settings
+        ollama_url = getattr(settings, 'OLLAMA_URL', 'http://127.0.0.1:11434')
+        ollama_model = getattr(settings, 'OLLAMA_MODEL', 'qwen2.5vl:3b')
+        try:
+            res = requests.get(f"{ollama_url.rstrip('/')}/api/tags", timeout=5)
+            if res.status_code == 200:
+                models = [m['name'] for m in res.json().get('models', [])]
+                model_available = any(ollama_model in m for m in models)
+                return Response({
+                    "success": True,
+                    "running": True,
+                    "configuredModel": ollama_model,
+                    "modelAvailable": model_available,
+                    "availableModels": models,
+                    "ollamaUrl": ollama_url
+                })
+        except Exception as e:
+            pass
+        return Response({
+            "success": False,
+            "running": False,
+            "configuredModel": ollama_model,
+            "modelAvailable": False,
+            "error": "Cannot reach Ollama server at " + ollama_url
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
 class DashboardSummaryView(APIView):
     """
     GET /api/reports/analytics/summary
     """
-    permission_classes = [IsManagerOrAdmin]
+    permission_classes = [IsCoordinatorOrManagerOrAdmin]
 
     def get(self, request):
         # Support parameters: period, region
         region_filter = request.query_params.get('region', 'all')
         
+        # Enforce regional isolation for coordinators
+        if request.user.role == 'regional_coordinator':
+            region_filter = request.user.region
+            
         # Filters
-        reports_qs = Report.objects.filter(status='approved')
+        reports_qs = Report.objects.filter(status='approved', is_deleted=False)
         support_qs = getattr(reports_qs, 'none')()  # will override below
         
         from apps.support.models import SupportRequest
@@ -278,8 +389,8 @@ class DashboardSummaryView(APIView):
             else:
                 end = start.replace(month=start.month+1, day=1) - timedelta(days=1)
                 
-            submitted = support_qs.filter(submitted_date__gte=start, submitted_date__lte=end).count()
-            resolved = support_qs.filter(submitted_date__gte=start, submitted_date__lte=end, status__in=['fulfilled', 'closed']).count()
+            submitted = support_qs.filter(created_at__date__gte=start, created_at__date__lte=end).count()
+            resolved = support_qs.filter(created_at__date__gte=start, created_at__date__lte=end, status__in=['fulfilled', 'closed']).count()
             
             support_trend.append({
                 "month": start.strftime('%b'),
@@ -300,15 +411,20 @@ class ConsolidatedReportView(APIView):
     """
     GET /api/reports/consolidated
     """
-    permission_classes = [IsManagerOrAdmin]
+    permission_classes = [IsCoordinatorOrManagerOrAdmin]
 
     def get(self, request):
         region = request.query_params.get('region', 'all')
+        
+        # Enforce regional isolation for coordinators
+        if request.user.role == 'regional_coordinator':
+            region = request.user.region
+            
         department = request.query_params.get('department', 'all')
         start_date = request.query_params.get('startDate')
         end_date = request.query_params.get('endDate')
         
-        queryset = Report.objects.filter(status='approved')
+        queryset = Report.objects.filter(status='approved', is_deleted=False)
         
         if region != 'all':
             queryset = queryset.filter(region=region)

@@ -41,22 +41,25 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            refresh = RefreshToken.for_user(user)
+            user.status = 'pending'
+            user.email_verified = False
+            user.save()
             
-            # If admin registered, MFA must be enabled
-            if user.role == 'admin':
-                user.mfa_enabled = True
-                user.save()
-                
+            # Send verification email
+            from su_connect.tasks import send_notification_email_task
+            import uuid
+            verify_link = f"http://localhost:5173/verify-email?token={user.verification_token}"
+            send_notification_email_task.delay(
+                user.email,
+                "Verify Your Email Address - SU Connect",
+                f"Hello {user.name},\n\nThank you for registering on SU Connect. Please verify your email by clicking the following link:\n{verify_link}\n\nOnce verified, an administrator will review your account for activation."
+            )
+            
             res_data = {
                 "success": True,
-                "message": "User registered successfully",
-                "user": UserSerializer(user).data,
-                "token": str(refresh.access_token)
+                "message": "Registration successful! Please check your email to verify your address."
             }
-            response = Response(res_data, status=status.HTTP_201_CREATED)
-            set_refresh_cookie(response, str(refresh))
-            return response
+            return Response(res_data, status=status.HTTP_201_CREATED)
         return Response({"success": False, "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -75,17 +78,56 @@ class LoginView(APIView):
             except User.DoesNotExist:
                 return Response({"success": False, "error": "Invalid email or password"}, status=status.HTTP_401_UNAUTHORIZED)
                 
+            # Lockout check
+            if user.locked_until and user.locked_until > timezone.now():
+                remaining = int((user.locked_until - timezone.now()).total_seconds() / 60)
+                return Response({
+                    "success": False, 
+                    "error": f"Account is locked out due to multiple failed login attempts. Try again in {remaining} minute(s)."
+                }, status=status.HTTP_403_FORBIDDEN)
+
+            # Check credentials
             if not user.check_password(password):
-                return Response({"success": False, "error": "Invalid email or password"}, status=status.HTTP_401_UNAUTHORIZED)
+                user.failed_login_attempts += 1
+                if user.failed_login_attempts >= 10:
+                    user.locked_until = timezone.now() + timezone.timedelta(minutes=30)
+                    user.save()
+                    return Response({"success": False, "error": "Account locked out for 30 minutes due to 10 failed login attempts."}, status=status.HTTP_403_FORBIDDEN)
+                user.save()
+                return Response({
+                    "success": False, 
+                    "error": f"Invalid email or password. Attempt {user.failed_login_attempts}/10 before lockout."
+                }, status=status.HTTP_401_UNAUTHORIZED)
                 
-            if user.status != 'active':
+            # Check email verification
+            if not user.email_verified:
+                return Response({
+                    "success": False, 
+                    "error": "Please verify your email address before logging in.", 
+                    "unverified": True
+                }, status=status.HTTP_403_FORBIDDEN)
+
+            # Check status
+            if user.status == 'pending':
+                return Response({"success": False, "error": "Your account registration is pending administrator approval."}, status=status.HTTP_403_FORBIDDEN)
+            elif user.status != 'active':
                 return Response({"success": False, "error": "This account is inactive. Please contact an administrator."}, status=status.HTTP_403_FORBIDDEN)
                 
-            # If Admin has MFA fully configured (both secret AND enabled), require OTP
-            # If mfa_secret is not set yet, let admin log in and set up MFA later
-            if user.role == 'admin' and user.mfa_enabled and user.mfa_secret:
-                # Return a restricted pre-auth token — OTP must be verified to proceed
-                refresh = RefreshToken.for_user(user)
+            # Success: reset failed attempts & session
+            import uuid
+            user.failed_login_attempts = 0
+            user.locked_until = None
+            user.session_id = str(uuid.uuid4())
+            user.last_activity = timezone.now()
+            user.last_login = timezone.now()
+            user.save()
+            
+            # Setup tokens and embed session_id
+            refresh = RefreshToken.for_user(user)
+            refresh['session_id'] = user.session_id
+
+            # If user has MFA enabled, check if they have setup secret
+            if user.mfa_enabled and user.mfa_secret:
                 return Response({
                     "success": True,
                     "mfaRequired": True,
@@ -93,11 +135,6 @@ class LoginView(APIView):
                     "accessToken": str(refresh.access_token)
                 })
                 
-            # Standard login
-            refresh = RefreshToken.for_user(user)
-            user.last_login = timezone.now()
-            user.save()
-            
             res_data = {
                 "success": True,
                 "user": UserSerializer(user).data,
@@ -366,7 +403,7 @@ class ToggleMFAView(APIView):
         enable = request.data.get('mfaEnabled', False)
         
         # Admins cannot disable MFA
-        if user.role == 'admin' and not enable:
+        if user.role == 'administrator' and not enable:
             return Response({"success": False, "error": "Administrators are required to have MFA enabled."}, status=status.HTTP_400_BAD_REQUEST)
             
         user.mfa_enabled = enable
@@ -374,3 +411,169 @@ class ToggleMFAView(APIView):
             user.mfa_secret = None
         user.save()
         return Response({"success": True, "mfaEnabled": user.mfa_enabled})
+
+
+class VerifyEmailView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        token = request.query_params.get('token')
+        if not token:
+            return Response({"success": False, "error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(verification_token=token)
+            user.email_verified = True
+            user.verification_token = None
+            user.save()
+            return Response({
+                "success": True, 
+                "message": "Email verified successfully. An administrator will review your account next."
+            }, status=status.HTTP_200_OK)
+        except (User.DoesNotExist, ValueError):
+            return Response({"success": False, "error": "Invalid or expired verification token"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResendVerificationView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"success": False, "error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+            if user.email_verified:
+                return Response({"success": False, "error": "Email is already verified"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Generate new token
+            import uuid
+            user.verification_token = uuid.uuid4()
+            user.save()
+
+            # Send email
+            from su_connect.tasks import send_notification_email_task
+            verify_link = f"http://localhost:5173/verify-email?token={user.verification_token}"
+            send_notification_email_task.delay(
+                user.email,
+                "Verify Your Email Address - SU Connect",
+                f"Hello {user.name},\n\nPlease verify your email by clicking the following link:\n{verify_link}\n\nOnce verified, an administrator will review your account for activation."
+            )
+            return Response({"success": True, "message": "Verification email resent successfully"}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"success": False, "error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class HeartbeatView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        user.last_activity = timezone.now()
+        user.save(update_fields=['last_activity'])
+        return Response({"success": True, "message": "Heartbeat acknowledged"}, status=status.HTTP_200_OK)
+
+
+class SessionsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
+        user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown Browser')
+        
+        session_info = {
+            "id": request.user.session_id or "active-session",
+            "ip": ip,
+            "browser": user_agent,
+            "lastActivity": request.user.last_activity,
+            "isCurrent": True
+        }
+        return Response({"success": True, "sessions": [session_info]}, status=status.HTTP_200_OK)
+
+
+class RevokeSessionsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        import uuid
+        user.session_id = str(uuid.uuid4())
+        user.save()
+        return Response({"success": True, "message": "All other sessions have been logged out."}, status=status.HTTP_200_OK)
+
+
+class PendingUsersView(APIView):
+    permission_classes = [IsAdminOnly]
+
+    def get(self, request):
+        users = User.objects.filter(status='pending').order_by('-created_at')
+        return Response({"success": True, "data": UserSerializer(users, many=True).data}, status=status.HTTP_200_OK)
+
+
+class ApproveUserView(APIView):
+    permission_classes = [IsAdminOnly]
+
+    def post(self, request, id):
+        try:
+            user = User.objects.get(id=id)
+            user.status = 'active'
+            user.save()
+
+            # Notify user
+            from su_connect.tasks import send_notification_email_task
+            send_notification_email_task.delay(
+                user.email,
+                "Account Approved - SU Connect",
+                f"Hello {user.name},\n\nYour account has been approved by the administrator. You can now log in at http://localhost:5173/login."
+            )
+            return Response({"success": True, "message": "User approved successfully"}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"success": False, "error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class RejectUserView(APIView):
+    permission_classes = [IsAdminOnly]
+
+    def post(self, request, id):
+        reason = request.data.get('reason', 'Requirements not met.')
+        try:
+            user = User.objects.get(id=id)
+            user.status = 'inactive'
+            user.save()
+
+            # Notify user
+            from su_connect.tasks import send_notification_email_task
+            send_notification_email_task.delay(
+                user.email,
+                "Account Registration Update - SU Connect",
+                f"Hello {user.name},\n\nYour account registration request has been rejected for the following reason:\n{reason}\n\nPlease contact administration if you believe this is an error."
+            )
+            return Response({"success": True, "message": "User registration rejected"}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"success": False, "error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class SendMFACodeEmailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        if not user.mfa_secret:
+            return Response({"success": False, "error": "MFA has not been setup yet"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Generate the current active TOTP code
+        code = TOTPHelper.get_current_code(user.mfa_secret)
+        if not code:
+            return Response({"success": False, "error": "Failed to generate verification code"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        # Send email
+        from su_connect.tasks import send_notification_email_task
+        send_notification_email_task.delay(
+            user.email,
+            "Your MFA Verification Code - SU Connect",
+            f"Hello {user.name},\n\nYour 6-digit MFA verification code is: {code}\n\nThis code is valid for 1 minute. If you did not request this, please change your password immediately."
+        )
+        
+        return Response({"success": True, "message": "Verification code sent to your email address."}, status=status.HTTP_200_OK)
+

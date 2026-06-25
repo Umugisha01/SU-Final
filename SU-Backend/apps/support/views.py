@@ -61,10 +61,11 @@ class SupportRequestListCreateView(generics.ListCreateAPIView):
         return Response({"success": True, "data": serializer.data})
 
 
-class SupportRequestDetailView(generics.RetrieveUpdateAPIView):
+class SupportRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET /api/support/{id} - retrieve request details
     PUT /api/support/{id} - update request properties
+    DELETE /api/support/{id} - delete support request
     """
     queryset = SupportRequest.objects.all()
     serializer_class = SupportRequestSerializer
@@ -73,7 +74,7 @@ class SupportRequestDetailView(generics.RetrieveUpdateAPIView):
         instance = self.get_object()
         
         # Enforce that only requester can modify properties of their own ticket
-        if instance.requester_id != request.user.id and request.user.role not in ['admin', 'manager']:
+        if instance.requester_id != request.user.id and request.user.role not in ['administrator', 'national_manager', 'regional_coordinator']:
             return Response({"success": False, "error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
             
         serializer = self.get_serializer(instance, data=request.data, partial=True)
@@ -81,6 +82,16 @@ class SupportRequestDetailView(generics.RetrieveUpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response({"success": False, "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Only the requester (owner) or admin/manager can delete
+        if instance.requester_id != request.user.id and request.user.role not in ['administrator', 'national_manager', 'regional_coordinator']:
+            return Response({"success": False, "error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        instance.delete()
+        return Response({"success": True, "message": "Support request deleted successfully"}, status=status.HTTP_200_OK)
 
 
 class SupportRequestStatusView(APIView):
@@ -174,3 +185,123 @@ class AddSupportCommentView(APIView):
             )
             
         return Response(SupportCommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+
+
+class SupportRequestAIAnalyzeView(APIView):
+    """Manually trigger AI analysis for a request"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, pk):
+        try:
+            support_request = SupportRequest.objects.get(pk=pk)
+        except SupportRequest.DoesNotExist:
+            return Response({'success': False, 'error': 'Support request not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check permission
+        if request.user.role not in ['administrator', 'national_manager', 'regional_coordinator']:
+            return Response({'success': False, 'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Run async
+        from apps.support.tasks import analyze_support_priority
+        task = analyze_support_priority.delay(pk)
+        
+        return Response({
+            'success': True,
+            'status': 'processing',
+            'task_id': task.id,
+            'message': 'AI analysis started'
+        }, status=status.HTTP_202_ACCEPTED)
+
+
+class SupportRequestBatchAIAnalyzeView(APIView):
+    """Batch analyze all pending requests"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        if request.user.role not in ['administrator', 'national_manager']:
+            return Response({'success': False, 'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        
+        limit = request.data.get('limit', 50)
+        from apps.support.tasks import batch_analyze_support_priorities
+        task = batch_analyze_support_priorities.delay(limit)
+        
+        return Response({
+            'success': True,
+            'status': 'processing',
+            'task_id': task.id,
+            'message': f'Batch analysis started for up to {limit} requests'
+        }, status=status.HTTP_202_ACCEPTED)
+
+
+class SupportRequestAITaskStatusView(APIView):
+    """Check status of AI analysis task"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, task_id):
+        from celery.result import AsyncResult
+        task = AsyncResult(task_id)
+        
+        if task.ready():
+            if task.failed():
+                return Response({
+                    'success': True,
+                    'status': 'failed',
+                    'error': str(task.result)
+                }, status=status.HTTP_200_OK)
+                
+            result_data = task.result
+            if isinstance(result_data, Exception):
+                result_data = str(result_data)
+                
+            return Response({
+                'success': True,
+                'status': 'completed',
+                'result': result_data
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'success': True,
+                'status': 'pending'
+            }, status=status.HTTP_200_OK)
+
+
+class SupportRequestAISuggestView(APIView):
+    """Get AI suggestion for a draft request (real-time)"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        from services.ai_priority_service import ai_priority_service
+        
+        title = request.data.get('title', '')
+        description = request.data.get('description', '')
+        category = request.data.get('category', 'Other')
+        
+        # Simple validation
+        if not title or not description:
+            return Response({
+                'success': False,
+                'error': 'Title and description are required for AI suggestion.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create a temporary object with the provided data
+        class TempRequest:
+            pass
+        
+        temp = TempRequest()
+        temp.title = title
+        temp.description = description
+        temp.category = category
+        temp.region = getattr(request.user, 'region', '')
+        temp.requester = request.user
+        
+        # Get AI suggestion using local Ollama model directly
+        result = ai_priority_service.classify(temp)
+        
+        return Response({
+            'success': True,
+            'priority': result['priority'],
+            'confidence': result['confidence'],
+            'reason': result['reason'],
+            'key_factors': result.get('key_factors', []),
+            'suggested_days': result.get('suggested_days', 7)
+        }, status=status.HTTP_200_OK)
