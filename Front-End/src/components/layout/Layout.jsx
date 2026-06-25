@@ -3,6 +3,8 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import SUConnectAI from '../ai/SUConnectAI';
+import IdleTimer from './IdleTimer';
 
 export default function Layout() {
   const { user } = useAuth();
@@ -19,8 +21,7 @@ export default function Layout() {
         setCollapsed={setCollapsed}
         mobileOpen={mobileOpen}
       />
-      <div className={`main-content ${collapsed ? 'sidebar-collapsed' : ''}`}
-           style={{ marginLeft: collapsed ? 68 : 'var(--sidebar-width)' }}>
+      <div className={`main-content ${collapsed ? 'sidebar-collapsed' : ''}`}>
         <Header
           onMenuToggle={() => setMobileOpen(o => !o)}
           collapsed={collapsed}
@@ -29,6 +30,8 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+      <SUConnectAI />
+      <IdleTimer />
     </div>
   );
 }

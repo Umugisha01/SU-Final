@@ -1,39 +1,114 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import api from '../services/api';
+import { useAuth } from './AuthContext';
+import toast from 'react-hot-toast';
 
 const NotificationContext = createContext();
 
-const INITIAL = [
-  { id: 1, type: 'report', title: 'Report Approved', message: 'Your Q1 Outreach report has been approved by the manager.', time: '2 min ago', read: false, icon: 'check' },
-  { id: 2, type: 'deadline', title: 'Deadline Reminder', message: 'Monthly activity report due in 3 days (May 9, 2025).', time: '1 hour ago', read: false, icon: 'clock' },
-  { id: 3, type: 'support', title: 'Support Request Updated', message: 'Your training materials request has been approved.', time: '3 hours ago', read: false, icon: 'package' },
-  { id: 4, type: 'prayer', title: 'Prayer Request Response', message: 'The prayer team has responded to your request.', time: '1 day ago', read: true, icon: 'heart' },
-  { id: 5, type: 'system', title: 'System Announcement', message: 'Scheduled maintenance on May 10, 2025 from 2–4 AM.', time: '2 days ago', read: true, icon: 'bell' },
-  { id: 6, type: 'report', title: 'Report Returned', message: 'Eastern Region Bible Study report needs revision.', time: '2 days ago', read: true, icon: 'alert' },
-];
-
 export function NotificationProvider({ children }) {
-  const [notifications, setNotifications] = useState(INITIAL);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [systemAlerts, setSystemAlerts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await api.get('/notifications/');
+      if (res.data && res.data.success) {
+        setNotifications(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        setNotifications(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  }, [user]);
+
+  const fetchSystemAlerts = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await api.get('/notifications/system-alerts/active');
+      if (res.data && res.data.success) {
+        setSystemAlerts(res.data.data);
+      } else if (Array.isArray(res.data)) {
+        setSystemAlerts(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch system alerts:', err);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      setLoading(true);
+      Promise.all([fetchNotifications(), fetchSystemAlerts()]).finally(() => setLoading(false));
+    } else {
+      setNotifications([]);
+      setSystemAlerts([]);
+    }
+  }, [user, fetchNotifications, fetchSystemAlerts]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markRead = useCallback((id) => {
-    setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+  const markRead = useCallback(async (id) => {
+    try {
+      // Optimistic UI update
+      setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+      await api.put(`/notifications/${id}/read`);
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
   }, []);
 
-  const markAllRead = useCallback(() => {
-    setNotifications(ns => ns.map(n => ({ ...n, read: true })));
+  const markAllRead = useCallback(async () => {
+    try {
+      setNotifications(ns => ns.map(n => ({ ...n, read: true })));
+      await api.post('/notifications/mark-read', { ids: [] });
+      toast.success('All notifications marked as read');
+    } catch (err) {
+      console.error('Failed to mark all notifications read:', err);
+    }
+  }, []);
+
+  const dismiss = useCallback(async (id) => {
+    try {
+      setNotifications(ns => ns.filter(n => n.id !== id));
+      await api.delete(`/notifications/${id}/`);
+      toast.success('Notification dismissed');
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+    }
+  }, []);
+
+  const dismissSystemAlert = useCallback(async (id) => {
+    try {
+      setSystemAlerts(alerts => alerts.filter(a => a.id !== id));
+      await api.post(`/notifications/system-alerts/${id}/dismiss`);
+      toast.success('System alert dismissed');
+    } catch (err) {
+      console.error('Failed to dismiss system alert:', err);
+    }
   }, []);
 
   const addNotification = useCallback((notif) => {
-    setNotifications(ns => [{ ...notif, id: Date.now(), read: false, time: 'Just now' }, ...ns]);
-  }, []);
-
-  const dismiss = useCallback((id) => {
-    setNotifications(ns => ns.filter(n => n.id !== id));
+    setNotifications(ns => [{ ...notif, id: Date.now(), read: false, created_at: new Date().toISOString() }, ...ns]);
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, markRead, markAllRead, addNotification, dismiss }}>
+    <NotificationContext.Provider value={{
+      notifications,
+      systemAlerts,
+      unreadCount,
+      loading,
+      fetchNotifications,
+      fetchSystemAlerts,
+      markRead,
+      markAllRead,
+      addNotification,
+      dismiss,
+      dismissSystemAlert
+    }}>
       {children}
     </NotificationContext.Provider>
   );

@@ -33,12 +33,19 @@
 .auth-brand { margin-bottom: 48px; }
 .auth-logo {
   width: 56px; height: 56px;
-  background: rgba(255,255,255,0.2);
+  background: #2F7333;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 16px;
   display: flex; align-items: center; justify-content: center;
   color: #fff;
   margin-bottom: 16px;
-  backdrop-filter: blur(10px);
+}
+.auth-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+  padding: 6px;
 }
 .auth-brand h1 { font-size: 1.8rem; font-weight: 800; color: #fff; }
 .auth-brand p { color: rgba(255,255,255,0.8); font-size: 0.875rem; margin-top: 4px; }
@@ -172,4 +179,9 @@
 @media (max-width: 768px) {
   .auth-left { display: none; }
   .auth-right { padding: 24px 16px; }
+}
+
+@media (max-width: 480px) {
+  .demo-creds { grid-template-columns: 1fr; }
+  .role-cards { grid-template-columns: 1fr; }
 }

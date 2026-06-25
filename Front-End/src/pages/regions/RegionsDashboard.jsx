@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MapPin, Users, FileText, TrendingUp, Download, ChevronRight, Heart } from 'lucide-react';
 import { mockReports, mockUsers, mockAnalytics } from '../../data/mockData';
@@ -12,8 +14,14 @@ const REGIONS_DATA = [
 ];
 
 export default function RegionsDashboard() {
+  const { user } = useAuth();
   const [selected, setSelected] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+
+  if (!user || user.role !== 'administrator') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const region = REGIONS_DATA.find(r => r.id === selected);
 
   return (
@@ -63,7 +71,7 @@ export default function RegionsDashboard() {
                     </div>
                     <ChevronRight size={16} color="var(--text-muted)" />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div className="responsive-grid-2" style={{ gap: 12, marginBottom: 16 }}>
                     {[
                       { icon: Users, label: 'Staff', val: r.staff },
                       { icon: FileText, label: 'Reports', val: r.reports },

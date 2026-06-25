@@ -1,46 +1,133 @@
-import { useState } from 'react';
-import { Users, Plus, Search, Edit, UserX, UserCheck, Download, Upload, Shield, Eye, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, Plus, Search, Edit, UserX, UserCheck, Download, Upload, Shield, Eye, X, Check } from 'lucide-react';
 import { mockUsers, REGIONS, DEPARTMENTS } from '../../data/mockData';
+import { userService } from '../../services/api';
 
-const ROLE_CONFIG = { admin: { cls: 'badge-danger', label: 'Admin' }, manager: { cls: 'badge-warning', label: 'Manager' }, staff: { cls: 'badge-info', label: 'Staff' }, coordinator: { cls: 'badge-primary', label: 'Coordinator' } };
+const ROLE_CONFIG = {
+  administrator: { cls: 'badge-danger', label: 'Administrator' },
+  national_manager: { cls: 'badge-warning', label: 'National Manager' },
+  regional_coordinator: { cls: 'badge-primary', label: 'Regional Coordinator' },
+  field_officer: { cls: 'badge-info', label: 'Field Officer' }
+};
 
 const PERMISSION_MATRIX = [
-  { feature: 'Submit Reports', admin: true, manager: true, staff: true, coordinator: true },
-  { feature: 'Approve Reports', admin: true, manager: true, staff: false, coordinator: false },
-  { feature: 'View All Regions', admin: true, manager: true, staff: false, coordinator: false },
-  { feature: 'AI Analysis', admin: true, manager: true, staff: false, coordinator: false },
-  { feature: 'Manage Users', admin: true, manager: false, staff: false, coordinator: false },
-  { feature: 'Security Audit', admin: true, manager: false, staff: false, coordinator: false },
-  { feature: 'Consolidate Reports', admin: true, manager: true, staff: false, coordinator: false },
-  { feature: 'View Analytics', admin: true, manager: true, staff: false, coordinator: false },
-  { feature: 'Support Requests', admin: true, manager: true, staff: true, coordinator: true },
-  { feature: 'Prayer Requests', admin: true, manager: true, staff: true, coordinator: true },
+  { feature: 'Submit Reports', administrator: true, national_manager: true, field_officer: true, regional_coordinator: true },
+  { feature: 'Approve Reports', administrator: true, national_manager: true, field_officer: false, regional_coordinator: true },
+  { feature: 'View All Regions', administrator: true, national_manager: false, field_officer: false, regional_coordinator: false },
+  { feature: 'AI Analysis', administrator: true, national_manager: true, field_officer: false, regional_coordinator: false },
+  { feature: 'Manage Users', administrator: true, national_manager: false, field_officer: false, regional_coordinator: false },
+  { feature: 'Security Audit', administrator: true, national_manager: false, field_officer: false, regional_coordinator: false },
+  { feature: 'Consolidate Reports', administrator: true, national_manager: true, field_officer: false, regional_coordinator: false },
+  { feature: 'View Analytics', administrator: true, national_manager: true, field_officer: false, regional_coordinator: false },
+  { feature: 'Support Requests', administrator: true, national_manager: true, field_officer: true, regional_coordinator: true },
+  { feature: 'Prayer Requests', administrator: true, national_manager: true, field_officer: true, regional_coordinator: true },
 ];
 
 export default function UserManagement() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeTab, setActiveTab] = useState('users');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'staff', region: '', department: '', phone: '' });
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'field_officer', region: '', department: '', phone: '' });
 
-  const filtered = users.filter(u => {
-    if (search && !u.name.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false;
+  const [rejectingUser, setRejectingUser] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const data = await userService.list();
+      setUsers(data || []);
+      
+      const pendingData = await userService.getPending();
+      if (pendingData.success) {
+        setPendingUsers(pendingData.data || []);
+      }
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError('Failed to load users from the server.');
+      setUsers(mockUsers);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const filtered = users.filter(u => u.status !== 'pending').filter(u => {
+    if (search) {
+      const s = search.toLowerCase();
+      const roleLabel = ROLE_CONFIG[u.role]?.label || '';
+      const matchName = (u.name || '').toLowerCase().includes(s);
+      const matchEmail = (u.email || '').toLowerCase().includes(s);
+      const matchRole = (u.role || '').toLowerCase().includes(s) || roleLabel.toLowerCase().includes(s);
+      const matchRegion = (u.region || '').toLowerCase().includes(s);
+      const matchDept = (u.department || '').toLowerCase().includes(s);
+      const matchPhone = (u.phone || '').toLowerCase().includes(s);
+      if (!matchName && !matchEmail && !matchRole && !matchRegion && !matchDept && !matchPhone) return false;
+    }
     if (filterRole !== 'all' && u.role !== filterRole) return false;
     if (filterStatus !== 'all' && u.status !== filterStatus) return false;
     return true;
   });
 
-  const toggleStatus = (id) => setUsers(prev => prev.map(u => u.id === id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u));
+  const toggleStatus = async (id, currentStatus) => {
+    const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    try {
+      await userService.toggleStatus(id, nextStatus);
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: nextStatus } : u));
+    } catch (err) {
+      console.error('Failed to toggle status:', err);
+      alert(err.response?.data?.error || 'Failed to update user status.');
+    }
+  };
+
+  const handleApprove = async (id) => {
+    if (!window.confirm('Are you sure you want to approve this user?')) return;
+    try {
+      await userService.approve(id);
+      await fetchUsers();
+      alert('User approved successfully!');
+    } catch (err) {
+      console.error('Error approving user:', err);
+      alert(err.response?.data?.error || 'Failed to approve user.');
+    }
+  };
+
+  const handleRejectPrompt = (user) => {
+    setRejectingUser(user);
+    setRejectReason('');
+  };
+
+  const handleReject = async () => {
+    if (!rejectingUser) return;
+    try {
+      await userService.reject(rejectingUser.id, rejectReason);
+      setRejectingUser(null);
+      setRejectReason('');
+      await fetchUsers();
+      alert('User rejected successfully.');
+    } catch (err) {
+      console.error('Error rejecting user:', err);
+      alert(err.response?.data?.error || 'Failed to reject user.');
+    }
+  };
 
   const addUser = () => {
     if (!newUser.name || !newUser.email) return;
     setUsers(prev => [...prev, { ...newUser, id: Date.now(), status: 'active', avatar: newUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(), lastLogin: 'Never', joinDate: new Date().toISOString().split('T')[0] }]);
     setShowAddModal(false);
-    setNewUser({ name: '', email: '', role: 'staff', region: '', department: '', phone: '' });
+    setNewUser({ name: '', email: '', role: 'field_officer', region: '', department: '', phone: '' });
   };
 
   return (
@@ -58,9 +145,14 @@ export default function UserManagement() {
       </div>
 
       <div className="tabs" style={{ marginBottom: 20 }}>
-        {['users', 'permissions', 'sessions'].map(t => (
-          <button key={t} className={`tab ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+        {[
+          { id: 'users', label: 'Users' },
+          { id: 'pending', label: `Pending Approvals (${pendingUsers.length})` },
+          { id: 'permissions', label: 'Permissions' },
+          { id: 'sessions', label: 'Sessions' }
+        ].map(t => (
+          <button key={t.id} className={`tab ${activeTab === t.id ? 'active' : ''}`} onClick={() => setActiveTab(t.id)}>
+            {t.label}
           </button>
         ))}
       </div>
@@ -115,7 +207,7 @@ export default function UserManagement() {
                       <td>
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setEditUser(u)} title="Edit"><Edit size={14} /></button>
-                          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => toggleStatus(u.id)} title={u.status === 'active' ? 'Deactivate' : 'Activate'}>
+                          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => toggleStatus(u.id, u.status)} title={u.status === 'active' ? 'Deactivate' : 'Activate'}>
                             {u.status === 'active' ? <UserX size={14} color="var(--danger)" /> : <UserCheck size={14} color="var(--success)" />}
                           </button>
                         </div>
@@ -129,6 +221,80 @@ export default function UserManagement() {
         </>
       )}
 
+      {activeTab === 'pending' && (
+        <div className="card">
+          <div className="card-header">
+            <h3 style={{ fontSize: '1rem' }}><Users size={16} style={{ marginRight: 8 }} />Pending Approvals</h3>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Self-registered user accounts awaiting administrator activation</p>
+          </div>
+          {pendingUsers.length === 0 ? (
+            <div className="card-body" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+              No pending registrations found.
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Region</th>
+                    <th>Department & Position</th>
+                    <th>Location</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingUsers.map(u => (
+                    <tr key={u.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div className="avatar" style={{ background: 'var(--warning)', width: 36, height: 36, fontSize: '0.78rem' }}>
+                            {u.avatar || u.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                          </div>
+                          <div>
+                            <p style={{ fontWeight: 600, fontSize: '0.875rem' }}>{u.name}</p>
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{u.email}</p>
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{u.phone || 'No phone'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span className={`badge ${ROLE_CONFIG[u.role]?.cls || 'badge-gray'}`}>{ROLE_CONFIG[u.role]?.label || u.role}</span></td>
+                      <td style={{ fontSize: '0.82rem' }}>{u.region}</td>
+                      <td style={{ fontSize: '0.82rem' }}>
+                        <div>{u.department}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{u.position}</div>
+                      </td>
+                      <td style={{ fontSize: '0.82rem' }}>{u.location || 'N/A'}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button 
+                            className="btn btn-ghost btn-icon btn-sm" 
+                            style={{ color: 'var(--success)' }} 
+                            onClick={() => handleApprove(u.id)} 
+                            title="Approve User"
+                          >
+                            <UserCheck size={16} />
+                          </button>
+                          <button 
+                            className="btn btn-ghost btn-icon btn-sm" 
+                            style={{ color: 'var(--danger)' }} 
+                            onClick={() => handleRejectPrompt(u)} 
+                            title="Reject User"
+                          >
+                            <UserX size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {activeTab === 'permissions' && (
         <div className="card">
           <div className="card-header">
@@ -140,17 +306,17 @@ export default function UserManagement() {
               <thead>
                 <tr>
                   <th>Feature / Permission</th>
-                  <th style={{ textAlign: 'center' }}>Admin</th>
-                  <th style={{ textAlign: 'center' }}>Manager</th>
-                  <th style={{ textAlign: 'center' }}>Staff</th>
-                  <th style={{ textAlign: 'center' }}>Coordinator</th>
+                  <th style={{ textAlign: 'center' }}>Administrator</th>
+                  <th style={{ textAlign: 'center' }}>National Manager</th>
+                  <th style={{ textAlign: 'center' }}>Field Officer</th>
+                  <th style={{ textAlign: 'center' }}>Regional Coordinator</th>
                 </tr>
               </thead>
               <tbody>
                 {PERMISSION_MATRIX.map(p => (
                   <tr key={p.feature}>
                     <td style={{ fontWeight: 500, fontSize: '0.875rem' }}>{p.feature}</td>
-                    {['admin', 'manager', 'staff', 'coordinator'].map(role => (
+                    {['administrator', 'national_manager', 'field_officer', 'regional_coordinator'].map(role => (
                       <td key={role} style={{ textAlign: 'center' }}>
                         <span style={{ fontSize: '1.2rem' }}>{p[role] ? '✅' : '❌'}</span>
                       </td>
@@ -238,6 +404,43 @@ export default function UserManagement() {
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={addUser} disabled={!newUser.name || !newUser.email}><Plus size={14} />Add User</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Reason Modal */}
+      {rejectingUser && (
+        <div className="modal-overlay" onClick={() => setRejectingUser(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Reject User Registration</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => setRejectingUser(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: 15 }}>
+                Please provide a reason for rejecting the registration request from <strong>{rejectingUser.name}</strong> ({rejectingUser.email}).
+              </p>
+              <div className="form-group">
+                <label className="form-label">Rejection Reason</label>
+                <textarea 
+                  className="form-control" 
+                  style={{ minHeight: 100, width: '100%', padding: '10px' }} 
+                  placeholder="e.g. Invalid department, unrecognized phone number, etc."
+                  value={rejectReason} 
+                  onChange={e => setRejectReason(e.target.value)} 
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setRejectingUser(null)}>Cancel</button>
+              <button 
+                className="btn btn-danger" 
+                onClick={handleReject} 
+                disabled={!rejectReason.trim()}
+              >
+                Reject Request
+              </button>
             </div>
           </div>
         </div>

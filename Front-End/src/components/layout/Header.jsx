@@ -26,7 +26,7 @@ export default function Header({ onMenuToggle, collapsed }) {
   const ROLE_LABELS = { admin: 'Administrator', manager: 'Regional Manager', staff: 'Staff Member', coordinator: 'Field Coordinator' };
 
   return (
-    <header className="header">
+    <header className={`header ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <div className="header-left">
         <button className="btn btn-ghost btn-icon mobile-menu-btn" onClick={onMenuToggle}>
           <Menu size={20} />

@@ -27,14 +27,14 @@ export const mockSupportRequests = [
 ];
 
 export const mockUsers = [
-  { id: 1, name: 'Emmanuel Habimana', email: 'admin@su.rw', role: 'admin', region: 'Kigali City', department: 'Administration', status: 'active', lastLogin: '2025-05-06 09:00', joinDate: '2023-01-15', phone: '+250 788 001 001', avatar: 'EH' },
-  { id: 2, name: 'Grace Uwimana', email: 'manager@su.rw', role: 'manager', region: 'Northern Province', department: 'Field Operations', status: 'active', lastLogin: '2025-05-06 08:30', joinDate: '2023-03-20', phone: '+250 788 002 002', avatar: 'GU' },
-  { id: 3, name: 'Patrick Nkurunziza', email: 'staff@su.rw', role: 'staff', region: 'Southern Province', department: 'Youth Ministry', status: 'active', lastLogin: '2025-05-05 16:45', joinDate: '2023-06-10', phone: '+250 788 003 003', avatar: 'PN' },
-  { id: 4, name: 'Alice Mukamana', email: 'coordinator@su.rw', role: 'coordinator', region: 'Eastern Province', department: 'Outreach', status: 'active', lastLogin: '2025-05-05 14:20', joinDate: '2023-09-01', phone: '+250 788 004 004', avatar: 'AM' },
-  { id: 5, name: 'Jean Habimana', email: 'jean@su.rw', role: 'coordinator', region: 'Southern Province', department: 'Outreach', status: 'active', lastLogin: '2025-05-04 11:00', joinDate: '2024-01-08', phone: '+250 788 005 005', avatar: 'JH' },
-  { id: 6, name: 'Marie Nyiramana', email: 'marie@su.rw', role: 'coordinator', region: 'Western Province', department: 'Youth Ministry', status: 'active', lastLogin: '2025-05-03 09:30', joinDate: '2024-02-14', phone: '+250 788 006 006', avatar: 'MN' },
-  { id: 7, name: 'David Niyonzima', email: 'david@su.rw', role: 'staff', region: 'Kigali City', department: 'Communications', status: 'inactive', lastLogin: '2025-04-20 15:00', joinDate: '2023-11-01', phone: '+250 788 007 007', avatar: 'DN' },
-  { id: 8, name: 'Solange Uwera', email: 'solange@su.rw', role: 'staff', region: 'Northern Province', department: 'Training & Development', status: 'active', lastLogin: '2025-05-05 10:15', joinDate: '2024-04-01', phone: '+250 788 008 008', avatar: 'SU' },
+  { id: 1, name: 'Emmanuel Habimana', email: 'admin@su.rw', role: 'administrator', region: 'Kigali City', department: 'Administration', status: 'active', lastLogin: '2025-05-06 09:00', joinDate: '2023-01-15', phone: '+250 788 001 001', avatar: 'EH' },
+  { id: 2, name: 'Grace Uwimana', email: 'manager@su.rw', role: 'national_manager', region: 'Northern Province', department: 'Field Operations', status: 'active', lastLogin: '2025-05-06 08:30', joinDate: '2023-03-20', phone: '+250 788 002 002', avatar: 'GU' },
+  { id: 3, name: 'Patrick Nkurunziza', email: 'staff@su.rw', role: 'field_officer', region: 'Southern Province', department: 'Youth Ministry', status: 'active', lastLogin: '2025-05-05 16:45', joinDate: '2023-06-10', phone: '+250 788 003 003', avatar: 'PN' },
+  { id: 4, name: 'Alice Mukamana', email: 'coordinator@su.rw', role: 'regional_coordinator', region: 'Eastern Province', department: 'Outreach', status: 'active', lastLogin: '2025-05-05 14:20', joinDate: '2023-09-01', phone: '+250 788 004 004', avatar: 'AM' },
+  { id: 5, name: 'Jean Habimana', email: 'jean@su.rw', role: 'regional_coordinator', region: 'Southern Province', department: 'Outreach', status: 'active', lastLogin: '2025-05-04 11:00', joinDate: '2024-01-08', phone: '+250 788 005 005', avatar: 'JH' },
+  { id: 6, name: 'Marie Nyiramana', email: 'marie@su.rw', role: 'regional_coordinator', region: 'Western Province', department: 'Youth Ministry', status: 'active', lastLogin: '2025-05-03 09:30', joinDate: '2024-02-14', phone: '+250 788 006 006', avatar: 'MN' },
+  { id: 7, name: 'David Niyonzima', email: 'david@su.rw', role: 'field_officer', region: 'Kigali City', department: 'Communications', status: 'inactive', lastLogin: '2025-04-20 15:00', joinDate: '2023-11-01', phone: '+250 788 007 007', avatar: 'DN' },
+  { id: 8, name: 'Solange Uwera', email: 'solange@su.rw', role: 'field_officer', region: 'Northern Province', department: 'Training & Development', status: 'active', lastLogin: '2025-05-05 10:15', joinDate: '2024-04-01', phone: '+250 788 008 008', avatar: 'SU' },
 ];
 
 export const mockPrayerRequests = [
