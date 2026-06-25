@@ -249,6 +249,10 @@ export const userService = {
     const res = await api.patch(`/users/${id}/status`, { status });
     return res.data;
   },
+  updateUser: async (id, userData) => {
+    const res = await api.put(`/users/${id}`, userData);
+    return res.data;
+  },
 };
 
 export const reportService = {

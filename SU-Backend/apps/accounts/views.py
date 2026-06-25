@@ -11,7 +11,7 @@ from core.totp import TOTPHelper
 from core.throttling import AuthRateThrottle
 from apps.accounts.serializers import (
     UserSerializer, RegisterSerializer, LoginSerializer,
-    PasswordUpdateSerializer, MFAVerifySerializer
+    PasswordUpdateSerializer, MFAVerifySerializer, AdminUserUpdateSerializer
 )
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -576,4 +576,25 @@ class SendMFACodeEmailView(APIView):
         )
         
         return Response({"success": True, "message": "Verification code sent to your email address."}, status=status.HTTP_200_OK)
+
+
+class AdminUserUpdateView(APIView):
+    permission_classes = [IsAdminOnly]
+
+    def put(self, request, id):
+        try:
+            user = User.objects.get(id=id)
+        except User.DoesNotExist:
+            return Response({"success": False, "error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AdminUserUpdateSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "message": "User updated successfully",
+                "data": UserSerializer(user).data
+            }, status=status.HTTP_200_OK)
+        return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 

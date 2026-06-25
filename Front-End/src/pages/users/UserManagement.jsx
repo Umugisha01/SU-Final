@@ -36,6 +36,7 @@ export default function UserManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'field_officer', region: '', department: '', phone: '' });
+  const [editForm, setEditForm] = useState({ name: '', email: '', role: 'field_officer', region: '', department: '', position: '', phone: '', location: '', status: 'active' });
 
   const [rejectingUser, setRejectingUser] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -63,6 +64,44 @@ export default function UserManagement() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (editUser) {
+      setEditForm({
+        name: editUser.name || '',
+        email: editUser.email || '',
+        role: editUser.role || 'field_officer',
+        region: editUser.region || '',
+        department: editUser.department || '',
+        position: editUser.position || '',
+        phone: editUser.phone || '',
+        location: editUser.location || '',
+        status: editUser.status || 'active'
+      });
+    }
+  }, [editUser]);
+
+  const handleUpdateUser = async () => {
+    if (!editUser) return;
+    try {
+      const res = await userService.updateUser(editUser.id, editForm);
+      if (res.success) {
+        setUsers(prev => prev.map(u => u.id === editUser.id ? { ...u, ...res.data, avatar: (res.data.name || u.name).split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() } : u));
+        setEditUser(null);
+        alert('User updated successfully!');
+      } else {
+        alert(res.error || 'Failed to update user.');
+      }
+    } catch (err) {
+      console.error('Error updating user:', err);
+      const errors = err.response?.data?.errors;
+      let errMsg = err.response?.data?.error || 'Failed to update user.';
+      if (errors) {
+        errMsg += '\n' + Object.entries(errors).map(([k, v]) => `${k}: ${v}`).join('\n');
+      }
+      alert(errMsg);
+    }
+  };
 
   const filtered = users.filter(u => u.status !== 'pending').filter(u => {
     if (search) {
@@ -440,6 +479,75 @@ export default function UserManagement() {
                 disabled={!rejectReason.trim()}
               >
                 Reject Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editUser && (
+        <div className="modal-overlay" onClick={() => setEditUser(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Edit User Details</h3>
+              <button className="btn btn-ghost btn-icon" onClick={() => setEditUser(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="grid grid-2">
+                <div className="form-group">
+                  <label className="form-label">Full Name <span>*</span></label>
+                  <input className="form-control" value={editForm.name} onChange={e => setEditForm(u => ({ ...u, name: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email <span>*</span></label>
+                  <input className="form-control" type="email" value={editForm.email} onChange={e => setEditForm(u => ({ ...u, email: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Phone</label>
+                  <input className="form-control" value={editForm.phone} onChange={e => setEditForm(u => ({ ...u, phone: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Location</label>
+                  <input className="form-control" value={editForm.location} onChange={e => setEditForm(u => ({ ...u, location: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Role</label>
+                  <select className="form-control form-select" value={editForm.role} onChange={e => setEditForm(u => ({ ...u, role: e.target.value }))}>
+                    {Object.entries(ROLE_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Region</label>
+                  <select className="form-control form-select" value={editForm.region} onChange={e => setEditForm(u => ({ ...u, region: e.target.value }))}>
+                    <option value="">Select...</option>
+                    {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Department</label>
+                  <select className="form-control form-select" value={editForm.department} onChange={e => setEditForm(u => ({ ...u, department: e.target.value }))}>
+                    <option value="">Select...</option>
+                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Position</label>
+                  <input className="form-control" value={editForm.position} onChange={e => setEditForm(u => ({ ...u, position: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Status</label>
+                  <select className="form-control form-select" value={editForm.status} onChange={e => setEditForm(u => ({ ...u, status: e.target.value }))}>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setEditUser(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleUpdateUser} disabled={!editForm.name || !editForm.email}>
+                Save Changes
               </button>
             </div>
           </div>

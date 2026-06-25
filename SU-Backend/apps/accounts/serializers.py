@@ -78,3 +78,21 @@ class PasswordUpdateSerializer(serializers.Serializer):
 
 class MFAVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6, min_length=6)
+
+
+class AdminUserUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for administrators to edit user profiles, role assignments, and region/department configurations.
+    """
+    class Meta:
+        model = User
+        fields = [
+            'name', 'email', 'role', 'region', 'department', 
+            'position', 'phone', 'location', 'status'
+        ]
+
+    def validate_name(self, value):
+        if len(value) < 2 or len(value) > 255:
+            raise serializers.ValidationError("Name must be between 2 and 255 characters.")
+        return value
+
