@@ -18,10 +18,11 @@ class UserManager(BaseUserManager):
         email = self.normalize_email(email)
         extra_fields.setdefault('username', email)
         extra_fields.setdefault('status', 'active')
+        extra_fields.setdefault('email_verified', True)
         
         # Superusers bypass regional registration defaults
         if extra_fields.get('is_superuser'):
-            extra_fields.setdefault('role', 'admin')
+            extra_fields.setdefault('role', 'administrator')
             
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -32,7 +33,7 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('role', 'admin')
+        extra_fields.setdefault('role', 'administrator')
         extra_fields.setdefault('region', 'Kigali City')
         extra_fields.setdefault('department', 'Administration')
         extra_fields.setdefault('position', 'Administrator')
@@ -50,12 +51,12 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     
     ROLE_CHOICES = (
-        ('admin', 'Admin'),
-        ('manager', 'Manager'),
-        ('staff', 'Staff'),
-        ('coordinator', 'Coordinator'),
+        ('administrator', 'Administrator'),
+        ('national_manager', 'National Manager'),
+        ('regional_coordinator', 'Regional Coordinator'),
+        ('field_officer', 'Field Officer'),
     )
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='coordinator')
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='regional_coordinator')
     region = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     position = models.CharField(max_length=100)
@@ -67,6 +68,15 @@ class User(AbstractUser):
         ('inactive', 'Inactive'),
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    
+    # Enhanced Auth Fields
+    location = models.CharField(max_length=255, blank=True, null=True)
+    failed_login_attempts = models.IntegerField(default=0)
+    locked_until = models.DateTimeField(blank=True, null=True)
+    email_verified = models.BooleanField(default=False)
+    verification_token = models.UUIDField(default=uuid.uuid4, null=True, blank=True)
+    last_activity = models.DateTimeField(blank=True, null=True)
+    session_id = models.CharField(max_length=255, blank=True, null=True)
     
     mfa_enabled = models.BooleanField(default=False)
     mfa_secret = models.CharField(max_length=255, blank=True, null=True)
@@ -116,7 +126,7 @@ class User(AbstractUser):
             self.notif_prefs = self.DEFAULT_NOTIF_PREFS
             
         # Admin MFA enforcement
-        if self.role == 'admin':
+        if self.role == 'administrator':
             # We default to true but the middleware checks if they have verified the token
             # If not configured, setup is required
             pass

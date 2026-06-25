@@ -20,7 +20,7 @@ class TestRegionalIsolation:
             email="kigali@su.org",
             password="Password123!",
             name="Kigali Staff",
-            role="staff",
+            role="field_officer",
             region="Kigali City",
             department="Youth",
             position="Officer"
@@ -29,7 +29,7 @@ class TestRegionalIsolation:
             email="west@su.org",
             password="Password123!",
             name="West Staff",
-            role="staff",
+            role="field_officer",
             region="Western Province",
             department="Youth",
             position="Officer"
@@ -38,7 +38,7 @@ class TestRegionalIsolation:
             email="admin@su.org",
             password="Password123!",
             name="Admin User",
-            role="admin",
+            role="administrator",
             region="Kigali City",
             department="Admin",
             position="Director"

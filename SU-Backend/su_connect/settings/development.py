@@ -33,8 +33,9 @@ CHANNEL_LAYERS = {
 # Celery setting for testing (runs tasks synchronously in-process)
 CELERY_TASK_ALWAYS_EAGER = True
 
-# For local development, send emails to console
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# For local development, default to console backend to prevent SMTP errors with fake domains.
+# Can be overridden to 'django.core.mail.backends.smtp.EmailBackend' in .env to test real SMTP sending.
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
 # --- DEVELOPMENT CORS: allow any localhost port (Vite, CRA, etc.) ---
 CORS_ALLOW_ALL_ORIGINS = False

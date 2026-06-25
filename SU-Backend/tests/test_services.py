@@ -2,8 +2,12 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from unittest.mock import patch, mock_open
+import os
+from django.conf import settings
 from apps.reports.models import Report
 from apps.support.models import SupportRequest
+from apps.documents.models import Document
 from services.report_service import ReportService
 from services.support_service import SupportService
 from services.document_service import DocumentService
@@ -18,14 +22,14 @@ class TestReportService:
             email="staff@su.org",
             password="Password123!",
             name="Staff User",
-            role="staff",
+            role="field_officer",
             region="Kigali City"
         )
         self.manager_user = User.objects.create_user(
             email="manager@su.org",
             password="Password123!",
             name="Manager User",
-            role="manager",
+            role="national_manager",
             region="Kigali City"
         )
         self.report = Report.objects.create(
@@ -69,7 +73,7 @@ class TestSupportService:
             email="staff2@su.org",
             password="Password123!",
             name="Staff 2",
-            role="staff",
+            role="field_officer",
             region="Kigali City"
         )
         
@@ -94,6 +98,7 @@ class TestSupportService:
         assert (req_crit.deadline - req_crit.created_at.date()).days == 1
 
 
+@pytest.mark.django_db
 class TestAIService:
     def test_pii_scrubbing(self):
         raw_text = "My name is Jean Bosco, and you can reach me at jean@gmail.com or +250 788 123 456."
@@ -108,3 +113,145 @@ class TestAIService:
         res = AIService.run_heuristics(title, desc)
         assert res['category'] == 'Bible Study'
         assert res['confidence'] == 60
+
+    def test_extract_text_from_document_text_file(self):
+        user = User.objects.create_user(
+            email="uploader@su.org",
+            password="Password123!",
+            name="Uploader User"
+        )
+        doc = Document.objects.create(
+            name="test_doc.txt",
+            type="TXT",
+            size=100,
+            storage_key="documents/test_doc.txt",
+            uploaded_by=user
+        )
+        
+        with patch("os.path.exists", return_value=True), \
+             patch("builtins.open", mock_open(read_data="This is a test document content.")):
+            text = AIService.extract_text_from_document(doc)
+            assert text == "This is a test document content."
+
+    def test_extract_text_from_document_file_not_found(self):
+        user = User.objects.create_user(
+            email="uploader_nf@su.org",
+            password="Password123!",
+            name="Uploader NF"
+        )
+        doc = Document.objects.create(
+            name="missing.txt",
+            type="TXT",
+            size=100,
+            storage_key="documents/missing.txt",
+            uploaded_by=user
+        )
+        with patch("os.path.exists", return_value=False):
+            text = AIService.extract_text_from_document(doc)
+            assert "File not found on disk" in text
+
+    @patch("requests.post")
+    def test_chat_assistant(self, mock_post):
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "message": {
+                "content": "This is a mocked response from local qwen2.5vl:3b"
+            }
+        }
+
+        user = User.objects.create_user(
+            email="chat_user@su.org",
+            password="Password123!",
+            name="Chat User",
+            role="field_officer",
+            region="Kigali City"
+        )
+
+        doc = Document.objects.create(
+            name="attached_doc.txt",
+            type="TXT",
+            size=100,
+            storage_key="documents/attached_doc.txt",
+            uploaded_by=user
+        )
+
+        with patch("os.path.exists", return_value=True), \
+             patch("builtins.open", mock_open(read_data="Extracted text from doc")):
+            reply = AIService.chat_assistant(
+                user=user,
+                user_message="Summarize this doc.",
+                document_ids=[doc.id]
+            )
+
+        assert reply == "This is a mocked response from local qwen2.5vl:3b"
+        assert mock_post.called
+        
+        # Verify the payload structure
+        args, kwargs = mock_post.call_args
+        payload = kwargs.get("json", {})
+        assert payload.get("model") == getattr(settings, "OLLAMA_TEXT_MODEL", "mistral:7b-instruct-q4_K_M")
+        messages = payload.get("messages", [])
+        assert len(messages) == 2
+        assert messages[0]["role"] == "system"
+        assert messages[1]["role"] == "user"
+        assert "attached_doc.txt" in messages[1]["content"]
+        assert "Extracted text from doc" in messages[1]["content"]
+
+    def test_text_normalization(self):
+        from services.ai_service import normalize_text
+        assert normalize_text("What is this? Test!!") == "what is this test"
+        assert normalize_text("  multiple   spaces  ") == "multiple spaces"
+
+    @patch("builtins.open", new_callable=mock_open, read_data="### Q1. What is system name?\nSystem name is SU Connect.\n### 2. Who is it for?\nSU Rwanda.\n---\n")
+    @patch("os.path.exists", return_value=True)
+    def test_load_reference_qa(self, mock_exists, mock_file):
+        from services.ai_service import load_reference_qa
+        qa = load_reference_qa()
+        assert "What is system name?" in qa
+        assert qa["What is system name?"] == "System name is SU Connect."
+        assert "Who is it for?" in qa
+        assert qa["Who is it for?"] == "SU Rwanda."
+
+    @patch("services.ai_service.get_reference_qa")
+    def test_find_matching_qa(self, mock_get_qa):
+        from services.ai_service import find_matching_qa
+        mock_get_qa.return_value = {
+            "What is the statement of the problem?": "Before development, operations suffered...",
+            "Who is this actor?": "The actor represents a user."
+        }
+        
+        # Test exact match
+        res = find_matching_qa("What is the statement of the problem?")
+        assert res == "Before development, operations suffered..."
+        
+        # Test case/punctuation variance
+        res = find_matching_qa("what is the statement of the problem")
+        assert res == "Before development, operations suffered..."
+        
+        # Test substring / extra words
+        res = find_matching_qa("Can you explain what is the statement of the problem in detail?")
+        assert res == "Before development, operations suffered..."
+        
+        # Test keyword overlap
+        res = find_matching_qa("problem statement description")
+        assert res == "Before development, operations suffered..."
+
+    @patch("services.ai_service.find_matching_qa")
+    def test_chat_assistant_qa_bypass(self, mock_find_match):
+        from services.ai_service import AIService
+        mock_find_match.return_value = "Detailed answer from reference sheet."
+        
+        user = User.objects.create_user(
+            email="test_bypass@su.org",
+            password="Password123!",
+            name="Bypass User",
+            role="field_officer",
+            region="Kigali City"
+        )
+        
+        reply = AIService.chat_assistant(
+            user=user,
+            user_message="What is the statement of the problem?"
+        )
+        assert reply == "Detailed answer from reference sheet."
+        mock_find_match.assert_called_with("What is the statement of the problem?")

@@ -22,6 +22,7 @@ class Notification(models.Model):
         ('prayer', 'Prayer Commitment'),
         ('deadline', 'Deadline Reminder'),
         ('system', 'System Alert'),
+        ('other', 'Other Notification'),
     )
 
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='notifications')
@@ -41,4 +42,32 @@ class Notification(models.Model):
         indexes = [
             models.Index(fields=['user', 'read']),
             models.Index(fields=['created_at']),
+        ]
+
+
+class SystemAlert(models.Model):
+    """
+    Dashboard alert model created by administrators.
+    """
+    PRIORITY_CHOICES = (
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('urgent', 'Urgent'),
+    )
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
+    is_announcement = models.BooleanField(default=False)
+    
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, related_name='created_alerts')
+    users = models.ManyToManyField('accounts.User', related_name='system_alerts', db_table='user_system_alerts')
+
+    class Meta:
+        db_table = 'system_alerts'
+        indexes = [
+            models.Index(fields=['expires_at']),
         ]

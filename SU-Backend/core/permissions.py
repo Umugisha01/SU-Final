@@ -5,23 +5,31 @@ class IsAdminOnly(permissions.BasePermission):
     Allows access only to users with the 'admin' role.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role == 'admin'
+        return request.user and request.user.is_authenticated and request.user.role == 'administrator'
 
 
 class IsManagerOrAdmin(permissions.BasePermission):
     """
-    Allows access to users with 'admin' or 'manager' roles.
+    Allows access to users with 'administrator' or 'national_manager' roles.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['admin', 'manager']
+        return request.user and request.user.is_authenticated and request.user.role in ['administrator', 'national_manager']
+
+
+class IsCoordinatorOrManagerOrAdmin(permissions.BasePermission):
+    """
+    Allows access to users with 'administrator', 'national_manager', or 'regional_coordinator' roles.
+    """
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.role in ['administrator', 'national_manager', 'regional_coordinator']
 
 
 class IsStaffOrCoordinator(permissions.BasePermission):
     """
-    Allows access to users with 'staff' or 'coordinator' roles.
+    Allows access to users with 'field_officer' or 'regional_coordinator' roles.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['staff', 'coordinator']
+        return request.user and request.user.is_authenticated and request.user.role in ['field_officer', 'regional_coordinator']
 
 
 class IsReportOwnerOrReadOnly(permissions.BasePermission):
@@ -48,8 +56,8 @@ class HasRegionalAccess(permissions.BasePermission):
         return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        # Admins and managers bypass regional isolation
-        if request.user.role in ['admin', 'manager']:
+        # Administrators and National Managers bypass regional isolation
+        if request.user.role in ['administrator', 'national_manager']:
             return True
         
         # Check if the object has a region field
@@ -65,11 +73,14 @@ class HasRegionalAccess(permissions.BasePermission):
 
 class CanApproveReport(permissions.BasePermission):
     """
-    Allows access to approve/return report if the user is a manager or admin,
+    Allows access to approve/return report if the user is an administrator, national_manager, or regional_coordinator (restricted to their region),
     AND is not the owner of the report (segregation of duties).
     """
     def has_object_permission(self, request, view, obj):
-        if request.user.role not in ['admin', 'manager']:
+        if request.user.role not in ['administrator', 'national_manager', 'regional_coordinator']:
+            return False
+        # Regional coordinator can only approve/return reports in their own region
+        if request.user.role == 'regional_coordinator' and request.user.region != obj.region:
             return False
         # Cannot approve/return own report
         return obj.submitted_by != request.user
@@ -80,4 +91,4 @@ class CanViewAllRegions(permissions.BasePermission):
     Allows access to global datasets across all regions.
     """
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role in ['admin', 'manager']
+        return request.user and request.user.is_authenticated and request.user.role in ['administrator', 'national_manager']

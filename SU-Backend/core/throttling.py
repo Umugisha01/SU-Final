@@ -1,12 +1,15 @@
 from rest_framework.throttling import SimpleRateThrottle
+from django.conf import settings
 
 class AuthRateThrottle(SimpleRateThrottle):
     """
-    Throttle for authentication endpoints: 5 requests per 15 minutes per IP.
+    Throttle for authentication endpoints: bypassed in development.
     """
     scope = 'auth'
 
     def get_cache_key(self, request, view):
+        if settings.DEBUG:
+            return None
         return self.get_ident(request)
 
     def parse_rate(self, rate):

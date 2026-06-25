@@ -1,6 +1,9 @@
 import threading
 from django.db import models
 from django.utils.deprecation import MiddlewareMixin
+from django.utils import timezone
+from datetime import timedelta
+from django.http import JsonResponse
 from services.audit_service import AuditService
 
 # Thread-local storage for request user
@@ -39,8 +42,8 @@ class RegionalQuerySet(models.QuerySet):
             user = get_current_user()
         
         if user and user.is_authenticated:
-            # Regional isolation applies only to staff and coordinators
-            if user.role in ['staff', 'coordinator']:
+            # Regional isolation applies only to field officers and regional coordinators
+            if user.role in ['field_officer', 'regional_coordinator']:
                 # If model is User, filter by region
                 if self.model.__name__ == 'User':
                     return self.filter(region=user.region)
@@ -53,6 +56,10 @@ class RegionalQuerySet(models.QuerySet):
                         # Allow access if region matches OR user is a recipient OR user is the submitter
                         from django.db.models import Q
                         return self.filter(Q(region=user.region) | Q(recipients=user) | Q(submitted_by=user)).distinct()
+                    if self.model.__name__ == 'SupportRequest':
+                        # Allow access if region matches OR user is a recipient OR user is the requester OR user is assigned_to
+                        from django.db.models import Q
+                        return self.filter(Q(region=user.region) | Q(recipients=user) | Q(requester=user) | Q(assigned_to=user)).distinct()
                     return self.filter(region=user.region)
         return self
 
@@ -98,3 +105,35 @@ class AuditLoggingMiddleware(MiddlewareMixin):
                         # Ensure middleware never crashes the request
                         print(f"Error writing audit log in middleware: {e}")
         return response
+
+
+class SessionTimeoutMiddleware(MiddlewareMixin):
+    """
+    Checks the user's last activity. If more than 15 minutes have passed,
+    forces logout. Otherwise updates last activity.
+    """
+    def process_request(self, request):
+        user = getattr(request, 'user', None)
+        if user and user.is_authenticated:
+            now = timezone.now()
+            
+            # Allow public heartbeat and auth routes to bypass timeout checks
+            if any(path in request.path for path in ['/auth/login', '/auth/register', '/auth/refresh', '/auth/verify-email']):
+                return None
+
+            if user.last_activity:
+                elapsed = now - user.last_activity
+                if elapsed > timedelta(minutes=15):
+                    # Force session termination
+                    user.session_id = None
+                    user.save(update_fields=['session_id'])
+                    return JsonResponse({
+                        "success": False,
+                        "error": "Session expired due to inactivity. Please log in again."
+                    }, status=401)
+            
+            # Update last activity at most once every 60 seconds to optimize DB writes
+            if not user.last_activity or (now - user.last_activity) > timedelta(seconds=60):
+                user.last_activity = now
+                user.save(update_fields=['last_activity'])
+        return None

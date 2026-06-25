@@ -57,7 +57,12 @@ class Report(models.Model):
     keywords = models.JSONField(blank=True, default=list)
     ai_summary = models.TextField(blank=True, null=True)
     overridden = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
     
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

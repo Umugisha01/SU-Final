@@ -10,7 +10,7 @@ class DocumentManager(models.Manager):
         if not user or not user.is_authenticated:
             return super().get_queryset().none()
             
-        if user.role in ['admin', 'manager']:
+        if user.role in ['administrator', 'national_manager']:
             return super().get_queryset()
             
         return super().get_queryset().filter(
@@ -32,6 +32,10 @@ class Document(models.Model):
     uploaded_by = models.ForeignKey('accounts.User', on_delete=models.RESTRICT, related_name='uploaded_documents')
     downloads = models.IntegerField(default=0)
     shared = models.BooleanField(default=False)
+    
+    category = models.CharField(max_length=100, default='Others')
+    description = models.TextField(blank=True, default='')
+    tags = models.CharField(max_length=255, blank=True, default='')
     
     # Many-to-many relationship linking uploaded files to activity reports
     reports = models.ManyToManyField('reports.Report', db_table='report_attachments', related_name='documents')

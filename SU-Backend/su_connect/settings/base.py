@@ -61,6 +61,7 @@ MIDDLEWARE = [
     'core.idempotency.IdempotencyMiddleware',
     'core.middleware.AuditLoggingMiddleware',
     'core.middleware.RegionalIsolationMiddleware',
+    'core.middleware.SessionTimeoutMiddleware',
 ]
 
 ROOT_URLCONF = 'su_connect.urls'
@@ -210,3 +211,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Ollama local settings for Dual AI Engine
+OLLAMA_URL = env('OLLAMA_URL', default='http://127.0.0.1:11434')
+OLLAMA_TEXT_MODEL = env('OLLAMA_TEXT_MODEL', default='mistral:7b-instruct-q4_K_M')
+OLLAMA_VISION_MODEL = env('OLLAMA_VISION_MODEL', default='qwen2.5vl:3b')
+OLLAMA_MODEL = OLLAMA_VISION_MODEL # Legacy alias compatibility

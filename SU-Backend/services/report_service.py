@@ -8,8 +8,10 @@ class ReportService:
     """
     @staticmethod
     def can_user_approve(report, user):
-        # Must be manager or admin, and cannot approve their own report
-        if user.role not in ['admin', 'manager']:
+        # Must be administrator, national_manager, or regional_coordinator (restricted to their region)
+        if user.role not in ['administrator', 'national_manager', 'regional_coordinator']:
+            return False
+        if user.role == 'regional_coordinator' and user.region != report.region:
             return False
         return report.submitted_by_id != user.id
 
@@ -17,25 +19,27 @@ class ReportService:
     def submit_report(report, user):
         if report.submitted_by_id != user.id:
             raise PermissionDenied("You can only submit your own reports.")
-        if report.status not in ['draft', 'returned']:
-            raise ValidationError("Only draft or returned reports can be submitted.")
+        if report.status not in ['draft', 'returned', 'submitted']:
+            raise ValidationError("Only draft, submitted, or returned reports can be submitted.")
         
+        from django.utils import timezone
         report.status = 'submitted'
+        report.submitted_at = timezone.now()
         report.save()
         
         # Queue the AI classification analysis asynchronously in Celery
         from su_connect.tasks import analyze_report_task
         analyze_report_task.delay(report.id)
         
-        # Notify managers of the region, all admins, and specific recipients
+        # Notify managers of the region, all admins, regional coordinators, and specific recipients
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        managers_admins = User.objects.filter(role__in=['admin', 'manager'])
+        managers_admins = User.objects.filter(role__in=['administrator', 'national_manager', 'regional_coordinator'])
         
         users_to_notify = set()
         for recipient in managers_admins:
-            # Admins see everything; managers only see their own region's reports
-            if recipient.role == 'admin' or recipient.region == report.region:
+            # Admins and National Managers see everything; regional coordinators only see their own region's reports
+            if recipient.role in ['administrator', 'national_manager'] or recipient.region == report.region:
                 users_to_notify.add(recipient)
                 
         # Also include explicitly selected recipients
@@ -64,7 +68,9 @@ class ReportService:
         if report.status != 'submitted':
             raise ValidationError("Only submitted reports can be approved.")
         
+        from django.utils import timezone
         report.status = 'approved'
+        report.approved_at = timezone.now()
         report.save()
         
         # Notify the submitter
@@ -88,7 +94,9 @@ class ReportService:
         if report.status != 'submitted':
             raise ValidationError("Only submitted reports can be returned.")
         
+        from django.utils import timezone
         report.status = 'returned'
+        report.returned_at = timezone.now()
         report.save()
         
         # Notify the submitter

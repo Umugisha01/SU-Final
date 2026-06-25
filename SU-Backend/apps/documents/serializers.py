@@ -9,7 +9,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ['id', 'name', 'type', 'size', 'uploaded_by', 'downloads', 'shared', 'url', 'created_at']
+        fields = ['id', 'name', 'type', 'size', 'uploaded_by', 'downloads', 'shared', 'url', 'category', 'description', 'tags', 'created_at']
         read_only_fields = ['id', 'type', 'size', 'uploaded_by', 'downloads', 'url', 'created_at']
 
     def get_url(self, obj):

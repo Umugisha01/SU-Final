@@ -24,11 +24,12 @@ class ReportSerializer(serializers.ModelSerializer):
             'id', 'title', 'type', 'region', 'department', 'date', 'duration', 'location',
             'status', 'submitted_by', 'participants', 'demographics', 'description', 'outcomes',
             'challenges', 'prayer_requests', 'ai_category', 'confidence', 'keywords', 'ai_summary',
-            'overridden', 'attachmentIds', 'attachments', 'recipientIds', 'recipients', 'created_at', 'updated_at'
+            'overridden', 'attachmentIds', 'attachments', 'recipientIds', 'recipients', 
+            'submitted_at', 'approved_at', 'returned_at', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'status', 'submitted_by', 'ai_category', 'confidence', 'keywords',
-            'ai_summary', 'overridden', 'recipients', 'created_at', 'updated_at'
+            'ai_summary', 'overridden', 'recipients', 'submitted_at', 'approved_at', 'returned_at', 'created_at', 'updated_at'
         ]
 
     def validate_title(self, value):
@@ -44,10 +45,7 @@ class ReportSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         date = attrs.get('date')
         if date and date > timezone.now().date():
-            # Determine current status context
-            current_status = self.instance.status if self.instance else 'draft'
-            if current_status != 'draft':
-                raise serializers.ValidationError({"date": "Activity date cannot be in the future unless report is a draft."})
+            raise serializers.ValidationError({"date": "Activity date cannot be in the future."})
         return attrs
 
     def get_attachments(self, obj):
@@ -81,9 +79,9 @@ class ReportSerializer(serializers.ModelSerializer):
         return report
 
     def update(self, instance, validated_data):
-        # Non-draft and non-returned reports cannot be updated via general PUT/PATCH
-        if instance.status not in ['draft', 'returned']:
-            raise serializers.ValidationError("Only reports in 'draft' or 'returned' status can be modified.")
+        # Non-draft, non-submitted, and non-returned reports cannot be updated via general PUT/PATCH
+        if instance.status not in ['draft', 'returned', 'submitted']:
+            raise serializers.ValidationError("Only reports in 'draft', 'submitted', or 'returned' status can be modified.")
             
         attachment_ids = validated_data.pop('attachmentIds', None)
         recipient_ids = validated_data.pop('recipientIds', None)
