@@ -377,6 +377,9 @@ export const reportService = {
                 onError(new Error(parsed.error));
                 return;
               }
+              if (parsed.citations) {
+                onChunk('', parsed.citations);
+              }
               if (parsed.content) {
                 onChunk(parsed.content);
               }

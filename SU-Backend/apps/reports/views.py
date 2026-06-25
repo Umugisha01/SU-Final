@@ -266,8 +266,8 @@ class AIChatView(APIView):
             response['X-Accel-Buffering'] = 'no'
             return response
         else:
-            reply = AIService.chat_assistant(request.user, message, document_ids, report_ids, **kwargs)
-            return Response({"success": True, "reply": reply}, status=status.HTTP_200_OK)
+            reply, citations = AIService.chat_assistant(request.user, message, document_ids, report_ids, **kwargs)
+            return Response({"success": True, "reply": reply, "citations": citations}, status=status.HTTP_200_OK)
 
 
 class OllamaHealthView(APIView):

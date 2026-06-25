@@ -545,11 +545,25 @@ class AdminDashboardView(APIView):
                 "time": format_relative_time(al.created_at),
                 "severity": al.severity
             })
+
+        # Compile regional staffing logic (active field officers per region)
+        regions = ['Kigali City', 'Northern Province', 'Eastern Province', 'Southern Province', 'Western Province']
+        field_officers_per_region = []
+        total_active_fos = User.objects.filter(role='field_officer', status='active').count()
+        for reg in regions:
+            count = User.objects.filter(role='field_officer', status='active', region=reg).count()
+            percentage = int((count / total_active_fos) * 100) if total_active_fos > 0 else 0
+            field_officers_per_region.append({
+                "region": reg,
+                "count": count,
+                "percentage": percentage
+            })
             
         return Response({
             "success": True,
             "metrics": {
                 "active_users": active_users_count,
+                "total_users": User.objects.count(),
                 "users_trend": "+2 this month",
                 "pending_approvals": pending_approvals_count,
                 "reports_submitted": storage_percentage, # Storage Used %
@@ -560,6 +574,7 @@ class AdminDashboardView(APIView):
             "pending_users": pending_list,
             "system_activity": login_chart_data,
             "mfa_compliance": mfa_compliance,
+            "field_officers_per_region": field_officers_per_region,
             "recent_audits": recent_audits,
             "uptime": "14 days, 6 hours"
         })

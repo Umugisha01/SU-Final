@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Send, X, Sparkles, Bot, Paperclip, FileText, Download } from 'lucide-react';
 import { reportService, documentService } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -6,6 +7,7 @@ import './SUConnectAI.css';
 
 export default function SUConnectAI() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([
@@ -113,9 +115,14 @@ How can I help you today?`
         documentIds,
         [],
         selectedModel,
-        (chunk) => {
-          fullText += chunk;
-          setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, text: fullText } : m));
+        (chunk, citations) => {
+          if (citations) {
+            setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, citations } : m));
+          }
+          if (chunk) {
+            fullText += chunk;
+            setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, text: fullText } : m));
+          }
         },
         (error) => {
           let errMsg = error.message || 'Unknown error';
@@ -326,6 +333,34 @@ How can I help you today?`
             {messages.map((m) => (
               <div key={m.id} className={`su-ai-message ${m.sender}`}>
                 {renderMessageText(m.text)}
+                {m.sender === 'ai' && m.citations && m.citations.length > 0 && (
+                  <div className="su-ai-citations">
+                    <div className="su-ai-citations-title">
+                      <FileText size={10} /> Cited Reports
+                    </div>
+                    {m.citations.map((c) => (
+                      <button
+                        key={c.id}
+                        className="su-ai-citation-item"
+                        onClick={() => {
+                          setOpen(false);
+                          navigate(`/reports/${c.id}`);
+                        }}
+                        type="button"
+                      >
+                        <div className="su-ai-citation-info">
+                          <span className="su-ai-citation-title-text">{c.title}</span>
+                          <span className="su-ai-citation-meta">
+                            <span>{c.date}</span>
+                            <span>•</span>
+                            <span>{c.region}</span>
+                          </span>
+                        </div>
+                        <span className="su-ai-citation-badge">{c.type}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {m.document && (
                   <div style={{ marginTop: 8, padding: '8px 10px', background: m.sender === 'user' ? 'rgba(255,255,255,0.15)' : 'var(--bg-input)', borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 6, border: m.sender === 'user' ? '1px solid rgba(255,255,255,0.3)' : '1px solid var(--border-light)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}>

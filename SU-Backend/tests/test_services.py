@@ -177,13 +177,14 @@ class TestAIService:
 
         with patch("os.path.exists", return_value=True), \
              patch("builtins.open", mock_open(read_data="Extracted text from doc")):
-            reply = AIService.chat_assistant(
+            reply, citations = AIService.chat_assistant(
                 user=user,
                 user_message="Summarize this doc.",
                 document_ids=[doc.id]
             )
 
         assert reply == "This is a mocked response from local qwen2.5vl:3b"
+        assert citations == []
         assert mock_post.called
         
         # Verify the payload structure
@@ -249,9 +250,10 @@ class TestAIService:
             region="Kigali City"
         )
         
-        reply = AIService.chat_assistant(
+        reply, citations = AIService.chat_assistant(
             user=user,
             user_message="What is the statement of the problem?"
         )
         assert reply == "Detailed answer from reference sheet."
+        assert citations == []
         mock_find_match.assert_called_with("What is the statement of the problem?")

@@ -115,7 +115,7 @@ export default function AdminDashboard() {
     );
   }
 
-  const { metrics, pending_users, system_activity, mfa_compliance, recent_audits, uptime } = data;
+  const { metrics, pending_users, system_activity, mfa_compliance, field_officers_per_region, recent_audits, uptime } = data;
 
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -123,11 +123,11 @@ export default function AdminDashboard() {
       {/* Admin metrics grid */}
       <div className="grid grid-4">
         <MetricCard 
-          value={metrics.active_users}
-          label="ACTIVE USERS"
+          value={metrics.total_users}
+          label="TOTAL REGISTERED USERS"
           icon={Users}
           color="green"
-          trend={metrics.users_trend}
+          trend={`${metrics.active_users} active`}
           trendLabel="Staff & coordinators"
         />
 
@@ -160,45 +160,17 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* System activity charts & System health widgets */}
-      <div className="grid grid-2" style={{ gridTemplateColumns: '1.2fr 0.8fr' }}>
-        {/* Recharts System Activity log */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Activity size={18} color="var(--primary)" />
-              <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>System Usage Trends (7 Days)</h3>
-            </div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Logins, reports, and API workload</span>
-          </div>
-          <div className="card-body" style={{ flex: 1, display: 'flex', alignItems: 'center', paddingTop: '16px' }}>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={system_activity} margin={{ left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8 }} />
-                <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="logins" fill="var(--primary)" radius={[2, 2, 0, 0]} name="Logins" />
-                <Bar dataKey="reports" fill="var(--info)" radius={[2, 2, 0, 0]} name="Reports Submitted" />
-                <Bar dataKey="apiCalls" fill="var(--purple)" radius={[2, 2, 0, 0]} name="API requests (x10)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Infrastructures System Health gauges */}
-        <div>
-          <SystemHealth 
-            health={healthData} 
-            onRefresh={refreshHealthData} 
-            loading={healthLoading} 
-          />
-        </div>
+      {/* Infrastructures System Health gauges */}
+      <div>
+        <SystemHealth 
+          health={healthData} 
+          onRefresh={refreshHealthData} 
+          loading={healthLoading} 
+        />
       </div>
 
-      {/* Pending approvals and MFA Compliance */}
-      <div className="grid grid-3" style={{ gridTemplateColumns: '1.3fr 0.7fr' }}>
+      {/* Pending approvals, Regional Staffing and MFA Compliance */}
+      <div className="grid grid-3" style={{ gridTemplateColumns: '1.2fr 0.9fr 0.9fr' }}>
         
         {/* Pending approvals */}
         <div className="card">
@@ -270,6 +242,28 @@ export default function AdminDashboard() {
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>No registrations are currently awaiting approval.</p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Active Field Officers per Region */}
+        <div className="card">
+          <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>📍 FIELD OFFICERS BY REGION</h3>
+          </div>
+          <div className="card-body" style={{ paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {field_officers_per_region && field_officers_per_region.map((reg, idx) => (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem' }}>
+                  <span style={{ fontWeight: 600 }}>{reg.region}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--primary)' }}>
+                    {reg.count} FOs ({reg.percentage}%)
+                  </span>
+                </div>
+                <div style={{ height: '6px', background: 'var(--border-light)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: `${reg.percentage}%`, height: '100%', background: 'var(--primary)', borderRadius: '3px' }} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

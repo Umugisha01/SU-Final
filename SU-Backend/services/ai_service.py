@@ -660,6 +660,7 @@ class AIService:
         from django.db.models import Q
         
         ollama_url = getattr(settings, 'OLLAMA_URL', 'http://127.0.0.1:11434')
+        citations = []
         
         # Check for direct match in reference Q&As
         if not document_ids and not report_ids:
@@ -667,9 +668,10 @@ class AIService:
             if matched_qa:
                 if stream:
                     def qa_stream_generator():
+                        yield json.dumps({"citations": []}) + "\n"
                         yield json.dumps({"content": matched_qa}) + "\n"
                     return qa_stream_generator()
-                return matched_qa
+                return matched_qa, []
 
         # 1. Load attached documents / images
         explicit_docs_content = []
@@ -706,10 +708,10 @@ class AIService:
                     explicit_docs_content.append(f"--- ATTACHED FILE: {doc.name} ---\n{doc_text}\n")
                     
         # Determine the model dynamically based on image presence
-        if model_override:
-            ollama_model = model_override
-        elif images_list:
+        if images_list:
             ollama_model = getattr(settings, 'OLLAMA_VISION_MODEL', 'qwen2.5vl:3b')
+        elif model_override:
+            ollama_model = model_override
         else:
             ollama_model = getattr(settings, 'OLLAMA_TEXT_MODEL', 'mistral:7b-instruct-q4_K_M')
             
@@ -729,6 +731,8 @@ class AIService:
             if stream:
                 def vision_stream_generator():
                     try:
+                        # Yield empty citations first
+                        yield json.dumps({"citations": []}) + "\n"
                         payload = {
                             "model": ollama_model,
                             "messages": [
@@ -787,19 +791,19 @@ class AIService:
                     timeout=600
                 )
                 if response.status_code == 200:
-                    return response.json().get('message', {}).get('content', '').strip()
+                    return response.json().get('message', {}).get('content', '').strip(), []
                 else:
-                    return f"AI error: Ollama returned status {response.status_code}. Please try again."
+                    return f"AI error: Ollama returned status {response.status_code}. Please try again.", []
             except requests.exceptions.Timeout:
                 return (
                     "⏱ The AI took too long to process the image. "
                     "This usually means the model is still loading into memory. "
                     "Please wait 30 seconds and try again."
-                )
+                ), []
             except requests.exceptions.ConnectionError:
-                return "⚠ Could not connect to Ollama. Please open a terminal and run: ollama serve"
+                return "⚠ Could not connect to Ollama. Please open a terminal and run: ollama serve", []
             except requests.exceptions.RequestException as e:
-                return f"⚠ Image analysis failed: {e}"
+                return f"⚠ Image analysis failed: {e}", []
                 
         # 2b. Text/Document path: compile RAG context and user database info
         is_greeting = user_message.lower().strip('!?., ') in {
@@ -862,6 +866,17 @@ class AIService:
                 
                 if not selected_reports:
                     selected_reports = list(reports.order_by('-date')[:2])
+                    
+            for r in selected_reports:
+                citations.append({
+                    "id": r.id,
+                    "title": r.title,
+                    "date": str(r.date),
+                    "region": r.region,
+                    "type": r.type,
+                    "location": r.location or "N/A",
+                    "participants": r.participants
+                })
                     
             context_lines = []
             for r in selected_reports:
@@ -1012,6 +1027,7 @@ class AIService:
         if stream:
             def text_stream_generator():
                 try:
+                    yield json.dumps({"citations": citations}) + "\n"
                     num_ctx = 4096 if (report_ids or document_ids) else 3072
                     payload = {
                         "model": ollama_model,
@@ -1072,18 +1088,18 @@ class AIService:
                 timeout=300
             )
             if response.status_code == 200:
-                return response.json().get('message', {}).get('content', '').strip()
+                return response.json().get('message', {}).get('content', '').strip(), citations
             else:
-                return f"Chat Assistant: Ollama returned status {response.status_code}."
+                return f"Chat Assistant: Ollama returned status {response.status_code}.", citations
         except requests.exceptions.Timeout:
             return (
                 "⏱ The AI is still loading. Please wait 30 seconds and try again. "
                 "The model needs time to load into memory on first use."
-            )
+            ), citations
         except requests.exceptions.ConnectionError:
-            return "⚠ Could not connect to Ollama. Please run: ollama serve"
+            return "⚠ Could not connect to Ollama. Please run: ollama serve", citations
         except requests.exceptions.RequestException as e:
-            return f"⚠ AI assistant error: {e}"
+            return f"⚠ AI assistant error: {e}", citations
 
     @staticmethod
     def generate_regional_insights(region=None):

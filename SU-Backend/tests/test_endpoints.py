@@ -90,7 +90,7 @@ class TestAIEndpoints:
 
     @patch("services.ai_service.AIService.chat_assistant")
     def test_ai_chat_endpoint(self, mock_chat):
-        mock_chat.return_value = "Hello from mocked AI assistant!"
+        mock_chat.return_value = ("Hello from mocked AI assistant!", [])
         
         url = reverse('report_ai_chat')
         data = {
@@ -101,4 +101,5 @@ class TestAIEndpoints:
         assert res.status_code == 200
         assert res.data["success"] is True
         assert res.data["reply"] == "Hello from mocked AI assistant!"
+        assert res.data["citations"] == []
         mock_chat.assert_called_once_with(self.user, "Hello AI", [], [])

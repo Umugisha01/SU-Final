@@ -108,6 +108,8 @@ class TestDashboardEndpoints:
         assert res.status_code == 200
         assert res.data["success"] is True
         assert "metrics" in res.data
+        assert "total_users" in res.data["metrics"]
+        assert "field_officers_per_region" in res.data
         assert "pending_users" in res.data
         assert "system_activity" in res.data
         
