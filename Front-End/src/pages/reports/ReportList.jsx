@@ -9,8 +9,12 @@ import toast from 'react-hot-toast';
 const STATUS_CONFIG = {
   approved: { label: 'Approved', cls: 'badge-success', icon: CheckCircle },
   submitted: { label: 'Submitted', cls: 'badge-info', icon: Clock },
+  submitted_to_coordinator: { label: 'Submitted to Coordinator', cls: 'badge-info', icon: Clock },
+  submitted_to_manager: { label: 'Submitted to Manager', cls: 'badge-info', icon: Clock },
   draft: { label: 'Draft', cls: 'badge-gray', icon: Edit },
   returned: { label: 'Returned', cls: 'badge-danger', icon: RotateCcw },
+  returned_by_coordinator: { label: 'Returned by Coordinator', cls: 'badge-danger', icon: RotateCcw },
+  returned_by_manager: { label: 'Returned by Manager', cls: 'badge-danger', icon: RotateCcw },
 };
 
 export default function ReportList() {
@@ -143,18 +147,31 @@ export default function ReportList() {
             line-height: 1.6;
           }
           .header {
-            text-align: center;
+            display: flex;
+            align-items: center;
             border-bottom: 2px solid #2e7d32;
             padding-bottom: 20px;
             margin-bottom: 30px;
           }
-          .logo {
+          .logo-container {
+            margin-right: 16px;
+            display: flex;
+            align-items: center;
+          }
+          .logo-img {
+            height: 60px;
+            filter: invert(34%) sepia(87%) saturate(1518%) hue-rotate(94deg) brightness(95%) contrast(85%);
+          }
+          .title-area {
+            text-align: left;
+          }
+          .org-title {
             font-size: 1.5rem;
             font-weight: 800;
             color: #2e7d32;
-            margin-bottom: 4px;
+            margin: 0;
           }
-          .subtitle {
+          .doc-subtitle {
             font-size: 0.9rem;
             color: #6b7280;
             margin-top: 4px;
@@ -236,9 +253,14 @@ export default function ReportList() {
       </head>
       <body>
         <div class="header">
-          <div class="logo">Scripture Union Rwanda</div>
-          <h2>Activity Reports Directory</h2>
-          <div class="subtitle">Exported on ${new Date().toLocaleDateString('en-RW')}</div>
+          <div class="logo-container">
+            <img class="logo-img" src="/SU-Logo.png" alt="SU Logo" />
+          </div>
+          <div class="title-area">
+            <h1 class="org-title">Scripture Union Rwanda</h1>
+            <h2>Activity Reports Directory</h2>
+            <div class="doc-subtitle">Exported on ${new Date().toLocaleDateString('en-RW')}</div>
+          </div>
         </div>
         
         <div class="metadata">
@@ -294,9 +316,126 @@ export default function ReportList() {
       printWindow.focus();
       printWindow.print();
     };
-    printWindow.onafterprint = () => {
-      printWindow.close();
-    };
+  };
+
+  const handleExportWord = () => {
+    if (!filtered || filtered.length === 0) {
+      toast.error("No reports data available to export");
+      return;
+    }
+    const totalParticipants = filtered.reduce((sum, r) => sum + (r.participants || 0), 0);
+    const dateStr = new Date().toLocaleDateString('en-RW');
+    
+    const content = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+            xmlns:w='urn:schemas-microsoft-com:office:word' 
+            xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <title>SU Connect Activity Reports Directory</title>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            color: #1a2e1a;
+            margin: 40px;
+          }
+          .header {
+            border-bottom: 2px solid #2e7d32;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+          }
+          .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2e7d32;
+          }
+          .subtitle {
+            font-size: 0.9rem;
+            color: #6b7280;
+          }
+          .metadata {
+            background: #f4f6f4;
+            padding: 12px;
+            border: 1px solid #e2e8e2;
+            margin-bottom: 20px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+          }
+          th, td {
+            border: 1px solid #e2e8e2;
+            padding: 8px 10px;
+            text-align: left;
+          }
+          th {
+            background: #f4f6f4;
+            font-weight: bold;
+            color: #2e7d32;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">Scripture Union Rwanda</div>
+          <h2>Activity Reports Directory</h2>
+          <div class="subtitle">Exported on ${dateStr}</div>
+        </div>
+        
+        <div class="metadata">
+          <p><strong>Filtered List:</strong> ${filtered.length} reports matches</p>
+          <p><strong>Total Reach:</strong> ${totalParticipants.toLocaleString()} cumulative participants</p>
+        </div>
+
+        <h3>Reports Table</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Report Title</th>
+              <th>Type</th>
+              <th>Region</th>
+              <th>Date</th>
+              <th>Participants</th>
+              <th>Submitted By</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtered.map(r => `
+              <tr>
+                <td><strong>${r.title}</strong></td>
+                <td>${r.type}</td>
+                <td>${r.region}</td>
+                <td>${r.date}</td>
+                <td><strong>${r.participants}</strong></td>
+                <td>${r.submittedBy}</td>
+                <td>${r.status}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob(["\uFEFF", content], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `su_connect_reports_${new Date().toISOString().slice(0,10)}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Word document exported successfully!");
   };
 
   const StatusBadge = ({ status }) => {
@@ -363,6 +502,9 @@ export default function ReportList() {
             )}
 
             <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}><Download size={14} /> Export PDF</button>
+            {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
+              <button className="btn btn-secondary btn-sm" onClick={handleExportWord}><Download size={14} /> Export Word</button>
+            )}
             <button className="btn btn-secondary btn-sm" onClick={handleExportExcel}><Download size={14} /> Export Excel</button>
           </div>
         </div>

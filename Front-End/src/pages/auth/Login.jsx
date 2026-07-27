@@ -18,12 +18,7 @@ export default function Login() {
   const [resendStatus, setResendStatus] = useState('');
   const [emailStatus, setEmailStatus] = useState('');
 
-  const DEMO_CREDS = [
-    { role: 'Admin', email: 'admin@su.rw', pw: '1234', color: '#dc2626' },
-    { role: 'Manager', email: 'pierre@su.rw', pw: '1234', color: '#1565c0' },
-    { role: 'Staff', email: 'patrick@su.rw', pw: '1234', color: '#2e7d32' },
-    { role: 'Coordinator', email: 'sarah@su.rw', pw: '1234', color: '#6a1b9a' },
-  ];
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -98,27 +93,7 @@ export default function Login() {
     }
   };
 
-  const quickLogin = async (email, pw) => {
-    setForm({ email, password: pw });
-    setError('');
-    setShowResend(false);
-    setResendStatus('');
-    const res = await login(email, pw);
-    if (res.success) {
-      if (res.mfaRequired) {
-        localStorage.setItem('su-access-token', res.accessToken);
-        setPendingUser(res.user);
-        setMfaRequired(true);
-      } else {
-        navigate('/dashboard');
-      }
-    } else {
-      setError(res.error);
-      if (res.unverified || res.error?.toLowerCase().includes('verify')) {
-        setShowResend(true);
-      }
-    }
-  };
+
 
   return (
     <div className="auth-page">
@@ -266,17 +241,7 @@ export default function Login() {
                 </button>
               </form>
 
-              <div className="auth-divider"><span>Quick Demo Login</span></div>
 
-              <div className="demo-creds">
-                {DEMO_CREDS.map(d => (
-                  <button key={d.role} className="demo-btn" style={{ '--demo-color': d.color }}
-                    onClick={() => quickLogin(d.email, d.pw)} disabled={loading}>
-                    <span className="demo-role">{d.role}</span>
-                    <span className="demo-email">{d.email}</span>
-                  </button>
-                ))}
-              </div>
 
               <p className="text-center text-sm" style={{ marginTop: 20 }}>
                 Don't have an account? <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>Register here</Link>

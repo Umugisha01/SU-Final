@@ -2,7 +2,8 @@ from rest_framework import status, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from core.permissions import IsManagerOrAdmin
+from django.utils import timezone
+from core.permissions import IsManagerOrAdmin, IsCoordinatorOrManagerOrAdmin
 from apps.support.models import SupportRequest, SupportComment
 from apps.support.serializers import SupportRequestSerializer, SupportCommentSerializer
 from services.support_service import SupportService
@@ -19,6 +20,12 @@ class SupportRequestListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = SupportRequest.objects.all().order_by('-created_at')
         
+        # Role-based status filtering for support requests
+        if self.request.user.role == 'national_manager':
+            queryset = queryset.filter(status__in=['submitted_to_manager', 'approved', 'under review', 'fulfilled', 'closed', 'returned_by_manager', 'submitted'])
+        elif self.request.user.role == 'regional_coordinator':
+            queryset = queryset.filter(status__in=['submitted_to_coordinator', 'submitted_to_manager', 'under review', 'approved', 'fulfilled', 'closed', 'returned_by_coordinator', 'returned_by_manager', 'submitted'])
+            
         status_param = self.request.query_params.get('status')
         urgency = self.request.query_params.get('urgency')
         category = self.request.query_params.get('category')
@@ -304,4 +311,59 @@ class SupportRequestAISuggestView(APIView):
             'reason': result['reason'],
             'key_factors': result.get('key_factors', []),
             'suggested_days': result.get('suggested_days', 7)
+        }, status=status.HTTP_200_OK)
+
+
+class SupportRequestConsolidateView(APIView):
+    """
+    POST /api/support/consolidate - consolidate multiple support requests into one editable draft.
+    """
+    permission_classes = [IsCoordinatorOrManagerOrAdmin]
+
+    def post(self, request):
+        ticket_ids = request.data.get('ticketIds', [])
+        if not ticket_ids:
+            return Response({"success": False, "error": "ticketIds is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        tickets = SupportRequest.objects.filter(id__in=ticket_ids)
+        if not tickets.exists():
+            return Response({"success": False, "error": "No tickets found with the provided IDs"}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Regional isolation check: coordinators can only consolidate tickets in their own region
+        if request.user.role == 'regional_coordinator':
+            for t in tickets:
+                if t.region != request.user.region:
+                    return Response({"success": False, "error": "Regional isolation: You can only consolidate support requests in your own region."}, status=status.HTTP_403_FORBIDDEN)
+                    
+        # Group by category, combine description, select highest urgency
+        categories = set()
+        descriptions = []
+        urgencies = ['low', 'medium', 'high', 'critical']
+        highest_urgency_idx = 0
+        
+        for t in tickets:
+            if t.category:
+                categories.add(t.category)
+            descriptions.append(f"- {t.title} (by {t.requester.name}): {t.description}")
+            try:
+                idx = urgencies.index(t.urgency)
+                if idx > highest_urgency_idx:
+                    highest_urgency_idx = idx
+            except ValueError:
+                pass
+                
+        combined_description = f"Consolidated Support Request representing the following regional tickets:\n" + "\n".join(descriptions)
+        
+        first_ticket = tickets.first()
+        draft_data = {
+            "title": f"Consolidated Support: {', '.join(categories)} - {timezone.now().strftime('%Y-%m-%d')}",
+            "category": first_ticket.category if len(categories) == 1 else "Technical",
+            "description": combined_description,
+            "urgency": urgencies[highest_urgency_idx],
+            "status": "submitted_to_coordinator"
+        }
+        
+        return Response({
+            "success": True,
+            "data": draft_data
         }, status=status.HTTP_200_OK)

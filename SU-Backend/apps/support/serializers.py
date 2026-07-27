@@ -55,7 +55,7 @@ class SupportRequestSerializer(serializers.ModelSerializer):
         recipient_ids = validated_data.pop('recipientIds', [])
         user = self.context['request'].user
         validated_data['requester'] = user
-        validated_data['status'] = 'submitted'
+        validated_data['status'] = 'submitted_to_coordinator'
         
         support_request = SupportRequest.objects.create(**validated_data)
         

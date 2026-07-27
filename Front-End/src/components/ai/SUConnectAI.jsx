@@ -78,6 +78,19 @@ How can I help you today?`
     const fileInput = document.getElementById('chat-file-input');
     if (fileInput) fileInput.value = '';
 
+    if (isImageFile && selectedModel === 'mistral:7b-instruct-q4_K_M') {
+      const aiMsgId = Date.now().toString() + "-ai";
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: aiMsgId,
+          sender: 'ai',
+          text: '⚠️ I noticed you attached an image but are trying to use the **Mistral (7B)** text-only model. Mistral does not support image analysis. Please select the **Qwen-2.5-VL (Fast 3B)** vision model from the dropdown above to analyze photos or visual things!'
+        }]);
+        setSending(false);
+      }, 600);
+      return;
+    }
+
     const aiMsgId = Date.now().toString() + "-ai";
 
     try {

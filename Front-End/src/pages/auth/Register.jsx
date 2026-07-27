@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CheckCircle, User, Briefcase, Lock, ChevronRight, ChevronLeft } from 'lucide-react';
+import { CheckCircle, User, Briefcase, Lock, ChevronRight, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { REGIONS, DEPARTMENTS } from '../../data/mockData';
 import './Auth.css';
@@ -41,6 +41,8 @@ export default function Register() {
   });
   const [errors, setErrors] = useState({});
   const [registered, setRegistered] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const pwStrength = getPwStrength(form.password);
@@ -249,8 +251,13 @@ export default function Register() {
                   <div>
                     <div className="form-group">
                       <label className="form-label">Password <span>*</span></label>
-                      <input className="form-control" type="password" placeholder="Min 8 characters" value={form.password}
-                        onChange={e => set('password', e.target.value)} />
+                      <div style={{ position: 'relative' }}>
+                        <input className="form-control" type={showPw ? 'text' : 'password'} placeholder="Min 8 characters" style={{ paddingRight: 40 }} value={form.password}
+                          onChange={e => set('password', e.target.value)} />
+                        <button type="button" className="pw-toggle" onClick={() => setShowPw(s => !s)}>
+                          {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                       {form.password && (
                         <>
                           <div className="pw-strength">
@@ -265,8 +272,13 @@ export default function Register() {
                     </div>
                     <div className="form-group">
                       <label className="form-label">Confirm Password <span>*</span></label>
-                      <input className="form-control" type="password" placeholder="Repeat password" value={form.confirm}
-                        onChange={e => set('confirm', e.target.value)} />
+                      <div style={{ position: 'relative' }}>
+                        <input className="form-control" type={showConfirm ? 'text' : 'password'} placeholder="Repeat password" style={{ paddingRight: 40 }} value={form.confirm}
+                          onChange={e => set('confirm', e.target.value)} />
+                        <button type="button" className="pw-toggle" onClick={() => setShowConfirm(s => !s)}>
+                          {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                       {errors.confirm && <span style={{ color: 'var(--danger)', fontSize: '0.75rem' }}>{errors.confirm}</span>}
                     </div>
                   </div>

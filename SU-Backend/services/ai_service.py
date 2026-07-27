@@ -709,6 +709,23 @@ class AIService:
                     
         # Determine the model dynamically based on image presence
         if images_list:
+            text_only_models = {
+                'mistral:7b-instruct-q4_K_M',
+                getattr(settings, 'OLLAMA_TEXT_MODEL', 'mistral:7b-instruct-q4_K_M')
+            }
+            if model_override in text_only_models:
+                advice_msg = (
+                    "⚠️ I noticed you are trying to use the **Mistral (7B)** model to analyze an image or visual file. "
+                    "Mistral is a text-only model and does not support image analysis. "
+                    "Please switch to **Qwen-2.5-VL (Fast 3B)** in the dropdown above to analyze photos or visual things!"
+                )
+                if stream:
+                    def advice_stream_generator():
+                        yield json.dumps({"citations": []}) + "\n"
+                        yield json.dumps({"content": advice_msg}) + "\n"
+                    return advice_stream_generator()
+                return advice_msg, []
+                
             ollama_model = getattr(settings, 'OLLAMA_VISION_MODEL', 'qwen2.5vl:3b')
         elif model_override:
             ollama_model = model_override

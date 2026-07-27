@@ -9,8 +9,12 @@ import toast from 'react-hot-toast';
 const STATUS_CONFIG = {
   approved: { cls: 'badge-success', icon: CheckCircle, label: 'Approved' },
   submitted: { cls: 'badge-info', icon: Clock, label: 'Submitted' },
+  submitted_to_coordinator: { cls: 'badge-info', icon: Clock, label: 'Submitted to Coordinator' },
+  submitted_to_manager: { cls: 'badge-info', icon: Clock, label: 'Submitted to Manager' },
   draft: { cls: 'badge-gray', icon: Edit, label: 'Draft' },
   returned: { cls: 'badge-danger', icon: RotateCcw, label: 'Returned' },
+  returned_by_coordinator: { cls: 'badge-danger', icon: RotateCcw, label: 'Returned by Coordinator' },
+  returned_by_manager: { cls: 'badge-danger', icon: RotateCcw, label: 'Returned by Manager' },
 };
 
 export default function ReportDetail() {
@@ -118,6 +122,162 @@ export default function ReportDetail() {
       console.error(err);
       addNotification({ type: 'error', title: 'Override Failed', message: err.response?.data?.error || 'Could not override category.', icon: 'x' });
     }
+  };
+
+  const handleExportWord = () => {
+    if (!report) return;
+    
+    const content = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+            xmlns:w='urn:schemas-microsoft-com:office:word' 
+            xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <title>${report.title}</title>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            color: #1a2e1a;
+            margin: 40px;
+          }
+          .header {
+            border-bottom: 2px solid #2e7d32;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+          }
+          .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2e7d32;
+          }
+          .subtitle {
+            font-size: 0.95rem;
+            color: #6b7280;
+          }
+          .meta-grid {
+            background: #f4f6f4;
+            padding: 12px;
+            border: 1px solid #e2e8e2;
+            margin-bottom: 20px;
+          }
+          h3 {
+            color: #2e7d32;
+            border-bottom: 1.5px solid #2e7d32;
+            padding-bottom: 6px;
+            margin-top: 30px;
+            margin-bottom: 12px;
+          }
+          .content-block {
+            padding: 15px;
+            border: 1px solid #e2e8e2;
+            margin-bottom: 20px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+          }
+          th, td {
+            border: 1px solid #e2e8e2;
+            padding: 8px 10px;
+            text-align: left;
+          }
+          th {
+            background: #f4f6f4;
+            font-weight: bold;
+            color: #2e7d32;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">Scripture Union Rwanda</div>
+          <h2>${report.title}</h2>
+          <p class="subtitle">${report.type} · ${report.region} · Status: ${report.status}</p>
+        </div>
+
+        <div class="meta-grid">
+          <p><strong>Date:</strong> ${report.date}</p>
+          <p><strong>Duration:</strong> ${report.duration || 'N/A'}</p>
+          <p><strong>Location:</strong> ${report.location || 'N/A'}</p>
+          <p><strong>Participants:</strong> ${report.participants.toLocaleString()}</p>
+        </div>
+
+        <h3>Activity Description</h3>
+        <div class="content-block">
+          ${report.description || 'No description provided.'}
+        </div>
+
+        <h3>Outcomes & Impact</h3>
+        <div class="content-block">
+          ${report.outcomes || 'No outcomes provided.'}
+        </div>
+
+        <h3>Challenges Encountered</h3>
+        <div class="content-block">
+          ${report.challenges || 'No challenges listed.'}
+        </div>
+
+        ${report.prayerRequests ? `
+          <h3>Prayer Requests</h3>
+          <div class="content-block" style="font-style: italic;">
+            ${report.prayerRequests}
+          </div>
+        ` : ''}
+
+        <h3>Attendance & Demographics</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Count</th>
+              <th>Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Male Participants</strong></td>
+              <td>${report.male}</td>
+              <td>${report.participants > 0 ? Math.round((report.male / report.participants) * 100) : 0}%</td>
+            </tr>
+            <tr>
+              <td><strong>Female Participants</strong></td>
+              <td>${report.female}</td>
+              <td>${report.participants > 0 ? Math.round((report.female / report.participants) * 100) : 0}%</td>
+            </tr>
+            <tr>
+              <td><strong>Youth (under 25)</strong></td>
+              <td>${report.youth}</td>
+              <td>${report.participants > 0 ? Math.round((report.youth / report.participants) * 100) : 0}%</td>
+            </tr>
+            <tr>
+              <td><strong>Adults (25+)</strong></td>
+              <td>${report.adults}</td>
+              <td>${report.participants > 0 ? Math.round((report.adults / report.participants) * 100) : 0}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob(["\uFEFF", content], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `su_connect_report_${report.id}_${new Date().toISOString().slice(0,10)}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Word document exported successfully!");
   };
 
   const handleExportPDF = () => {
@@ -237,9 +397,14 @@ export default function ReportDetail() {
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="logo">Scripture Union Rwanda</div>
-          <div class="title-area">
+        <div class="header" style="display: flex; align-items: center; border-bottom: 2px solid #2e7d32; padding-bottom: 20px; margin-bottom: 30px;">
+          <img src="/SU-Logo.png" alt="SU Logo" style="height: 60px; filter: invert(34%) sepia(87%) saturate(1518%) hue-rotate(94deg) brightness(95%) contrast(85%); margin-right: 15px;" />
+          <div style="text-align: left;">
+            <div style="font-size: 1.5rem; font-weight: 800; color: #2e7d32; line-height: 1.2;">Scripture Union Rwanda</div>
+            <div class="subtitle" style="font-size: 0.95rem; color: #6b7280; margin-top: 4px;">SU Connect Platform</div>
+          </div>
+        </div>
+        <div style="margin-top: 20px;">
             <h1 class="report-title">${report.title}</h1>
             <p class="subtitle">${report.type} · ${report.region} · <span class="badge ${report.status === 'approved' ? 'badge-success' : report.status === 'submitted' ? 'badge-info' : report.status === 'returned' ? 'badge-danger' : 'badge-gray'}">${report.status}</span></p>
           </div>
@@ -373,6 +538,9 @@ export default function ReportDetail() {
             </button>
           )}
           <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}><Download size={14} />Export PDF</button>
+          {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
+            <button className="btn btn-secondary btn-sm" onClick={handleExportWord}><Download size={14} />Export Word</button>
+          )}
           {(report.submitted_by?.id === user?.id || user?.role === 'administrator') && (
             <button className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={handleDeleteReport}>
               <Trash2 size={14} />Delete

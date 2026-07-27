@@ -22,10 +22,14 @@ class SupportRequest(models.Model):
 
     STATUS_CHOICES = (
         ('submitted', 'Submitted'),
+        ('submitted_to_coordinator', 'Submitted to Coordinator'),
+        ('submitted_to_manager', 'Submitted to Manager'),
         ('under review', 'Under Review'),
         ('approved', 'Approved'),
         ('fulfilled', 'Fulfilled'),
         ('closed', 'Closed'),
+        ('returned_by_coordinator', 'Returned by Coordinator'),
+        ('returned_by_manager', 'Returned by Manager'),
     )
 
     title = models.CharField(max_length=255)
@@ -67,6 +71,9 @@ class SupportRequest(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        if self.status == 'submitted' or not self.status:
+            self.status = 'submitted_to_coordinator'
+            
         # Auto-complete region from the requester
         if not self.region and self.requester:
             self.region = self.requester.region

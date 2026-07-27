@@ -12,6 +12,19 @@ def analyze_report_task(report_id):
     return AIService.analyze_report(report_id)
 
 
+def trigger_analyze_report(report_id):
+    """
+    Triggers the report analysis task asynchronously.
+    If CELERY_TASK_ALWAYS_EAGER is True (e.g. in development), spawns a background thread
+    to prevent blocking the request thread. Otherwise, runs it via celery delay.
+    """
+    import threading
+    if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
+        threading.Thread(target=analyze_report_task, args=(report_id,)).start()
+    else:
+        analyze_report_task.delay(report_id)
+
+
 @shared_task(name="su_connect.tasks.send_notification_email_task")
 def send_notification_email_task(email, title, message):
     """

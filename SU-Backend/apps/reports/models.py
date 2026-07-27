@@ -19,8 +19,12 @@ class Report(models.Model):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
         ('submitted', 'Submitted'),
+        ('submitted_to_coordinator', 'Submitted to Coordinator'),
+        ('submitted_to_manager', 'Submitted to Manager'),
         ('approved', 'Approved'),
         ('returned', 'Returned'),
+        ('returned_by_coordinator', 'Returned by Coordinator'),
+        ('returned_by_manager', 'Returned by Manager'),
     )
 
     title = models.CharField(max_length=255)

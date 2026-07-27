@@ -27,6 +27,12 @@ class ReportListCreateView(generics.ListCreateAPIView):
         # Exclude deleted reports for non-admins
         if self.request.user.role != 'administrator':
             queryset = queryset.filter(is_deleted=False)
+            
+        # Role-based status filtering
+        if self.request.user.role == 'national_manager':
+            queryset = queryset.filter(status__in=['submitted_to_manager', 'approved', 'returned_by_manager', 'submitted'])
+        elif self.request.user.role == 'regional_coordinator':
+            queryset = queryset.filter(status__in=['submitted_to_coordinator', 'submitted_to_manager', 'approved', 'returned_by_coordinator', 'returned_by_manager', 'submitted', 'returned'])
         
         region = self.request.query_params.get('region')
         department = self.request.query_params.get('department')
@@ -189,8 +195,8 @@ class QueueAIAnalyzeView(APIView):
                 pending_reports = pending_reports.filter(region=request.user.region)
                 
             for r in pending_reports:
-                from su_connect.tasks import analyze_report_task
-                analyze_report_task.delay(r.id)
+                from su_connect.tasks import trigger_analyze_report
+                trigger_analyze_report(r.id)
             return Response({"success": True, "message": f"Queued {pending_reports.count()} reports for AI analysis"}, status=status.HTTP_202_ACCEPTED)
             
         try:
@@ -200,8 +206,8 @@ class QueueAIAnalyzeView(APIView):
             if request.user.role == 'regional_coordinator' and report.region != request.user.region:
                 return Response({"success": False, "error": "Regional isolation: You can only trigger analysis for reports in your own region."}, status=status.HTTP_403_FORBIDDEN)
                 
-            from su_connect.tasks import analyze_report_task
-            analyze_report_task.delay(report.id)
+            from su_connect.tasks import trigger_analyze_report
+            trigger_analyze_report(report.id)
             return Response({"success": True, "message": "AI analysis job queued", "jobId": f"job-rep-{report.id}"}, status=status.HTTP_202_ACCEPTED)
         except Report.DoesNotExist:
             return Response({"success": False, "error": "Report not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -409,7 +415,8 @@ class DashboardSummaryView(APIView):
 
 class ConsolidatedReportView(APIView):
     """
-    GET /api/reports/consolidated
+    GET /api/reports/consolidated - get summaries and metrics of approved reports
+    POST /api/reports/consolidated - consolidate selected reports into an editable draft
     """
     permission_classes = [IsCoordinatorOrManagerOrAdmin]
 
@@ -477,3 +484,72 @@ class ConsolidatedReportView(APIView):
             "geographicDistribution": geo_data,
             "aiConsolidatedSummary": ai_summary
         })
+
+    def post(self, request):
+        report_ids = request.data.get('reportIds', [])
+        if not report_ids:
+            return Response({"success": False, "error": "reportIds is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        reports = Report.objects.filter(id__in=report_ids)
+        if not reports.exists():
+            return Response({"success": False, "error": "No reports found with the provided IDs"}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Regional isolation check: coordinators can only consolidate reports in their own region
+        if request.user.role == 'regional_coordinator':
+            for r in reports:
+                if r.region != request.user.region:
+                    return Response({"success": False, "error": "Regional isolation: You can only consolidate reports in your own region."}, status=status.HTTP_403_FORBIDDEN)
+                    
+        # Demographics sum
+        male = 0
+        female = 0
+        youth = 0
+        adults = 0
+        participants = 0
+        departments = set()
+        types = set()
+        regions = set()
+        
+        for r in reports:
+            demo = r.demographics or {}
+            male += demo.get('male', 0)
+            female += demo.get('female', 0)
+            youth += demo.get('youth', 0)
+            adults += demo.get('adults', 0)
+            participants += r.participants
+            if r.department:
+                departments.add(r.department)
+            if r.type:
+                types.add(r.type)
+            if r.region:
+                regions.add(r.region)
+                
+        # Generate consolidated summary using the AI Service
+        ai_summary = AIService.generate_consolidated_summary(report_ids)
+        
+        # Pre-populate a draft report object
+        first_report = reports.first()
+        draft_data = {
+            "title": f"Consolidated Report: {', '.join(types)} - {timezone.now().strftime('%Y-%m-%d')}",
+            "type": first_report.type if len(types) == 1 else "Outreach",
+            "region": request.user.region if request.user.role == 'regional_coordinator' else (list(regions)[0] if regions else 'Kigali City'),
+            "department": first_report.department if len(departments) == 1 else "Administration",
+            "date": timezone.now().date().strftime('%Y-%m-%d'),
+            "participants": participants,
+            "demographics": {
+                "male": male,
+                "female": female,
+                "youth": youth,
+                "adults": adults
+            },
+            "description": f"Consolidated from the following reports:\n" + "\n".join([f"- {r.title} (by {r.submitted_by.name})" for r in reports]) + f"\n\nAI Executive Summary:\n{ai_summary}",
+            "outcomes": "\n".join(filter(None, [r.outcomes for r in reports])),
+            "challenges": "\n".join(filter(None, [r.challenges for r in reports])),
+            "prayer_requests": "\n".join(filter(None, [r.prayer_requests for r in reports])),
+            "status": "draft"
+        }
+        
+        return Response({
+            "success": True,
+            "data": draft_data
+        }, status=status.HTTP_200_OK)

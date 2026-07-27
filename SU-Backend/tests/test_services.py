@@ -46,19 +46,19 @@ class TestReportService:
         assert self.report.status == 'draft'
         ReportService.submit_report(self.report, self.staff_user)
         self.report.refresh_from_db()
-        assert self.report.status == 'submitted'
+        assert self.report.status == 'submitted_to_coordinator'
 
     def test_segregation_of_duties_approval(self):
         # Manager cannot approve report if they created it
         self.report.submitted_by = self.manager_user
-        self.report.status = 'submitted'
+        self.report.status = 'submitted_to_manager'
         self.report.save()
         
         with pytest.raises(PermissionDenied):
             ReportService.approve_report(self.report, self.manager_user)
 
     def test_successful_approval(self):
-        self.report.status = 'submitted'
+        self.report.status = 'submitted_to_manager'
         self.report.save()
         
         ReportService.approve_report(self.report, self.manager_user, "Good report!")
@@ -257,3 +257,45 @@ class TestAIService:
         assert reply == "Detailed answer from reference sheet."
         assert citations == []
         mock_find_match.assert_called_with("What is the statement of the problem?")
+
+    @patch("requests.post")
+    def test_chat_assistant_mistral_image_advice(self, mock_post):
+        from services.ai_service import AIService
+        from apps.documents.models import Document
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user = User.objects.create_user(
+            email="test_advice@su.org",
+            password="Password123!",
+            name="Advice User",
+            role="field_officer",
+            region="Kigali City"
+        )
+        
+        doc = Document.objects.create(
+            name="test_image.png",
+            type="PNG",
+            size=100,
+            storage_key="documents/test_image.png",
+            uploaded_by=user
+        )
+        
+        with patch("os.path.exists", return_value=True), \
+             patch("PIL.Image.open") as mock_img:
+            # Setup image mock to bypass actual file load and yield b64_data
+            mock_img.return_value.__enter__.return_value.size = (10, 10)
+            mock_img.return_value.__enter__.return_value.width = 10
+            mock_img.return_value.__enter__.return_value.height = 10
+            mock_img.return_value.__enter__.return_value.mode = "RGB"
+            
+            reply, citations = AIService.chat_assistant(
+                user=user,
+                user_message="Explain this photo.",
+                document_ids=[doc.id],
+                model_override="mistral:7b-instruct-q4_K_M"
+            )
+            
+        assert "Mistral (7B)" in reply
+        assert "analyze an image" in reply
+        assert "Please switch to **Qwen-2.5-VL (Fast 3B)**" in reply
+        assert citations == []

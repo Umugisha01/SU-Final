@@ -111,6 +111,102 @@ export default function PrayerRequests() {
     }
   };
 
+  const handleExportWord = () => {
+    if (!filtered || filtered.length === 0) {
+      alert('No prayer requests available to export.');
+      return;
+    }
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const tabLabel = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+
+    const byRegion = {};
+    filtered.forEach(p => {
+      const region = p.region || 'General';
+      if (!byRegion[region]) byRegion[region] = [];
+      byRegion[region].push(p);
+    });
+
+    const regionSections = Object.entries(byRegion).map(([region, prayers]) => {
+      const prayerCards = prayers.map((p, i) => `
+        <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #e2e8e2;">
+          <p><strong>#${i + 1} ${p.title}</strong></p>
+          <p style="font-size: 0.8rem; color: #6b7280;">Region: ${p.region} | Date: ${p.createdAt} | Submitted by: ${p.submittedBy}</p>
+          <p>${p.description}</p>
+        </div>
+      `).join('');
+      return `
+        <h3>📍 Region: ${region} (${prayers.length})</h3>
+        ${prayerCards}
+      `;
+    }).join('');
+
+    const content = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+            xmlns:w='urn:schemas-microsoft-com:office:word' 
+            xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <title>SU Connect Prayer Requests</title>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            color: #1a2e1a;
+            margin: 40px;
+          }
+          .header {
+            border-bottom: 2px solid #2e7d32;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+          }
+          .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2e7d32;
+          }
+          .subtitle {
+            font-size: 0.95rem;
+            color: #6b7280;
+          }
+          h3 {
+            color: #2e7d32;
+            border-bottom: 1.5px solid #2e7d32;
+            padding-bottom: 6px;
+            margin-top: 30px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">Scripture Union Rwanda</div>
+          <h2>🙏 Prayer Meeting Requests</h2>
+          <p class="subtitle">${dateStr} · ${tabLabel} Requests</p>
+        </div>
+
+        ${regionSections}
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(["\uFEFF", content], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `su_connect_prayer_requests_${new Date().toISOString().slice(0,10)}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleExportPDF = () => {
     if (!filtered || filtered.length === 0) {
       alert('No prayer requests available to export.');
@@ -385,9 +481,14 @@ export default function PrayerRequests() {
         </style>
       </head>
       <body>
-        <div class="doc-header">
-          <div class="org-name">Scripture Union Rwanda</div>
-          <div class="doc-title">🙏 Prayer Meeting Requests</div>
+        <div class="doc-header" style="display: flex; align-items: center; justify-content: center; gap: 16px; border-bottom: 3px solid #2e7d32; padding-bottom: 24px; margin-bottom: 28px;">
+          <img src="/SU-Logo.png" alt="SU Logo" style="height: 60px; filter: invert(34%) sepia(87%) saturate(1518%) hue-rotate(94deg) brightness(95%) contrast(85%);" />
+          <div style="text-align: left;">
+            <div class="org-name" style="margin: 0; line-height: 1.2;">Scripture Union Rwanda</div>
+            <div class="doc-title" style="margin: 4px 0 0 0; font-size: 1.5rem; line-height: 1.2;">🙏 Prayer Meeting Requests</div>
+          </div>
+        </div>
+        <div style="margin-top: 20px;">
           <div class="doc-subtitle">${dateStr} · ${tabLabel} Requests${filterRegion !== 'all' ? ' · ' + filterRegion : ''}</div>
           <div class="scripture-verse">
             "Do not be anxious about anything, but in every situation, by prayer and petition,
@@ -454,6 +555,9 @@ export default function PrayerRequests() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}><Download size={14} />Export for Prayer Meeting</button>
+          {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
+            <button className="btn btn-secondary btn-sm" onClick={handleExportWord}><Download size={14} />Export Word</button>
+          )}
           <button className="btn btn-primary" onClick={() => setShowForm(true)}><Plus size={16} />Add Request</button>
         </div>
       </div>

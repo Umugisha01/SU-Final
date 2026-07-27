@@ -1,0 +1,9 @@
+Role	Name	Email Address	Password
+Admin	Emmanuel Habimana	admin@su.rw	Admin@123
+Manager	Grace Uwimana	manager@su.rw	Manager@123
+Staff	Patrick Nkurunziza	staff@su.rw	Staff@123
+Staff	David Niyonzima	david@su.rw	Staff@123
+Staff	Solange Uwera	solange@su.rw	Staff@123
+Coordinator	Alice Mukamana	coordinator@su.rw	Coord@123
+Coordinator	Jean Habimana	jean@su.rw	Coord@123
+Coordinator	Marie Nyiramana	marie@su.rw	Coord@123

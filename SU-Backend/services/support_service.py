@@ -14,7 +14,7 @@ class SupportService:
             raise PermissionDenied("Only administrators, national managers, and regional coordinators can assign support requests.")
         
         support_request.assigned_to = assigned_user
-        if support_request.status == 'submitted':
+        if support_request.status in ['submitted', 'submitted_to_coordinator']:
             support_request.status = 'under review'
         support_request.save()
         
@@ -37,6 +37,18 @@ class SupportService:
         # Field officer / other non-assigner requesters can only transition to 'closed'
         if user.role not in ['administrator', 'national_manager', 'regional_coordinator'] and status != 'closed':
             raise PermissionDenied("Requesters can only transition requests to 'closed'.")
+            
+        # Regional Coordinators
+        if user.role == 'regional_coordinator':
+            if status not in ['submitted_to_manager', 'returned_by_coordinator', 'under review', 'closed']:
+                raise ValidationError("Coordinators can only forward to manager, return, or review tickets.")
+            if support_request.region != user.region:
+                raise PermissionDenied("You can only manage support requests in your own region.")
+        
+        # Managers/Admins
+        elif user.role in ['national_manager', 'administrator']:
+            if status not in ['approved', 'under review', 'fulfilled', 'closed', 'returned_by_manager']:
+                raise ValidationError("Managers can only approve, review, fulfill, close, or return tickets.")
         
         support_request.status = status
         support_request.save()

@@ -79,9 +79,9 @@ class ReportSerializer(serializers.ModelSerializer):
         return report
 
     def update(self, instance, validated_data):
-        # Non-draft, non-submitted, and non-returned reports cannot be updated via general PUT/PATCH
-        if instance.status not in ['draft', 'returned', 'submitted']:
-            raise serializers.ValidationError("Only reports in 'draft', 'submitted', or 'returned' status can be modified.")
+        # Non-draft/unsubmitted reports cannot be updated via general PUT/PATCH
+        if instance.status not in ['draft', 'returned', 'submitted', 'submitted_to_coordinator', 'submitted_to_manager', 'returned_by_coordinator', 'returned_by_manager']:
+            raise serializers.ValidationError("Only reports in editable status can be modified.")
             
         attachment_ids = validated_data.pop('attachmentIds', None)
         recipient_ids = validated_data.pop('recipientIds', None)

@@ -8,39 +8,63 @@ class ReportService:
     """
     @staticmethod
     def can_user_approve(report, user):
-        # Must be administrator, national_manager, or regional_coordinator (restricted to their region)
-        if user.role not in ['administrator', 'national_manager', 'regional_coordinator']:
+        # Segregation of duties: cannot approve own submission
+        if report.submitted_by_id == user.id:
             return False
-        if user.role == 'regional_coordinator' and user.region != report.region:
-            return False
-        return report.submitted_by_id != user.id
+        
+        if user.role == 'regional_coordinator':
+            # Coordinators can only approve/action reports in their region that are submitted to them
+            if user.region != report.region:
+                return False
+            return report.status in ['submitted_to_coordinator', 'submitted']
+            
+        elif user.role in ['administrator', 'national_manager']:
+            # Managers and Admins can only approve reports submitted to them
+            return report.status == 'submitted_to_manager'
+            
+        return False
 
     @staticmethod
     def submit_report(report, user):
         if report.submitted_by_id != user.id:
             raise PermissionDenied("You can only submit your own reports.")
-        if report.status not in ['draft', 'returned', 'submitted']:
-            raise ValidationError("Only draft, submitted, or returned reports can be submitted.")
+        if report.status not in ['draft', 'returned', 'returned_by_coordinator', 'returned_by_manager', 'submitted']:
+            raise ValidationError("Only draft or returned reports can be submitted.")
         
         from django.utils import timezone
-        report.status = 'submitted'
+        
+        # Determine the next status based on user role
+        if user.role == 'field_officer':
+            report.status = 'submitted_to_coordinator'
+        elif user.role == 'regional_coordinator':
+            report.status = 'submitted_to_manager'
+        else:
+            # Fallback for admin or manager submitting their own report
+            report.status = 'submitted_to_manager'
+            
         report.submitted_at = timezone.now()
         report.save()
         
-        # Queue the AI classification analysis asynchronously in Celery
-        from su_connect.tasks import analyze_report_task
-        analyze_report_task.delay(report.id)
+        # Queue the AI classification analysis asynchronously in Celery (or thread in development)
+        from su_connect.tasks import trigger_analyze_report
+        trigger_analyze_report(report.id)
         
         # Notify managers of the region, all admins, regional coordinators, and specific recipients
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        managers_admins = User.objects.filter(role__in=['administrator', 'national_manager', 'regional_coordinator'])
         
         users_to_notify = set()
-        for recipient in managers_admins:
-            # Admins and National Managers see everything; regional coordinators only see their own region's reports
-            if recipient.role in ['administrator', 'national_manager'] or recipient.region == report.region:
-                users_to_notify.add(recipient)
+        
+        if report.status == 'submitted_to_coordinator':
+            # Notify regional coordinators of this region
+            coordinators = User.objects.filter(role='regional_coordinator', region=report.region)
+            for rc in coordinators:
+                users_to_notify.add(rc)
+        elif report.status == 'submitted_to_manager':
+            # Notify national managers and administrators
+            managers_admins = User.objects.filter(role__in=['administrator', 'national_manager'])
+            for ma in managers_admins:
+                users_to_notify.add(ma)
                 
         # Also include explicitly selected recipients
         for recipient in report.recipients.all():
@@ -63,22 +87,38 @@ class ReportService:
     @staticmethod
     def approve_report(report, manager, comments=None):
         if not ReportService.can_user_approve(report, manager):
-            raise PermissionDenied("You do not have permission to approve this report or it is your own submission.")
-        
-        if report.status != 'submitted':
-            raise ValidationError("Only submitted reports can be approved.")
+            raise PermissionDenied("You do not have permission to approve this report or it is in an invalid status.")
         
         from django.utils import timezone
-        report.status = 'approved'
-        report.approved_at = timezone.now()
+        
+        # If coordinator is approving, they forward it to the Manager
+        if manager.role == 'regional_coordinator':
+            report.status = 'submitted_to_manager'
+            # Notify Managers/Admins
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            managers_admins = User.objects.filter(role__in=['administrator', 'national_manager'])
+            for ma in managers_admins:
+                NotificationService.create_notification(
+                    user=ma,
+                    type_name='report',
+                    title='Report Forwarded by Coordinator',
+                    message=f"Report '{report.title}' was reviewed and forwarded by Coordinator {manager.name}.",
+                    icon='clock'
+                )
+        # If manager is approving, it becomes 'approved' (final state)
+        else:
+            report.status = 'approved'
+            report.approved_at = timezone.now()
+            
         report.save()
         
         # Notify the submitter
         NotificationService.create_notification(
             user=report.submitted_by,
             type_name='report',
-            title='Report Approved',
-            message=f"Your report '{report.title}' was approved by {manager.name}. {comments or ''}",
+            title='Report Forwarded' if manager.role == 'regional_coordinator' else 'Report Approved',
+            message=f"Your report '{report.title}' was forwarded to Manager by {manager.name}." if manager.role == 'regional_coordinator' else f"Your report '{report.title}' was approved by {manager.name}. {comments or ''}",
             icon='check'
         )
         return report
@@ -86,16 +126,17 @@ class ReportService:
     @staticmethod
     def return_report(report, manager, comments):
         if not ReportService.can_user_approve(report, manager):
-            raise PermissionDenied("You do not have permission to return this report or it is your own submission.")
+            raise PermissionDenied("You do not have permission to return this report or it is in an invalid status.")
         
         if not comments:
             raise ValidationError("Comments specifying the reason for returning are required.")
-            
-        if report.status != 'submitted':
-            raise ValidationError("Only submitted reports can be returned.")
         
         from django.utils import timezone
-        report.status = 'returned'
+        if manager.role == 'regional_coordinator':
+            report.status = 'returned_by_coordinator'
+        else:
+            report.status = 'returned_by_manager'
+            
         report.returned_at = timezone.now()
         report.save()
         

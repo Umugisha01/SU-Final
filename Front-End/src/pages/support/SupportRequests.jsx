@@ -14,10 +14,14 @@ const PRIORITY_CONFIG = {
 
 const STATUS_CONFIG = { 
   submitted: { cls: 'badge-info', label: 'Submitted' }, 
+  submitted_to_coordinator: { cls: 'badge-info', label: 'Submitted to Coordinator' }, 
+  submitted_to_manager: { cls: 'badge-info', label: 'Submitted to Manager' }, 
   'under review': { cls: 'badge-warning', label: 'Under Review' }, 
   approved: { cls: 'badge-success', label: 'Approved' }, 
   fulfilled: { cls: 'badge-primary', label: 'Fulfilled' }, 
-  closed: { cls: 'badge-gray', label: 'Closed' } 
+  closed: { cls: 'badge-gray', label: 'Closed' },
+  returned_by_coordinator: { cls: 'badge-danger', label: 'Returned by Coordinator' },
+  returned_by_manager: { cls: 'badge-danger', label: 'Returned by Manager' }
 };
 
 const TYPE_ICONS = { 

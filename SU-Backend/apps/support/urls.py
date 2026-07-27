@@ -3,7 +3,8 @@ from apps.support.views import (
     SupportRequestListCreateView, SupportRequestDetailView, 
     SupportRequestStatusView, SupportRequestAssignView, AddSupportCommentView,
     SupportRequestAIAnalyzeView, SupportRequestBatchAIAnalyzeView,
-    SupportRequestAITaskStatusView, SupportRequestAISuggestView
+    SupportRequestAITaskStatusView, SupportRequestAISuggestView,
+    SupportRequestConsolidateView
 )
 
 urlpatterns = [
@@ -18,4 +19,5 @@ urlpatterns = [
     path('ai-batch', SupportRequestBatchAIAnalyzeView.as_view(), name='support-ai-batch'),
     path('ai-status/<str:task_id>', SupportRequestAITaskStatusView.as_view(), name='support-ai-status'),
     path('ai-suggest', SupportRequestAISuggestView.as_view(), name='support-ai-suggest'),
+    path('consolidate', SupportRequestConsolidateView.as_view(), name='support_consolidate'),
 ]
