@@ -1,10 +1,32 @@
+import sys
+import traceback
 import threading
 from django.db import models
 from django.utils.deprecation import MiddlewareMixin
 from django.utils import timezone
 from datetime import timedelta
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from services.audit_service import AuditService
+
+class ExceptionLoggingMiddleware:
+    """
+    Middleware that intercepts unhandled exceptions, prints the full traceback
+    to stderr (visible in Vercel logs), and returns the detailed traceback.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_exception(self, request, exception):
+        tb = traceback.format_exc()
+        print(f"CRITICAL DJANGO ERROR on {request.path}:\n{tb}", file=sys.stderr)
+        return HttpResponse(
+            f"DJANGO RUNTIME EXCEPTION ({type(exception).__name__}):\n\n{exception}\n\nTraceback:\n{tb}",
+            content_type="text/plain; charset=utf-8",
+            status=500
+        )
 
 # Thread-local storage for request user
 _thread_locals = threading.local()

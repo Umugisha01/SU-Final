@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'core.middleware.ExceptionLoggingMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -179,24 +180,36 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
-# Redis & Channels Configuration
-REDIS_URL = env('REDIS_URL', default='redis://localhost:6379/0')
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'config': {
-            'hosts': [REDIS_URL],
+# Redis & Channels Configuration (Graceful Serverless Fallback)
+REDIS_URL = env('REDIS_URL', default='')
+if REDIS_URL and not any(h in REDIS_URL for h in ['localhost', '127.0.0.1']):
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'config': {
+                'hosts': [REDIS_URL],
+            },
         },
-    },
-}
-
-# Cache Settings
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_URL,
     }
-}
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'su-connect-serverless-cache',
+        }
+    }
+
 
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
