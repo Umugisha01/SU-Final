@@ -17,13 +17,22 @@ class ExceptionLoggingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        return self.get_response(request)
+        try:
+            return self.get_response(request)
+        except Exception as exception:
+            tb = traceback.format_exc()
+            print(f"CRITICAL DJANGO ERROR on {request.path}:\n{tb}", file=sys.stderr)
+            return HttpResponse(
+                f"EXACT DJANGO ERROR on {request.path}:\n\n{type(exception).__name__}: {exception}\n\nTraceback:\n{tb}",
+                content_type="text/plain; charset=utf-8",
+                status=500
+            )
 
     def process_exception(self, request, exception):
         tb = traceback.format_exc()
         print(f"CRITICAL DJANGO ERROR on {request.path}:\n{tb}", file=sys.stderr)
         return HttpResponse(
-            f"DJANGO RUNTIME EXCEPTION ({type(exception).__name__}):\n\n{exception}\n\nTraceback:\n{tb}",
+            f"EXACT DJANGO ERROR on {request.path}:\n\n{type(exception).__name__}: {exception}\n\nTraceback:\n{tb}",
             content_type="text/plain; charset=utf-8",
             status=500
         )

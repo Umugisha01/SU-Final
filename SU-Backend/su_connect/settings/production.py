@@ -1,6 +1,6 @@
 from .base import *
 
-DEBUG = False
+DEBUG = env.bool('DEBUG', default=False)
 
 # Security Headers
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
