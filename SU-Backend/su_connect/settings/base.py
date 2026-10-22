@@ -203,6 +203,11 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     origin.strip() for origin in env('CORS_ALLOWED_ORIGINS', default='http://localhost:3000').split(',') if origin.strip()
 ]
+# Automatically allow all Vercel production and preview deployments
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+    r"^http://localhost:\d+$",
+]
 
 # Celery Configurations
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
