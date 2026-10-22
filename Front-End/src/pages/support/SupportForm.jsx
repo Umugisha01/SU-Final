@@ -236,7 +236,7 @@ export default function SupportForm() {
               AI ASSISTANT
             </div>
             <div className="card-body">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6 }}>
                   🤖 AI Priority Suggestion
                 </p>
@@ -257,7 +257,7 @@ export default function SupportForm() {
 
               {aiSuggestion && (
                 <div style={{ marginTop: 14, background: 'var(--bg-input)', padding: '12px', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                     <div style={{ fontSize: '0.85rem' }}>
                       Suggested Priority: <strong style={{ textTransform: 'capitalize' }}>{aiSuggestion.priority}</strong> <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>({aiSuggestion.confidence}% confidence)</span>
                     </div>
@@ -405,9 +405,9 @@ export default function SupportForm() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/support')}>Cancel</button>
-            <button type="submit" className="btn btn-primary btn-lg" disabled={submitting || loadingEdit}>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-secondary" style={{ flex: '1 1 120px' }} onClick={() => navigate('/support')}>Cancel</button>
+            <button type="submit" className="btn btn-primary btn-lg" style={{ flex: '2 1 200px' }} disabled={submitting || loadingEdit}>
               <Send size={16} />{submitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update Request' : 'Submit Request')}
             </button>
           </div>

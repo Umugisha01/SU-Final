@@ -7,14 +7,14 @@ import { reportService } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const STATUS_CONFIG = {
-  approved: { cls: 'badge-success', icon: CheckCircle, label: 'Approved' },
+  approved: { cls: 'badge-success', icon: CheckCircle, label: 'Approved ★' },
   submitted: { cls: 'badge-info', icon: Clock, label: 'Submitted' },
-  submitted_to_coordinator: { cls: 'badge-info', icon: Clock, label: 'Submitted to Coordinator' },
-  submitted_to_manager: { cls: 'badge-info', icon: Clock, label: 'Submitted to Manager' },
+  submitted_to_coordinator: { cls: 'badge-info', icon: Clock, label: 'Submitted' },
+  submitted_to_manager: { cls: 'badge-info', icon: Clock, label: 'Submitted ★' },
   draft: { cls: 'badge-gray', icon: Edit, label: 'Draft' },
   returned: { cls: 'badge-danger', icon: RotateCcw, label: 'Returned' },
   returned_by_coordinator: { cls: 'badge-danger', icon: RotateCcw, label: 'Returned by Coordinator' },
-  returned_by_manager: { cls: 'badge-danger', icon: RotateCcw, label: 'Returned by Manager' },
+  returned_by_manager: { cls: 'badge-danger', icon: RotateCcw, label: 'Returned by Manager ★' },
 };
 
 export default function ReportDetail() {
@@ -87,6 +87,22 @@ export default function ReportDetail() {
     } catch (err) {
       console.error(err);
       addNotification({ type: 'error', title: 'Action Failed', message: err.response?.data?.error || 'Could not return report.', icon: 'x' });
+    }
+  };
+
+  const shareReport = async () => {
+    try {
+      const res = await reportService.share([id]);
+      if (res.success) {
+        toast.success(res.message || "Report shared with National Manager.");
+        addNotification({ type: 'report', title: 'Report Shared', message: `"${report.title}" has been shared with National Manager.`, icon: 'check' });
+        fetchReport();
+      } else {
+        toast.error(res.error || "Failed to share report.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || "An error occurred while sharing the report.");
     }
   };
 
@@ -524,12 +540,15 @@ export default function ReportDetail() {
             <p className="page-subtitle">{report.type} · {report.region}</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <span className={`badge ${cfg.cls}`}><Icon size={11} />{cfg.label}</span>
-          {canApprove && status === 'submitted' && (
+          {canApprove && ['submitted', 'submitted_to_coordinator'].includes(status) && (
             <>
               <button className="btn btn-primary btn-sm" onClick={approve}><ThumbsUp size={14} />Approve</button>
               <button className="btn btn-danger btn-sm" onClick={returnReport}><ThumbsDown size={14} />Return</button>
+              {user?.role === 'regional_coordinator' && !(report.recipients && report.recipients.some(recip => recip.role === 'national_manager')) && (
+                <button className="btn btn-secondary btn-sm" onClick={shareReport}>Share to National Manager</button>
+              )}
             </>
           )}
           {report.submitted_by?.id === user?.id && ['draft', 'returned', 'submitted'].includes(status) && (

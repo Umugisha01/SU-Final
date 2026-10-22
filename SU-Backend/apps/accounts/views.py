@@ -312,7 +312,10 @@ class UserDirectoryView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        users = User.objects.filter(status='active').values('id', 'name', 'role', 'region', 'department')
+        queryset = User.objects.filter(status='active')
+        if request.user.role == 'field_officer':
+            queryset = queryset.exclude(role__in=['national_manager', 'administrator'])
+        users = queryset.values('id', 'name', 'role', 'region', 'department')
         return Response({"success": True, "data": list(users)}, status=status.HTTP_200_OK)
 
 

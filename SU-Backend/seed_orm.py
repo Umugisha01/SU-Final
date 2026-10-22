@@ -2,6 +2,12 @@ import os, django, datetime
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'su_connect.settings.development')
 django.setup()
 
+# Disconnect AI auto-analysis signals during seeding to prevent Ollama connection timeouts
+from django.db.models.signals import post_save
+from apps.support.signals import auto_analyze_on_create
+from apps.support.models import SupportRequest
+post_save.disconnect(auto_analyze_on_create, sender=SupportRequest)
+
 from django.db import connection
 from apps.accounts.models import User
 from apps.reports.models import Report
@@ -25,20 +31,21 @@ with connection.cursor() as cursor:
 print('Creating Users...')
 users = [
   ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'emmanuel.h', 'admin@su.rw', 'Emmanuel Habimana', 'administrator', 'Kigali City', 'Administration', 'National Director', '+250788001001', True, True, True),
+  ('99eebc99-9c0b-4ef8-bb6d-6bb9bd380a99', 'umugishaone', 'umugishaone@gmail.com', 'BUMUGISHA Neema', 'administrator', 'Kigali City', 'Administration', 'Administrator', '+250788001099', True, True, True),
   ('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'alice.m', 'alice@su.rw', 'Alice Mukamana', 'administrator', 'Kigali City', 'Finance', 'Finance Director', '+250788001002', True, False, True),
-  ('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'pierre.n', 'pierre@su.rw', 'Pierre Nkurunziza', 'national_manager', 'Northern Province', 'Field Operations', 'Regional Manager', '+250788001003', True, False, True),
-  ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'claudine.u', 'claudine@su.rw', 'Claudine Uwase', 'national_manager', 'Southern Province', 'Field Operations', 'Regional Manager', '+250788001004', True, False, True),
-  ('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55', 'john.m', 'john@su.rw', 'John Mugabo', 'national_manager', 'Eastern Province', 'Youth Ministry', 'Youth Director', '+250788001005', True, False, True),
-  ('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'jean.h', 'jean@su.rw', 'Jean Habimana', 'field_officer', 'Southern Province', 'Outreach', 'Field Staff', '+250788001006', True, False, False),
-  ('a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a77', 'marie.u', 'marie@su.rw', 'Marie Uwase', 'field_officer', 'Eastern Province', 'Youth Ministry', 'Youth Worker', '+250788001007', True, False, False),
-  ('b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a88', 'patrick.n', 'patrick@su.rw', 'Patrick Nkurunziza', 'field_officer', 'Kigali City', 'Administration', 'Admin Assistant', '+250788001008', True, False, False),
-  ('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a99', 'grace.u', 'grace@su.rw', 'Grace Uwimana', 'field_officer', 'Western Province', 'Field Operations', 'Field Staff', '+250788001009', True, False, False),
-  ('d1eebc99-9c0b-4ef8-bb6d-6bb9bd380aaa', 'david.k', 'david.k@su.rw', 'David Kagame', 'field_officer', 'Northern Province', 'Outreach', 'Community Worker', '+250788001010', False, False, False),
-  ('e1eebc99-9c0b-4ef8-bb6d-6bb9bd380abb', 'david.m', 'david.m@su.rw', 'David Mugabo', 'regional_coordinator', 'Western Province', 'Field Operations', 'Field Coordinator', '+250788001011', True, False, False),
-  ('f1eebc99-9c0b-4ef8-bb6d-6bb9bd380acc', 'sarah.u', 'sarah@su.rw', 'Sarah Uwitonze', 'regional_coordinator', 'Kigali City', 'Youth Ministry', 'Youth Coordinator', '+250788001012', True, False, False),
-  ('a2eebc99-9c0b-4ef8-bb6d-6bb9bd380add', 'peter.n', 'peter@su.rw', 'Peter Niyonshuti', 'regional_coordinator', 'Eastern Province', 'Field Operations', 'Field Coordinator', '+250788001013', True, False, False),
-  ('b2eebc99-9c0b-4ef8-bb6d-6bb9bd380aee', 'esther.m', 'esther@su.rw', 'Esther Mukamana', 'regional_coordinator', 'Northern Province', 'Youth Ministry', 'Youth Coordinator', '+250788001014', True, False, False),
-  ('c2eebc99-9c0b-4ef8-bb6d-6bb9bd380aff', 'joseph.h', 'joseph@su.rw', 'Joseph Habineza', 'regional_coordinator', 'Southern Province', 'Field Operations', 'Field Coordinator', '+250788001015', False, False, False),
+  ('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'pierre.n', 'pierre@su.rw', 'Pierre Nkurunziza', 'national_manager', 'Northern Province', 'Field Operations', 'National Manager', '+250788001003', True, False, True),
+  ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'claudine.u', 'claudine@su.rw', 'Claudine Uwase', 'national_manager', 'Southern Province', 'Field Operations', 'National Manager', '+250788001004', True, False, True),
+  ('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55', 'john.m', 'john@su.rw', 'John Mugabo', 'national_manager', 'Eastern Province', 'Youth Ministry', 'National Manager', '+250788001005', True, False, True),
+  ('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'jean.h', 'jean@su.rw', 'Jean Habimana', 'field_officer', 'Southern Province', 'Outreach', 'Field Officer', '+250788001006', True, False, False),
+  ('a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a77', 'marie.u', 'marie@su.rw', 'Marie Uwase', 'field_officer', 'Eastern Province', 'Youth Ministry', 'Field Officer', '+250788001007', True, False, False),
+  ('b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a88', 'patrick.n', 'patrick@su.rw', 'Patrick Nkurunziza', 'field_officer', 'Kigali City', 'Administration', 'Field Officer', '+250788001008', True, False, False),
+  ('c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a99', 'grace.u', 'grace@su.rw', 'Grace Uwimana', 'field_officer', 'Western Province', 'Field Operations', 'Field Officer', '+250788001009', True, False, False),
+  ('d1eebc99-9c0b-4ef8-bb6d-6bb9bd380aaa', 'david.k', 'david.k@su.rw', 'David Kagame', 'field_officer', 'Northern Province', 'Outreach', 'Field Officer', '+250788001010', False, False, False),
+  ('e1eebc99-9c0b-4ef8-bb6d-6bb9bd380abb', 'david.m', 'david.m@su.rw', 'David Mugabo', 'regional_coordinator', 'Western Province', 'Field Operations', 'Regional Coordinator', '+250788001011', True, False, False),
+  ('f1eebc99-9c0b-4ef8-bb6d-6bb9bd380acc', 'sarah.u', 'sarah@su.rw', 'Sarah Uwitonze', 'regional_coordinator', 'Kigali City', 'Youth Ministry', 'Regional Coordinator', '+250788001012', True, False, False),
+  ('a2eebc99-9c0b-4ef8-bb6d-6bb9bd380add', 'peter.n', 'peter@su.rw', 'Peter Niyonshuti', 'regional_coordinator', 'Eastern Province', 'Field Operations', 'Regional Coordinator', '+250788001013', True, False, False),
+  ('b2eebc99-9c0b-4ef8-bb6d-6bb9bd380aee', 'esther.m', 'esther@su.rw', 'Esther Mukamana', 'regional_coordinator', 'Northern Province', 'Youth Ministry', 'Regional Coordinator', '+250788001014', True, False, False),
+  ('c2eebc99-9c0b-4ef8-bb6d-6bb9bd380aff', 'joseph.h', 'joseph@su.rw', 'Joseph Habineza', 'regional_coordinator', 'Southern Province', 'Field Operations', 'Regional Coordinator', '+250788001015', False, False, False),
 ]
 
 for u in users:

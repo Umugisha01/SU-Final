@@ -56,15 +56,6 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen }) {
       </nav>
 
       <div className="sidebar-footer">
-        {!collapsed && user && (
-          <div className="user-info">
-            <div className="avatar" style={{ width: 32, height: 32, fontSize: '0.75rem' }}>{user.avatar}</div>
-            <div className="user-details">
-              <p className="user-name truncate">{user.name}</p>
-              <p className="user-role">{user.role}</p>
-            </div>
-          </div>
-        )}
         <button className="logout-btn btn btn-ghost btn-sm" onClick={handleLogout} title="Logout">
           <LogOut size={16} />
           {!collapsed && 'Logout'}

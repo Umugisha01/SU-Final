@@ -3,13 +3,16 @@
   top: 0;
   left: var(--sidebar-width);
   right: 0;
-  height: var(--header-height);
+  /* Top safe-area for iPhone notch / Dynamic Island */
+  padding-top: var(--sat);
+  height: calc(var(--header-height) + var(--sat));
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding-left: 24px;
+  padding-right: calc(24px + var(--sar));
   gap: 16px;
   z-index: 90;
   transition: left var(--transition-slow);
@@ -18,22 +21,60 @@
 
 .header.sidebar-collapsed { left: 68px; }
 
-.header-left { display: flex; align-items: center; gap: 16px; flex: 1; }
-.header-right { display: flex; align-items: center; gap: 8px; }
+.header-left { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; }
+.header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
+/* Mobile hamburger — hidden on desktop */
 .mobile-menu-btn { display: none; }
+
+/* ── Search bar expanding on mobile ────────── */
+.search-wrapper { position: relative; }
+.search-wrapper input { padding-left: 40px; }
+
+/* ── Responsive Header ─────────────────────── */
 @media (max-width: 768px) {
   .mobile-menu-btn { display: flex; }
-  .header { left: 0; padding: 0 12px; gap: 8px; }
-  .header-left { gap: 8px; }
-  .header-right { gap: 4px; }
-}
-@media (max-width: 480px) {
-  /* Hide search bar text on very small screens — show only icon */
-  .header .search-wrapper input { font-size: 0.8rem; }
+
+  .header {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding-left: calc(8px + var(--sal));
+    padding-right: calc(8px + var(--sar));
+    gap: 8px;
+    box-sizing: border-box !important;
+    overflow: hidden;
+  }
+
+  .header-left { gap: 8px; min-width: 0; flex: 1; }
+  .header-right { gap: 4px; flex-shrink: 0; }
+
+  /* Search bar grows, but compact on small screens */
+  .header-left .search-wrapper { flex: 1; min-width: 0; width: 100%; }
+  .header-left .search-wrapper input {
+    width: 100%;
+    min-width: 0;
+    font-size: 16px !important; /* No iOS auto-zoom */
+    padding-left: 34px !important;
+    text-overflow: ellipsis;
+  }
 }
 
-/* Notifications */
+@media (max-width: 480px) {
+  .header {
+    gap: 6px;
+    padding-left: calc(6px + var(--sal));
+    padding-right: calc(6px + var(--sar));
+  }
+
+  /* Hide search on very small screens — use inline search within pages instead */
+  .header-search-hide-xs {
+    display: none !important;
+  }
+}
+
+/* ── Notifications ─────────────────────────── */
 .notif-wrapper { position: relative; }
 .notif-btn { position: relative; }
 .notif-badge {
@@ -49,6 +90,7 @@
   align-items: center;
   justify-content: center;
   border: 2px solid var(--bg-card);
+  pointer-events: none;
 }
 
 .notif-dropdown {
@@ -70,10 +112,12 @@
   justify-content: space-between;
   padding: 16px 20px 12px;
   border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .notif-header h4 { font-size: 0.95rem; font-weight: 700; }
 
-.notif-list { max-height: 360px; overflow-y: auto; }
+.notif-list { max-height: 360px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
 .notif-item {
   display: flex;
@@ -84,6 +128,8 @@
   transition: background var(--transition);
   border-bottom: 1px solid var(--border-light);
   position: relative;
+  /* Touch target height */
+  min-height: 56px;
 }
 .notif-item:last-child { border-bottom: none; }
 .notif-item:hover { background: var(--bg-hover); }
@@ -96,16 +142,16 @@
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.notif-icon-wrap.type-report { background: #dbeafe; color: #1e40af; }
+.notif-icon-wrap.type-report   { background: #dbeafe; color: #1e40af; }
 .notif-icon-wrap.type-deadline { background: #fef3c7; color: #92400e; }
-.notif-icon-wrap.type-support { background: #dcfce7; color: #166534; }
-.notif-icon-wrap.type-prayer { background: #fce7f3; color: #9d174d; }
-.notif-icon-wrap.type-system { background: #f3f4f6; color: #374151; }
+.notif-icon-wrap.type-support  { background: #dcfce7; color: #166534; }
+.notif-icon-wrap.type-prayer   { background: #fce7f3; color: #9d174d; }
+.notif-icon-wrap.type-system   { background: #f3f4f6; color: #374151; }
 
 .notif-content { flex: 1; min-width: 0; }
 .notif-title { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
-.notif-msg { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
-.notif-time { font-size: 0.72rem; color: var(--text-light); margin-top: 4px; }
+.notif-msg   { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+.notif-time  { font-size: 0.72rem; color: var(--text-light); margin-top: 4px; }
 
 .unread-dot {
   width: 8px; height: 8px;
@@ -115,7 +161,14 @@
   margin-top: 4px;
 }
 
-/* User info */
+/* ── User info ──────────────────────────────── */
 .header-user { display: flex; align-items: center; gap: 10px; padding-left: 8px; border-left: 1px solid var(--border-light); }
-.header-user-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
-.header-user-role { font-size: 0.72rem; color: var(--primary); font-weight: 500; text-transform: capitalize; }
+.header-user-info { display: flex; flex-direction: column; }
+.header-user-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.header-user-role { font-size: 0.72rem; color: var(--primary); font-weight: 500; text-transform: capitalize; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  /* Hide user name/role text on small phones; keep avatar */
+  .header-user-info { display: none; }
+  .header-user { gap: 0; padding-left: 6px; border-left: none; }
+}

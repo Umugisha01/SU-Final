@@ -1,21 +1,34 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, FileText, Eye, Edit, CheckCircle, Clock, AlertCircle, RotateCcw, Download, Trash2 } from 'lucide-react';
+import { 
+  Plus, Search, Filter, FileText, Eye, Edit, CheckCircle, Clock, 
+  AlertCircle, RotateCcw, Download, Trash2, MapPin, Calendar, 
+  Users, SlidersHorizontal, ChevronDown, ChevronUp, CheckSquare, Square, X 
+} from 'lucide-react';
 import { ACTIVITY_TYPES, REGIONS } from '../../data/mockData';
 import { useAuth } from '../../contexts/AuthContext';
 import { reportService } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const STATUS_CONFIG = {
-  approved: { label: 'Approved', cls: 'badge-success', icon: CheckCircle },
+  approved: { label: 'Approved ★', cls: 'badge-success', icon: CheckCircle },
   submitted: { label: 'Submitted', cls: 'badge-info', icon: Clock },
-  submitted_to_coordinator: { label: 'Submitted to Coordinator', cls: 'badge-info', icon: Clock },
-  submitted_to_manager: { label: 'Submitted to Manager', cls: 'badge-info', icon: Clock },
+  submitted_to_coordinator: { label: 'Submitted', cls: 'badge-info', icon: Clock },
+  submitted_to_manager: { label: 'Submitted ★', cls: 'badge-info', icon: Clock },
   draft: { label: 'Draft', cls: 'badge-gray', icon: Edit },
   returned: { label: 'Returned', cls: 'badge-danger', icon: RotateCcw },
   returned_by_coordinator: { label: 'Returned by Coordinator', cls: 'badge-danger', icon: RotateCcw },
-  returned_by_manager: { label: 'Returned by Manager', cls: 'badge-danger', icon: RotateCcw },
+  returned_by_manager: { label: 'Returned by Manager ★', cls: 'badge-danger', icon: RotateCcw },
 };
+
+const UNIQUE_STATUSES = [];
+const seenLabels = new Set();
+for (const [k, v] of Object.entries(STATUS_CONFIG)) {
+  if (!seenLabels.has(v.label)) {
+    seenLabels.add(v.label);
+    UNIQUE_STATUSES.push({ key: k, ...v });
+  }
+}
 
 export default function ReportList() {
   const navigate = useNavigate();
@@ -29,6 +42,39 @@ export default function ReportList() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [view, setView] = useState('table');
+  const [selectedReportIds, setSelectedReportIds] = useState([]);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
+  const activeFilterCount = (filterStatus !== 'all' ? 1 : 0) +
+    (filterType !== 'all' ? 1 : 0) +
+    (filterRegion !== 'all' ? 1 : 0) +
+    (startDate || endDate ? 1 : 0);
+
+  const handleToggleSelectReport = (id) => {
+    setSelectedReportIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleShareSelected = async () => {
+    if (selectedReportIds.length === 0) return;
+    try {
+      const res = await reportService.share(selectedReportIds);
+      if (res.success) {
+        toast.success(res.message || `Successfully shared ${selectedReportIds.length} reports.`);
+        setSelectedReportIds([]);
+        reportService.list()
+          .then(setReports)
+          .catch(console.error);
+      } else {
+        toast.error(res.error || "Failed to share reports.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || "An error occurred while sharing reports.");
+    }
+  };
 
   useEffect(() => {
     reportService.list()
@@ -60,7 +106,11 @@ export default function ReportList() {
       const matchDesc = (r.description || '').toLowerCase().includes(s);
       if (!matchTitle && !matchSubmitter && !matchRegion && !matchType && !matchDept && !matchLocation && !matchDesc) return false;
     }
-    if (filterStatus !== 'all' && r.status !== filterStatus) return false;
+    if (filterStatus !== 'all') {
+      const filterLabel = STATUS_CONFIG[filterStatus]?.label;
+      const reportLabel = STATUS_CONFIG[r.status]?.label || r.status;
+      if (filterLabel !== reportLabel) return false;
+    }
     if (filterType !== 'all' && r.type !== filterType) return false;
     if (filterRegion !== 'all' && r.region !== filterRegion) return false;
     
@@ -454,81 +504,241 @@ export default function ReportList() {
         <button className="btn btn-primary" onClick={() => navigate('/reports/new')}><Plus size={16} />New Report</button>
       </div>
 
-      {/* Filters */}
-      <div className="card" style={{ marginBottom: 20 }}>
+      {/* Desktop Filters (>=768px) */}
+      <div className="card reports-filter-desktop" style={{ marginBottom: 20 }}>
         <div className="card-body" style={{ padding: '16px 20px' }}>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div className="search-wrapper" style={{ flex: 1, minWidth: 200 }}>
-              <Search size={16} className="search-icon" />
-              <input className="form-control" style={{ paddingLeft: 40 }} placeholder="Search reports..."
-                value={search} onChange={e => setSearch(e.target.value)} />
+          <div className="reports-filter-panel">
+            <div className="reports-filter-row-top">
+              <div className="search-wrapper reports-search-box">
+                <Search size={16} className="search-icon" />
+                <input className="form-control" style={{ paddingLeft: 40 }} placeholder="Search reports..."
+                  value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
+              <div className="reports-select-item">
+                <select className="form-control form-select" style={{ width: '100%' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                  <option value="all">All Status</option>
+                  {UNIQUE_STATUSES.map(v => <option key={v.key} value={v.key}>{v.label}</option>)}
+                </select>
+              </div>
+              <div className="reports-select-item">
+                <select className="form-control form-select" style={{ width: '100%' }} value={filterType} onChange={e => setFilterType(e.target.value)}>
+                  <option value="all">All Types</option>
+                  {ACTIVITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
+                <div className="reports-select-item">
+                  <select 
+                    className="form-control form-select" 
+                    style={{ width: '100%' }} 
+                    value={filterRegion} 
+                    onChange={e => setFilterRegion(e.target.value)}
+                    disabled={user?.role === 'regional_coordinator'}
+                  >
+                    {user?.role !== 'regional_coordinator' && <option value="all">All Regions</option>}
+                    {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
-            <select className="form-control form-select" style={{ width: 140 }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-              <option value="all">All Status</option>
-              {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-            </select>
-            <select className="form-control form-select" style={{ width: 150 }} value={filterType} onChange={e => setFilterType(e.target.value)}>
-              <option value="all">All Types</option>
-              {ACTIVITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-            {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
-              <select 
-                className="form-control form-select" 
-                style={{ width: 180 }} 
-                value={filterRegion} 
-                onChange={e => setFilterRegion(e.target.value)}
-                disabled={user?.role === 'regional_coordinator'}
-              >
-                {user?.role !== 'regional_coordinator' && <option value="all">All Regions</option>}
-                {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
-            )}
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>From:</span>
-              <input type="date" className="form-control" style={{ width: 130, fontSize: '0.78rem' }} 
-                value={startDate} onChange={e => setStartDate(e.target.value)} />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>To:</span>
-              <input type="date" className="form-control" style={{ width: 130, fontSize: '0.78rem' }} 
-                value={endDate} onChange={e => setEndDate(e.target.value)} />
-            </div>
-            {(startDate || endDate) && (
-              <button className="btn btn-ghost btn-sm" style={{ padding: '6px 8px' }} 
-                onClick={() => { setStartDate(''); setEndDate(''); }}>
-                <RotateCcw size={13} style={{ marginRight: 4 }} />Reset Dates
-              </button>
-            )}
+            <div className="reports-filter-row-bottom">
+              <div className="reports-date-box">
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>From:</span>
+                <input type="date" className="form-control" style={{ width: 140, fontSize: '0.78rem' }} 
+                  value={startDate} onChange={e => setStartDate(e.target.value)} />
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>To:</span>
+                <input type="date" className="form-control" style={{ width: 140, fontSize: '0.78rem' }} 
+                  value={endDate} onChange={e => setEndDate(e.target.value)} />
+                {(startDate || endDate) && (
+                  <button className="btn btn-ghost btn-sm" style={{ padding: '6px 8px' }} 
+                    onClick={() => { setStartDate(''); setEndDate(''); }}>
+                    <RotateCcw size={13} style={{ marginRight: 4 }} />Reset Dates
+                  </button>
+                )}
+              </div>
 
-            <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}><Download size={14} /> Export PDF</button>
-            {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
-              <button className="btn btn-secondary btn-sm" onClick={handleExportWord}><Download size={14} /> Export Word</button>
-            )}
-            <button className="btn btn-secondary btn-sm" onClick={handleExportExcel}><Download size={14} /> Export Excel</button>
+              <div className="reports-export-btns">
+                <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}><Download size={14} /> Export PDF</button>
+                {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
+                  <button className="btn btn-secondary btn-sm" onClick={handleExportWord}><Download size={14} /> Export Word</button>
+                )}
+                <button className="btn btn-secondary btn-sm" onClick={handleExportExcel}><Download size={14} /> Export Excel</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Mobile Filter Bar & Drawer (<768px) */}
+      <div className="reports-filter-mobile">
+        <div className="reports-mobile-top-bar">
+          <div className="search-wrapper" style={{ flex: 1 }}>
+            <Search size={16} className="search-icon" />
+            <input 
+              className="form-control" 
+              style={{ paddingLeft: 38 }} 
+              placeholder="Search reports..."
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+            />
+            {search && (
+              <button 
+                type="button" 
+                onClick={() => setSearch('')}
+                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4 }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <button 
+            className={`btn btn-secondary ${activeFilterCount > 0 ? 'active-filter' : ''}`}
+            style={{ padding: '0 12px', minWidth: 44, position: 'relative' }}
+            onClick={() => setShowMobileFilters(prev => !prev)}
+            aria-label="Toggle Filters"
+          >
+            <SlidersHorizontal size={16} />
+            {activeFilterCount > 0 && (
+              <span className="mobile-filter-badge">{activeFilterCount}</span>
+            )}
+          </button>
+          <button 
+            className="btn btn-secondary"
+            style={{ padding: '0 12px', minWidth: 44 }}
+            onClick={() => setShowExportMenu(prev => !prev)}
+            aria-label="Export Options"
+          >
+            <Download size={16} />
+          </button>
+        </div>
+
+        {/* Mobile Export Menu Dropdown */}
+        {showExportMenu && (
+          <div className="mobile-export-dropdown card">
+            <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border-light)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+              EXPORT DATA
+            </div>
+            <button className="mobile-export-item" onClick={() => { handleExportPDF(); setShowExportMenu(false); }}>
+              <Download size={14} /> Export as PDF Document
+            </button>
+            {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
+              <button className="mobile-export-item" onClick={() => { handleExportWord(); setShowExportMenu(false); }}>
+                <Download size={14} /> Export as Word (.doc)
+              </button>
+            )}
+            <button className="mobile-export-item" onClick={() => { handleExportExcel(); setShowExportMenu(false); }}>
+              <Download size={14} /> Export as Excel / CSV
+            </button>
+          </div>
+        )}
+
+        {/* Mobile Filter Drawer */}
+        {showMobileFilters && (
+          <div className="mobile-filter-sheet card">
+            <div className="mobile-filter-sheet-header">
+              <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Filter Reports</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowMobileFilters(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="mobile-filter-sheet-body">
+              <div className="form-group">
+                <label className="form-label">Activity Type</label>
+                <select className="form-control form-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
+                  <option value="all">All Types</option>
+                  {ACTIVITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
+                <div className="form-group">
+                  <label className="form-label">Region</label>
+                  <select 
+                    className="form-control form-select" 
+                    value={filterRegion} 
+                    onChange={e => setFilterRegion(e.target.value)}
+                    disabled={user?.role === 'regional_coordinator'}
+                  >
+                    {user?.role !== 'regional_coordinator' && <option value="all">All Regions</option>}
+                    {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label className="form-label">Date Range</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>From</span>
+                    <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>To</span>
+                    <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mobile-filter-sheet-footer">
+              <button 
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  setFilterType('all');
+                  if (user?.role !== 'regional_coordinator') setFilterRegion('all');
+                  setStartDate('');
+                  setEndDate('');
+                }}
+              >
+                Reset
+              </button>
+              <button 
+                className="btn btn-primary btn-sm"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Status Summary chips */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-        {Object.entries(STATUS_CONFIG).map(([k, v]) => {
-          const count = reports.filter(r => r.status === k).length;
+      <div className="support-chip-bar" style={{ marginBottom: 16 }}>
+        {UNIQUE_STATUSES.map(v => {
+          const count = reports.filter(r => (STATUS_CONFIG[r.status]?.label || r.status) === v.label).length;
           return (
-            <button key={k} className={`chip ${filterStatus === k ? 'active' : ''}`}
-              onClick={() => setFilterStatus(filterStatus === k ? 'all' : k)}>
+            <button key={v.key} className={`chip ${filterStatus === v.key ? 'active' : ''}`}
+              style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+              onClick={() => setFilterStatus(filterStatus === v.key ? 'all' : v.key)}>
               {v.label}: {count}
             </button>
           );
         })}
       </div>
 
-      {/* Table */}
-      <div className="card">
+      {/* Bulk Sharing Panel */}
+      {user?.role === 'regional_coordinator' && selectedReportIds.length > 0 && (
+        <div className="card" style={{ marginBottom: 16, background: 'var(--primary-50)', borderColor: 'var(--primary-200)' }}>
+          <div className="card-body" style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary-dark)' }}>
+              {selectedReportIds.length} report(s) selected
+            </span>
+            <button className="btn btn-primary btn-sm" onClick={handleShareSelected}>
+              Share to National Manager
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Table View (>=768px) */}
+      <div className="card desktop-reports-table">
         <div className="table-wrapper">
           <table className="table">
             <thead>
               <tr>
+                {user?.role === 'regional_coordinator' && <th>Select</th>}
                 <th>Report Title</th>
                 <th>Type</th>
                 <th>Region</th>
@@ -541,9 +751,9 @@ export default function ReportList() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px' }}>Loading reports from database...</td></tr>
+                <tr><td colSpan={user?.role === 'regional_coordinator' ? 9 : 8} style={{ textAlign: 'center', padding: '40px' }}>Loading reports from database...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8}>
+                <tr><td colSpan={user?.role === 'regional_coordinator' ? 9 : 8}>
                   <div className="empty-state">
                     <FileText size={40} className="empty-state-icon" />
                     <h3>No Reports Found</h3>
@@ -553,15 +763,30 @@ export default function ReportList() {
                 </td></tr>
               ) : filtered.map(r => (
                 <tr key={r.id}>
-                  <td>
+                  {user?.role === 'regional_coordinator' && (
+                    <td data-label="Select" style={{ textAlign: 'center' }}>
+                      {r.status === 'submitted_to_coordinator' && (
+                        r.recipients && r.recipients.some(recip => recip.role === 'national_manager') ? (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Shared</span>
+                        ) : (
+                          <input 
+                            type="checkbox" 
+                            checked={selectedReportIds.includes(r.id)} 
+                            onChange={() => handleToggleSelectReport(r.id)} 
+                          />
+                        )
+                      )}
+                    </td>
+                  )}
+                  <td data-label="Report Title">
                     <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{r.title}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{Array.isArray(r.attachments) ? r.attachments.length : (r.attachments || 0)} attachments</div>
                   </td>
-                  <td><span className="chip" style={{ cursor: 'default' }}>{r.type}</span></td>
-                  <td style={{ fontSize: '0.82rem' }}>{r.region}</td>
-                  <td style={{ fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{r.date}</td>
-                  <td style={{ fontWeight: 600 }}>{r.participants.toLocaleString()}</td>
-                  <td>
+                  <td data-label="Type"><span className="chip" style={{ cursor: 'default' }}>{r.type}</span></td>
+                  <td data-label="Region" style={{ fontSize: '0.82rem' }}>{r.region}</td>
+                  <td data-label="Date" style={{ fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{r.date}</td>
+                  <td data-label="Participants" style={{ fontWeight: 600 }}>{r.participants.toLocaleString()}</td>
+                  <td data-label="Submitted By">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div className="avatar" style={{ width: 28, height: 28, fontSize: '0.65rem' }}>
                         {r.submittedBy.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -569,8 +794,8 @@ export default function ReportList() {
                       <span style={{ fontSize: '0.82rem' }}>{r.submittedBy}</span>
                     </div>
                   </td>
-                  <td><StatusBadge status={r.status} /></td>
-                  <td>
+                  <td data-label="Status"><StatusBadge status={r.status} /></td>
+                  <td data-label="Actions">
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button className="btn btn-ghost btn-icon btn-sm" title="View" onClick={() => navigate(`/reports/${r.id}`)}>
                         <Eye size={15} />
@@ -597,6 +822,116 @@ export default function ReportList() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Card-Based Reports View (<768px) */}
+      <div className="mobile-reports-container">
+        {loading ? (
+          <div className="empty-state card" style={{ padding: '40px 16px' }}>
+            <div style={{ animation: 'spin 1s linear infinite', fontSize: '2rem', marginBottom: 10 }}>⏳</div>
+            <p>Loading activity reports...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="empty-state card" style={{ padding: '40px 16px' }}>
+            <FileText size={38} className="empty-state-icon" />
+            <h3 style={{ marginTop: 10 }}>No Reports Found</h3>
+            <p>Try clearing filters or search terms.</p>
+            <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => navigate('/reports/new')}>
+              <Plus size={16} /> New Report
+            </button>
+          </div>
+        ) : (
+          <div className="mobile-reports-list">
+            {filtered.map(r => {
+              const isSelected = selectedReportIds.includes(r.id);
+              const isSelectable = user?.role === 'regional_coordinator' && r.status === 'submitted_to_coordinator' &&
+                !(r.recipients && r.recipients.some(recip => recip.role === 'national_manager'));
+              const attachmentCount = Array.isArray(r.attachments) ? r.attachments.length : (r.attachments || 0);
+
+              return (
+                <div key={r.id} className={`mobile-report-card ${isSelected ? 'selected' : ''}`}>
+                  <div className="mobile-report-card-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className="chip chip-sm" style={{ fontWeight: 600, fontSize: '0.72rem' }}>{r.type}</span>
+                      {isSelectable && (
+                        <button 
+                          type="button" 
+                          className="mobile-card-select-btn"
+                          onClick={() => handleToggleSelectReport(r.id)}
+                          aria-label="Select report"
+                        >
+                          {isSelected ? <CheckSquare size={17} color="var(--primary)" /> : <Square size={17} color="var(--text-muted)" />}
+                        </button>
+                      )}
+                    </div>
+                    <StatusBadge status={r.status} />
+                  </div>
+
+                  <h3 className="mobile-report-title" onClick={() => navigate(`/reports/${r.id}`)}>
+                    {r.title}
+                  </h3>
+
+                  <div className="mobile-report-meta-row">
+                    <span className="mobile-meta-item">
+                      <MapPin size={12} /> {r.region}
+                    </span>
+                    <span className="mobile-meta-item">
+                      <Calendar size={12} /> {r.date}
+                    </span>
+                    {attachmentCount > 0 && (
+                      <span className="mobile-meta-item">
+                        📎 {attachmentCount} file{attachmentCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mobile-report-stats-row">
+                    <div className="mobile-stat-pill">
+                      <Users size={13} />
+                      <span><strong>{r.participants.toLocaleString()}</strong> reach</span>
+                    </div>
+                    <div className="mobile-submitter-pill">
+                      <div className="avatar" style={{ width: 22, height: 22, fontSize: '0.62rem' }}>
+                        {r.submittedBy.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <span className="mobile-submitter-name truncate">{r.submittedBy}</span>
+                    </div>
+                  </div>
+
+                  <div className="mobile-report-card-footer">
+                    <button 
+                      className="btn btn-primary btn-sm mobile-action-btn-primary" 
+                      onClick={() => navigate(`/reports/${r.id}`)}
+                    >
+                      <Eye size={14} /> View Details
+                    </button>
+                    <div className="mobile-action-btn-group">
+                      {['draft', 'returned'].includes(r.status) && (
+                        <button 
+                          className="btn btn-ghost btn-icon btn-sm" 
+                          title="Edit"
+                          onClick={() => navigate(`/reports/${r.id}/edit`)}
+                        >
+                          <Edit size={15} />
+                        </button>
+                      )}
+                      {(r.submittedBy === user?.name || r.submitted_by?.id === user?.id || user?.role === 'administrator') && (
+                        <button 
+                          className="btn btn-ghost btn-icon btn-sm" 
+                          style={{ color: 'var(--danger)' }}
+                          title="Delete" 
+                          onClick={() => handleDeleteReport(r.id, r.title)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

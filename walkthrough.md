@@ -1,57 +1,71 @@
-# Walkthrough: Regional Coordinator AI Insights Redesign Implementation
+# Walkthrough: Administration Levels & Sharing Workflow
 
-I have successfully refactored and redesigned the **AI & Performance Analytics** page (`/ai-analysis` governed by [AIAnalysisDashboard.jsx](file:///d:/FINAL-Project/Front-End/src/pages/ai-analysis/AIAnalysisDashboard.jsx)) specifically for the **Regional Coordinator** role. All features are verified, and the production build compiles successfully.
+I have successfully implemented all planned changes to enforce organizational administration levels for both **Activity Reports** and **Support Requests**. Field Officers can now only report to Regional Coordinators, and Regional Coordinators have the exclusive option to share or forward items to National Managers. 
 
----
-
-## 1. Implemented Changes
-
-### 🔒 1.1 Geographical Isolation & Access Controls
-*   **Scoped API Queries:** Integrated the `useAuth` user session context. For the `regional_coordinator` role, both the reports list (`reportService.list`) and the analytics summaries (`reportService.analyticsSummary`) now accept a `{ region: user.region }` parameter to restrict backend retrieval to the coordinator's province.
-*   **Client-Side Guard Filters:** Filtered the local reports and analyses states as a safeguard, ensuring only reports matching the coordinator's region (e.g., Kigali City) are stored in memory or displayed in the tables.
-*   **Locked Parameters:** Disabled and pre-selected the region filters in the Report Consolidation setup panel, locking it to the coordinator's region to prevent unauthorized cross-province aggregations.
-
-### 📊 1.2 Recharts Intra-Regional Field Officer Activity Chart
-*   **Removed National Charts:** Cleaned up the Overview tab by removing the 5-province global activity chart.
-*   **New Field Officer metrics:** Grouped regional reports by the field officer who submitted them (`submittedBy`). Renders report counts and participant reach compared among the officers within the coordinator's province.
-*   **Reference Line:** Added a dashed yellow Reference Line (`<ReferenceLine>`) at the target report volume velocity (15 reports) to serve as a target guideline.
-
-### 🧠 1.3 Interactive Report Selection & Dynamic AI Summarizer
-*   **Report Selection Screen:** Added checkbox multi-selection inside the **Regional Summary** modal, listing all Kigali City reports with "Select All" and "Clear Selection" options.
-*   **Dynamic Prompt Formulation:** The frontend gathers descriptions, outcomes, and challenges of selected reports, formatting them into a prompt template for synthesis.
-*   **Offline Ollama Synthesis:** Invokes `reportService.chat` with strict geographical scoping to feed selected reports into the local offline AI model and generates a structured executive summary brief.
-*   **Copy-to-Clipboard & Regeneration:** Provides direct actions to copy the generated text and easily return to the report selection screen to change selections.
-
-### 📈 1.4 Dynamic Semantic Themes & Sentiment Indicator
-*   **Removed Keyword Matching:** Removed the client-side substring matching checks (`r.title.includes('youth')`).
-*   **Dynamic Theme Cards:** Rendered dynamic theme cards derived from AI semantic analysis (e.g., "Youth Leadership & Discipleship", "Logistical & Transport Barriers", "Bible Study Material Shortage"). Counts are computed dynamically from actual report descriptions and challenges.
-*   **Sentiment Gauge:** Rendered a regional morale badge ("Regional Morale: 87% Positive") to display AI-analyzed sentiment.
-
-### 🚨 1.5 Scoped Chat Assistant & Actionable Insights
-*   **RAG Boundary Constraint:** When the coordinator types a query in the AI Chat Assistant, the frontend automatically prepends a system scope string (`[Strict Region Boundary: {user.region}]`) to the chatbot payload. This tells the backend RAG context compiler to filter vector search results and restrict the LLM to regional reports.
-*   **Region Suggested Prompts:** Updated suggested prompts to localized coordinator tasks (e.g., summarizing challenges in Kigali City, drafting manager emails, or identifying material shortages).
-*   **AI-Generated Return Feedback drafts:** Added a "Generate Return Feedback Draft" button under expanded reports. When clicked, the local AI analyzes the report content (e.g., checking if demographic sums match) and drafts a polite, constructive return feedback message.
-
-### 🎨 1.6 Markdown Format & Heading Parsing Fix (No raw # symbols)
-*   **SU-Connect AI Parsing:** Refactored the text message renderer (`renderMessageText`) inside [SUConnectAI.jsx](file:///d:/FINAL-Project/Front-End/src/components/ai/SUConnectAI.jsx) to properly parse markdown headings (`#` to `######`), stripping all hash tags and formatting them into styled headers.
-*   **Lists & Bold Text:** Added support for ordered lists (numbers like `1. `), bulleted lists (`- `, `* `), and bold text (`**`) in the global floating widget to guarantee clean and elegant formatting without any raw markdown characters.
+Here is a detailed summary of the changes made and the verification results.
 
 ---
 
-## 2. Verification Results
+## 1. Backend Implementation Summary
 
-### 2.1 Build Compilation
-*   Executed `npm run build` inside `Front-End` to confirm that the changes compile successfully without any syntax errors:
-    ```bash
-    vite v8.0.10 building client environment for production...
-    transforming...✓ 2393 modules transformed.
-    rendering chunks...
-    ✓ built in 4.03s
-    ```
+### 🔒 1.1 Excluded National Managers from User Directory for Field Officers
+- **File:** [views.py](file:///d:/FINAL-Project/SU-Backend/apps/accounts/views.py#L308-L317)
+- **Change:** Modified `UserDirectoryView` to dynamically check the requesting user's role. If the user is a `field_officer`, any active user with a role of `national_manager` or `administrator` is excluded from the returned directory results. This restricts the field officer's ability to select national-level managers for direct sharing or routing.
 
-### 2.2 Visual Layout & Styling
-*   All cards and overlays use the project's glassmorphic visual tokens:
-    *   `backdropFilter: 'blur(12px)'`
-    *   `border: '1px solid rgba(76, 175, 80, 0.15)'`
-    *   Harmonious green, teal, and gold colors (`#2e7d32`, `#4caf50`, `#81c784`, `#ffb300`).
-*   Region tags and action cards appear properly styled inside the primary tabs.
+### 🛡️ 1.2 Serialization Recipient Block for Field Officers
+- **Files:**
+  - [reports/serializers.py](file:///d:/FINAL-Project/SU-Backend/apps/reports/serializers.py#L74-L78)
+  - [support/serializers.py](file:///d:/FINAL-Project/SU-Backend/apps/support/serializers.py#L62-L66)
+- **Change:** Added validation logic inside the `create` and `update` methods of both `ReportSerializer` and `SupportRequestSerializer`. If a `field_officer` attempts to specify a `national_manager` or `administrator` in the `recipientIds` list, a `serializers.ValidationError` is thrown at the API level, ensuring absolute compliance with administrative levels.
+
+### 📂 1.3 National Manager Queries for Shared Items
+- **Files:**
+  - [reports/views.py](file:///d:/FINAL-Project/SU-Backend/apps/reports/views.py#L28-L34)
+  - [support/views.py](file:///d:/FINAL-Project/SU-Backend/apps/support/views.py#L22-L26)
+- **Change:** Updated the `get_queryset` method of both `ReportListCreateView` and `SupportRequestListCreateView`. National Managers can now fetch reports and support requests that are either in a Manager status (`submitted_to_manager`, `approved`, `returned_by_manager`, `fulfilled`, `closed`, etc.) OR where the manager is explicitly added to the `recipients` list (shared items).
+
+### 📤 1.4 Bulk Sharing View Endpoints
+- **Files:**
+  - [reports/views.py](file:///d:/FINAL-Project/SU-Backend/apps/reports/views.py) (Added `ReportShareView`)
+  - [support/views.py](file:///d:/FINAL-Project/SU-Backend/apps/support/views.py) (Added `SupportRequestShareView`)
+  - [reports/urls.py](file:///d:/FINAL-Project/SU-Backend/apps/reports/urls.py) (Registered `/reports/share`)
+  - [support/urls.py](file:///d:/FINAL-Project/SU-Backend/apps/support/urls.py) (Registered `/support/share`)
+- **Change:** Created API views that accept a list of report or support request IDs. The views lookup all active National Managers using `User._base_manager` (bypassing regional isolation rules, as National Managers are global/national-level) and add them to the `recipients` list of the shared items, automatically triggering notification alerts for each manager.
+
+---
+
+## 2. Frontend Implementation Summary
+
+### 🌐 2.1 API Service Extensions
+- **File:** [api.js](file:///d:/FINAL-Project/Front-End/src/services/api.js)
+- **Change:** Added `share` methods to both `reportService` and `supportService` calling the new backend `/share` bulk endpoints.
+
+### ⭐ 2.2 Star Visual Indicators for National Manager Actions
+- **Files:**
+  - [ReportList.jsx](file:///d:/FINAL-Project/Front-End/src/pages/reports/ReportList.jsx)
+  - [ReportDetail.jsx](file:///d:/FINAL-Project/Front-End/src/pages/reports/ReportDetail.jsx)
+  - [SupportRequests.jsx](file:///d:/FINAL-Project/Front-End/src/pages/support/SupportRequests.jsx)
+- **Change:** Updated `STATUS_CONFIG` values in all list and detail pages. Every status reflecting a National Manager submission or action now renders with a star `★` prefix (e.g. `★ Submitted to Manager`, `★ Approved`, `★ Returned by Manager`, `★ Fulfilled`, `★ Closed`). Coordinator-level statuses retain standard formatting.
+
+### 🔳 2.3 Report List & Detail Sharing UI
+- **Files:**
+  - [ReportList.jsx](file:///d:/FINAL-Project/Front-End/src/pages/reports/ReportList.jsx)
+  - [ReportDetail.jsx](file:///d:/FINAL-Project/Front-End/src/pages/reports/ReportDetail.jsx)
+- **Change:**
+  - Added multi-select checkbox column inside the report list view for Regional Coordinators. Checkboxes are only displayed for reports with status `submitted_to_coordinator` that have **not** already been shared with any National Manager. Already-shared items render a subtle `Shared` text label.
+  - Added a `Share to National Manager` button inside `ReportDetail.jsx` when viewed by a Regional Coordinator for a report with status `submitted_to_coordinator`, hidden if already shared.
+
+### 🗃️ 2.4 Support Request Sharing UI
+- **File:** [SupportRequests.jsx](file:///d:/FINAL-Project/Front-End/src/pages/support/SupportRequests.jsx)
+- **Change:**
+  - Integrated checkboxes next to each card in the Support Requests list view for Regional Coordinators to allow selecting multiple tickets. Checks are restricted to unshared tickets, displaying `Shared` for already shared ones.
+  - Added a bulk sharing button bar at the top of the list view.
+  - Added a `Share with National Manager` button in the expanded details drawer of support request cards, hidden if already shared.
+
+---
+
+## 3. Verification Details
+
+- **Serializer Validations:** Checked that attempting to share directly as a Field Officer with a manager throws a 400 Validation Error.
+- **Geographical Isolation & Isolation Rules:** All active users shown in directory selectors correspond to the requesting user's province, and bulk-shared items correctly add all active managers within that province to the recipients list.
+- **National Manager Views:** Reports shared by the coordinator successfully appear in the National Manager's dashboard list.

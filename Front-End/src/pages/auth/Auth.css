@@ -1,6 +1,11 @@
 .auth-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
+  /* Respect safe areas on iOS notched devices */
+  padding-top: var(--sat);
+  padding-left: var(--sal);
+  padding-right: var(--sar);
 }
 
 .auth-left {
@@ -11,6 +16,7 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .auth-left::before {
@@ -69,7 +75,9 @@
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
+  padding-bottom: calc(40px + var(--sab));
   background: var(--bg-main);
+  min-width: 0;
 }
 
 .auth-card {
@@ -88,8 +96,9 @@
   background: none; border: none;
   cursor: pointer;
   color: var(--text-muted);
-  padding: 4px;
-  display: flex;
+  /* Touch target */
+  min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
 }
 .pw-toggle:hover { color: var(--primary); }
 
@@ -106,7 +115,7 @@
 .demo-creds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .demo-btn {
   display: flex; flex-direction: column; gap: 2px;
-  padding: 10px 12px;
+  padding: 12px;
   border-radius: var(--radius);
   border: 1.5px solid var(--border);
   background: var(--bg-input);
@@ -114,6 +123,7 @@
   transition: all var(--transition);
   text-align: left;
   font-family: inherit;
+  min-height: 56px;
 }
 .demo-btn:hover {
   border-color: var(--demo-color);
@@ -126,10 +136,16 @@
 .stepper {
   display: flex; align-items: center; gap: 0;
   margin-bottom: 32px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.stepper::-webkit-scrollbar { display: none; }
+
 .step {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   flex: 1;
+  min-width: 60px;
   position: relative;
 }
 .step:not(:last-child)::after {
@@ -166,6 +182,7 @@
   cursor: pointer;
   transition: all var(--transition);
   text-align: center;
+  min-height: 80px;
 }
 .role-card:hover { border-color: var(--primary); background: var(--primary-50); }
 .role-card.selected { border-color: var(--primary); background: var(--primary-50); box-shadow: 0 0 0 3px rgba(46,125,50,0.1); }
@@ -176,12 +193,55 @@
 .pw-strength { height: 4px; border-radius: 4px; background: var(--border); margin-top: 8px; overflow: hidden; }
 .pw-strength-fill { height: 100%; border-radius: 4px; transition: all 0.4s ease; }
 
-@media (max-width: 768px) {
-  .auth-left { display: none; }
-  .auth-right { padding: 24px 16px; }
+/* ── Tablet (≤900px) ─ Hide sidebar branding, narrower left panel ─ */
+@media (max-width: 900px) {
+  .auth-left { width: 300px; padding: 32px 24px; }
+  .auth-left .auth-feature-list { display: none; }
+  .auth-brand h1 { font-size: 1.5rem; }
 }
 
+/* ── Mobile (≤768px) ─ Hide left panel, full-screen form ───────── */
+@media (max-width: 768px) {
+  .auth-page {
+    flex-direction: column;
+    /* Remove left safe area for full-bleed layout */
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .auth-left { display: none; }
+  .auth-right {
+    padding: 28px 20px;
+    padding-top: calc(28px + var(--sat));
+    padding-bottom: calc(28px + var(--sab));
+    min-height: 100dvh;
+    align-items: flex-start;
+  }
+  .auth-card { max-width: 100%; }
+  .auth-card-header h2 { font-size: 1.4rem; }
+
+  /* Enforce 16px on inputs to stop iOS Safari auto-zoom */
+  .auth-right input,
+  .auth-right select,
+  .auth-right textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ── Small mobile (≤480px) ─ Compact single-column ─────────────── */
 @media (max-width: 480px) {
+  .auth-right { padding: 20px 16px; padding-bottom: calc(20px + var(--sab)); }
   .demo-creds { grid-template-columns: 1fr; }
   .role-cards { grid-template-columns: 1fr; }
+  .auth-card-header h2 { font-size: 1.25rem; }
+  .auth-card-header p { font-size: 0.82rem; }
+  .step-label { font-size: 0.62rem; }
+}
+
+/* ── Ultra-small (≤374px) ──────────────────────────────────────── */
+@media (max-width: 374px) {
+  .auth-right { padding: 14px 12px; }
+  .auth-card-header h2 { font-size: 1.1rem; }
+  .demo-btn { padding: 10px; }
+  .role-card { padding: 12px; }
+  .role-card-icon { font-size: 1.6rem; }
 }

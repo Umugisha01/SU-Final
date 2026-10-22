@@ -4,7 +4,7 @@ from apps.support.views import (
     SupportRequestStatusView, SupportRequestAssignView, AddSupportCommentView,
     SupportRequestAIAnalyzeView, SupportRequestBatchAIAnalyzeView,
     SupportRequestAITaskStatusView, SupportRequestAISuggestView,
-    SupportRequestConsolidateView
+    SupportRequestConsolidateView, SupportRequestShareView
 )
 
 urlpatterns = [
@@ -13,6 +13,7 @@ urlpatterns = [
     path('<int:id>/status', SupportRequestStatusView.as_view(), name='support_status'),
     path('<int:id>/assign', SupportRequestAssignView.as_view(), name='support_assign'),
     path('<int:id>/comments', AddSupportCommentView.as_view(), name='support_comment'),
+    path('share', SupportRequestShareView.as_view(), name='support_share'),
     
     # AI Priority endpoints
     path('<int:pk>/ai-analyze', SupportRequestAIAnalyzeView.as_view(), name='support-ai-analyze'),

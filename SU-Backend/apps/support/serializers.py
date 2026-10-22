@@ -62,6 +62,8 @@ class SupportRequestSerializer(serializers.ModelSerializer):
         if recipient_ids:
             from apps.accounts.models import User
             recips = User.objects.filter(id__in=recipient_ids)
+            if user.role == 'field_officer' and recips.filter(role__in=['national_manager', 'administrator']).exists():
+                raise serializers.ValidationError({"recipientIds": "Field officers cannot share support requests directly with National Managers or Administrators."})
             support_request.recipients.set(recips)
             
             # Notify recipients
@@ -91,6 +93,9 @@ class SupportRequestSerializer(serializers.ModelSerializer):
         if recipient_ids is not None:
             from apps.accounts.models import User
             recips = User.objects.filter(id__in=recipient_ids)
+            user = self.context['request'].user
+            if user.role == 'field_officer' and recips.filter(role__in=['national_manager', 'administrator']).exists():
+                raise serializers.ValidationError({"recipientIds": "Field officers cannot share support requests directly with National Managers or Administrators."})
             instance.recipients.set(recips)
             
         return instance

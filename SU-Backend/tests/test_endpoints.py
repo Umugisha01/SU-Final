@@ -103,3 +103,113 @@ class TestAIEndpoints:
         assert res.data["reply"] == "Hello from mocked AI assistant!"
         assert res.data["citations"] == []
         mock_chat.assert_called_once_with(self.user, "Hello AI", [], [])
+
+
+@pytest.mark.django_db
+class TestAdministrationLevelsEndpoints:
+    def setup_method(self):
+        self.client = APIClient()
+        self.field_officer = User.objects.create_user(
+            email="fo_test@su.org",
+            password="Password123!",
+            name="Field Officer Test",
+            role="field_officer",
+            region="Kigali City",
+            department="Youth Ministry",
+            position="Officer"
+        )
+        self.manager = User.objects.create_user(
+            email="manager_test@su.org",
+            password="Password123!",
+            name="Manager Test",
+            role="national_manager",
+            region="Kigali City",
+            department="Youth Ministry",
+            position="Manager"
+        )
+        self.coordinator = User.objects.create_user(
+            email="coordinator_test@su.org",
+            password="Password123!",
+            name="Coordinator Test",
+            role="regional_coordinator",
+            region="Kigali City",
+            department="Youth Ministry",
+            position="Coordinator"
+        )
+
+    def test_field_officer_cannot_add_manager_as_recipient_report(self):
+        self.client.force_authenticate(user=self.field_officer)
+        url = reverse('report_list_create')
+        data = {
+            "title": "Kigali Outreach Report",
+            "type": "Outreach",
+            "region": "Kigali City",
+            "department": "Youth Ministry",
+            "date": "2025-06-01",
+            "description": "Activity outreach report description that is long enough.",
+            "recipientIds": [str(self.manager.id)]
+        }
+        res = self.client.post(url, data, format='json')
+        assert res.status_code == 400
+
+    def test_field_officer_cannot_add_manager_as_recipient_support(self):
+        self.client.force_authenticate(user=self.field_officer)
+        url = reverse('support_list_create')
+        data = {
+            "title": "Equipment Request",
+            "type": "Material",
+            "description": "Need basic training materials and workbooks for Eastern province.",
+            "priority": "medium",
+            "recipientIds": [str(self.manager.id)]
+        }
+        res = self.client.post(url, data, format='json')
+        assert res.status_code == 400
+
+    def test_user_directory_excludes_managers_for_field_officer(self):
+        self.client.force_authenticate(user=self.field_officer)
+        url = reverse('user_directory')
+        res = self.client.get(url, format='json')
+        assert res.status_code == 200
+        roles = [u['role'] for u in res.data['data']]
+        assert 'national_manager' not in roles
+        assert 'administrator' not in roles
+
+    def test_share_reports(self):
+        from apps.reports.models import Report
+        self.client.force_authenticate(user=self.coordinator)
+        report = Report.objects.create(
+            title="Kigali Outreach Report 2",
+            type="Outreach",
+            region="Kigali City",
+            department="Youth Ministry",
+            date="2025-06-01",
+            description="Activity outreach report description that is long enough.",
+            submitted_by=self.field_officer,
+            status="submitted_to_coordinator"
+        )
+        url = reverse('report_share')
+        data = {
+            "reportIds": [report.id]
+        }
+        res = self.client.post(url, data, format='json')
+        assert res.status_code == 200
+        assert res.data["success"] is True
+
+    def test_share_support(self):
+        from apps.support.models import SupportRequest
+        self.client.force_authenticate(user=self.coordinator)
+        req = SupportRequest.objects.create(
+            title="Equipment Request 2",
+            category="Equipment",
+            description="Need basic training materials and workbooks for Eastern province.",
+            urgency="medium",
+            requester=self.field_officer,
+            status="submitted_to_coordinator"
+        )
+        url = reverse('support_share')
+        data = {
+            "requestIds": [req.id]
+        }
+        res = self.client.post(url, data, format='json')
+        assert res.status_code == 200
+        assert res.data["success"] is True

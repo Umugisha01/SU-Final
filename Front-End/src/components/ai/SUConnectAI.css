@@ -324,26 +324,88 @@
   to   { opacity: 1; }
 }
 
-/* ── Mobile: fullscreen chat overlay ─────────────────────────── */
-@media (max-width: 480px) {
+/* ── Mobile: full-screen AI chat overlay ──────────────────────── */
+@media (max-width: 600px) {
+  /* Sit above the mobile bottom nav bar */
   .su-ai-widget {
-    bottom: 16px;
-    right: 16px;
+    bottom: calc(var(--mobile-nav-height) + var(--sab) + 12px);
+    right: calc(16px + var(--sar));
   }
 
+  /* Full-viewport panel — no clipping on small phones */
   .su-ai-panel {
-    position: fixed;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    z-index: 10000 !important;
+    transform-origin: bottom right;
     bottom: 0;
     right: 0;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100dvh;        /* dynamic viewport height avoids address-bar gaps */
-    max-height: none;
+  }
+
+  /* Respect status bar / notch at the top */
+  .su-ai-header {
+    padding-top: calc(16px + var(--sat));
     border-radius: 0;
-    transform-origin: bottom right;
+  }
+
+  /* Messages area fills remaining space */
+  .su-ai-messages {
+    flex: 1;
+    padding: 12px 14px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Input form respects home-bar safe area */
+  .su-ai-input-form {
+    padding: 10px 14px calc(10px + var(--sab));
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+  }
+
+  /* CRITICAL: prevent iOS Safari auto-zoom when tapping the chat input */
+  .su-ai-input-form input {
+    font-size: 16px !important;
+  }
+
+  /* Suggestions scroll horizontally instead of vertically */
+  .su-ai-suggestions {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    max-height: none;
+    padding: 10px 14px;
+    gap: 8px;
+    scrollbar-width: none;
+  }
+  .su-ai-suggestions::-webkit-scrollbar { display: none; }
+
+  .su-ai-chip {
+    flex-shrink: 0;
+    width: auto;
+    white-space: nowrap;
+    font-size: 0.72rem;
+    padding: 6px 10px;
   }
 }
+
+/* Very small phones — minimal trigger button */
+@media (max-width: 374px) {
+  .su-ai-trigger {
+    width: 48px;
+    height: 48px;
+  }
+  .su-ai-widget {
+    right: calc(10px + var(--sar));
+  }
+}
+
 
 .su-ai-suggestions {
   display: flex;
@@ -464,5 +526,29 @@
   background: rgba(46, 125, 50, 0.1);
   color: #2e7d32;
   font-weight: 700;
+}
+
+/* ── Mobile AI Assistant Positioning & Dimensions (≤768px) ── */
+@media (max-width: 768px) {
+  .su-ai-widget {
+    bottom: calc(var(--mobile-nav-height) + var(--sab) + 14px);
+    right: 14px;
+  }
+
+  .su-ai-trigger {
+    width: 48px;
+    height: 48px;
+    box-shadow: 0 4px 16px rgba(46, 125, 50, 0.35);
+  }
+
+  .su-ai-panel {
+    position: fixed;
+    inset: auto 8px calc(var(--mobile-nav-height) + var(--sab) + 68px) 8px;
+    width: auto;
+    max-width: calc(100vw - 16px);
+    height: min(520px, calc(100dvh - var(--mobile-nav-height) - var(--header-height) - 40px));
+    border-radius: var(--radius-xl);
+    box-sizing: border-box;
+  }
 }
 

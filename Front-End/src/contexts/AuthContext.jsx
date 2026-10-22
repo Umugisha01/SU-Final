@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
         role: data.role || 'field_officer',
         region: data.region || 'Kigali City',
         department: data.department || 'Outreach',
-        position: data.position || 'Field Coordinator',
+        position: data.position || 'Field Officer',
         phone: data.phone || '',
         location: data.location || '',
       };

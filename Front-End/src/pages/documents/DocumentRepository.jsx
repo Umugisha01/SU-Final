@@ -258,9 +258,25 @@ export default function DocumentRepository() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 20 }}>
+      {/* Mobile Folder Pill Carousel (<768px) */}
+      <div className="doc-mobile-folder-carousel">
+        {FOLDERS.map(f => (
+          <button
+            key={f.name}
+            type="button"
+            className={`doc-folder-pill ${activeFolder === f.name ? 'active' : ''}`}
+            onClick={() => setActiveFolder(f.name)}
+          >
+            <FolderOpen size={13} />
+            <span>{f.name}</span>
+            <span className="doc-pill-count">{getFolderCount(f.name)}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="doc-repo-layout">
         {/* Sidebar Folders */}
-        <div style={{ width: 250, flexShrink: 0 }}>
+        <div className="doc-repo-sidebar">
           <div className="card" style={{ padding: '12px 0' }}>
             <p style={{ padding: '8px 16px 4px', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>Folders</p>
             {FOLDERS.map(f => (
@@ -279,7 +295,7 @@ export default function DocumentRepository() {
         {/* Main Area */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Active Folder Info & Description */}
-          <div className="card" style={{ padding: '16px 20px', background: 'var(--bg-hover)', borderColor: 'var(--primary-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="card doc-active-folder-banner" style={{ padding: '16px 20px', background: 'var(--bg-hover)', borderColor: 'var(--primary-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary)' }}>{activeFolder}</h3>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 3 }}>
@@ -293,19 +309,23 @@ export default function DocumentRepository() {
 
           {/* Search and Filters Toolbar */}
           <div className="card" style={{ padding: '16px' }}>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
-              <div className="search-wrapper" style={{ flex: 1, minWidth: 240 }}>
+            <div className="doc-filter-row" style={{ marginBottom: 12 }}>
+              <div className="search-wrapper doc-search-box">
                 <Search size={16} className="search-icon" />
                 <input className="form-control" style={{ paddingLeft: 40 }} placeholder="Global Search (by name, description, tags, uploader)..." value={search} onChange={e => handleSearchChange(e.target.value)} />
               </div>
-              <select className="form-control form-select" style={{ width: 160 }} value={filterRegion} onChange={e => setFilterRegion(e.target.value)}>
-                <option value="all">All Regions</option>
-                {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
-              <select className="form-control form-select" style={{ width: 120 }} value={filterType} onChange={e => setFilterType(e.target.value)}>
-                <option value="all">All Types</option>
-                {['PDF', 'DOCX', 'XLSX', 'ZIP', 'JPG', 'PNG'].map(t => <option key={t} value={t}>.{t}</option>)}
-              </select>
+              <div className="doc-select-box">
+                <select className="form-control form-select" style={{ width: '100%' }} value={filterRegion} onChange={e => setFilterRegion(e.target.value)}>
+                  <option value="all">All Regions</option>
+                  {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div className="doc-select-box">
+                <select className="form-control form-select" style={{ width: '100%' }} value={filterType} onChange={e => setFilterType(e.target.value)}>
+                  <option value="all">All Types</option>
+                  {['PDF', 'DOCX', 'XLSX', 'ZIP', 'JPG', 'PNG'].map(t => <option key={t} value={t}>.{t}</option>)}
+                </select>
+              </div>
               <div className="tabs" style={{ width: 'auto' }}>
                 {['grid', 'list'].map(v => (
                   <button key={v} className={`tab ${view === v ? 'active' : ''}`} style={{ flex: 'none', padding: '6px 12px' }} onClick={() => setView(v)}>
@@ -316,21 +336,21 @@ export default function DocumentRepository() {
             </div>
 
             {/* Date Filters Row */}
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', paddingTop: 8, borderTop: '1px solid var(--border-light)' }}>
+            <div className="doc-date-row">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Date range:</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Date range:</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="date" className="form-control" style={{ width: 145, padding: '4px 8px', fontSize: '0.8rem' }} value={startDate} onChange={e => setStartDate(e.target.value)} />
+              <div className="doc-date-inputs">
+                <input type="date" className="form-control" style={{ width: 140, padding: '4px 8px', fontSize: '0.8rem' }} value={startDate} onChange={e => setStartDate(e.target.value)} />
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>to</span>
-                <input type="date" className="form-control" style={{ width: 145, padding: '4px 8px', fontSize: '0.8rem' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
+                <input type="date" className="form-control" style={{ width: 140, padding: '4px 8px', fontSize: '0.8rem' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
+                {(startDate || endDate) && (
+                  <button className="btn btn-ghost btn-sm" onClick={() => { setStartDate(''); setEndDate(''); }} style={{ padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <X size={12} /> Clear
+                  </button>
+                )}
               </div>
-              {(startDate || endDate) && (
-                <button className="btn btn-ghost btn-sm" onClick={() => { setStartDate(''); setEndDate(''); }} style={{ padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <X size={12} /> Clear Date
-                </button>
-              )}
             </div>
           </div>
 
@@ -345,111 +365,161 @@ export default function DocumentRepository() {
               <h3>No Documents Found</h3>
               <p>No files match the filters or search query in this category.</p>
             </div>
-          ) : view === 'grid' ? (
-            /* Grid View */
-            <div className="grid grid-3">
-              {filtered.map(d => (
-                <div key={d.id} className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', transition: 'all var(--transition)', cursor: 'pointer' }} onClick={() => setSelected(d)}>
-                  <div style={{ padding: '24px 20px', textAlign: 'center', background: 'var(--bg-input)', borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0', borderBottom: '1px solid var(--border-light)', relative: 'true' }}>
-                    <div style={{ fontSize: '3.2rem', marginBottom: 4 }}>{TYPE_ICONS[d.type] || '📄'}</div>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: TYPE_COLORS[d.type] || '#6b7280', letterSpacing: '0.05em' }}>.{d.type}</span>
-                    {d.shared && (
-                      <span title="Shared globally" style={{ position: 'absolute', top: 12, right: 12, color: 'var(--primary)', background: 'var(--primary-50)', padding: '4px', borderRadius: '50%', display: 'flex' }}>
-                        <Globe size={12} />
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ padding: '14px 16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <p style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }} className="truncate" title={d.name}>{d.name}</p>
-                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 8 }} className="truncate">{d.description || 'No description provided.'}</p>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>Size: {formatSize(d.size)} · By: {d.uploaded_by?.name || 'Unknown'}</p>
-                    </div>
-
-                    <div style={{ marginTop: 12 }}>
-                      {/* Tags */}
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
-                        {getTagsArray(d.tags).slice(0, 3).map(t => (
-                          <span key={t} className="badge badge-primary" style={{ fontSize: '0.62rem', padding: '2px 6px' }}>{t}</span>
-                        ))}
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid var(--border-light)' }}>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>{d.created_at ? d.created_at.split('T')[0] : ''}</span>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); window.open(getAbsoluteUrl(d.url, d.id), '_blank'); }} title="View Document"><Eye size={13} /></button>
-                          <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); handleDownloadFile(d.id); }} title="Download"><Download size={13} /></button>
-                          {canModify(d) && (
-                            <>
-                              <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); handleOpenEdit(d); }} title="Edit Document"><Edit2 size={13} /></button>
-                              <button className="btn btn-ghost btn-icon btn-sm" style={{ color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(d.id); }} title="Delete Document"><Trash2 size={13} /></button>
-                            </>
+          ) : (
+            <>
+              {/* Desktop Document View (>=768px) */}
+              <div className="desktop-doc-view">
+                {view === 'grid' ? (
+                  /* Grid View */
+                  <div className="grid grid-3">
+                    {filtered.map(d => (
+                      <div key={d.id} className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', transition: 'all var(--transition)', cursor: 'pointer' }} onClick={() => setSelected(d)}>
+                        <div style={{ padding: '24px 20px', textAlign: 'center', background: 'var(--bg-input)', borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0', borderBottom: '1px solid var(--border-light)', relative: 'true' }}>
+                          <div style={{ fontSize: '3.2rem', marginBottom: 4 }}>{TYPE_ICONS[d.type] || '📄'}</div>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: TYPE_COLORS[d.type] || '#6b7280', letterSpacing: '0.05em' }}>.{d.type}</span>
+                          {d.shared && (
+                            <span title="Shared globally" style={{ position: 'absolute', top: 12, right: 12, color: 'var(--primary)', background: 'var(--primary-50)', padding: '4px', borderRadius: '50%', display: 'flex' }}>
+                              <Globe size={12} />
+                            </span>
                           )}
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            /* List View */
-            <div className="card">
-              <div className="table-wrapper">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Folder</th>
-                      <th>Region</th>
-                      <th>Size</th>
-                      <th>Uploaded By</th>
-                      <th>Upload Date</th>
-                      <th>Downloads</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map(d => (
-                      <tr key={d.id} style={{ cursor: 'pointer' }} onClick={() => setSelected(d)}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{ fontSize: '1.4rem' }}>{TYPE_ICONS[d.type] || '📄'}</span>
-                            <div style={{ maxWidth: 220 }}>
-                              <p style={{ fontWeight: 600, fontSize: '0.85rem' }} className="truncate" title={d.name}>{d.name}</p>
-                              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }} className="truncate">{d.description || 'No description.'}</p>
-                              <div style={{ display: 'flex', gap: 3, marginTop: 3 }}>
-                                {getTagsArray(d.tags).slice(0, 2).map(t => (
-                                  <span key={t} className="badge badge-primary" style={{ fontSize: '0.6rem', padding: '1px 4px' }}>{t}</span>
-                                ))}
+                        <div style={{ padding: '14px 16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                          <div>
+                            <p style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: 4 }} className="truncate" title={d.name}>{d.name}</p>
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 8 }} className="truncate">{d.description || 'No description provided.'}</p>
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>Size: {formatSize(d.size)} · By: {d.uploaded_by?.name || 'Unknown'}</p>
+                          </div>
+
+                          <div style={{ marginTop: 12 }}>
+                            {/* Tags */}
+                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
+                              {getTagsArray(d.tags).slice(0, 3).map(t => (
+                                <span key={t} className="badge badge-primary" style={{ fontSize: '0.62rem', padding: '2px 6px' }}>{t}</span>
+                              ))}
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid var(--border-light)' }}>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>{d.created_at ? d.created_at.split('T')[0] : ''}</span>
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); window.open(getAbsoluteUrl(d.url, d.id), '_blank'); }} title="View Document"><Eye size={13} /></button>
+                                <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); handleDownloadFile(d.id); }} title="Download"><Download size={13} /></button>
+                                {canModify(d) && (
+                                  <>
+                                    <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); handleOpenEdit(d); }} title="Edit Document"><Edit2 size={13} /></button>
+                                    <button className="btn btn-ghost btn-icon btn-sm" style={{ color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(d.id); }} title="Delete Document"><Trash2 size={13} /></button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
-                        </td>
-                        <td style={{ fontSize: '0.78rem' }}>{d.category}</td>
-                        <td style={{ fontSize: '0.78rem' }}>{d.uploaded_by?.region || 'All Regions'}</td>
-                        <td style={{ fontSize: '0.78rem' }}>{formatSize(d.size)}</td>
-                        <td style={{ fontSize: '0.78rem' }}>{d.uploaded_by?.name || 'Unknown'}</td>
-                        <td style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{d.created_at ? d.created_at.split('T')[0] : ''}</td>
-                        <td style={{ fontSize: '0.82rem', fontWeight: 600 }}>{d.downloads}</td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); window.open(getAbsoluteUrl(d.url, d.id), '_blank'); }} title="View Document"><Eye size={13} /></button>
-                            <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); handleDownloadFile(d.id); }} title="Download"><Download size={13} /></button>
-                            {canModify(d) && (
-                              <>
-                                <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); handleOpenEdit(d); }} title="Edit"><Edit2 size={13} /></button>
-                                <button className="btn btn-ghost btn-icon btn-sm" style={{ color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(d.id); }} title="Delete"><Trash2 size={13} /></button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                ) : (
+                  /* List View */
+                  <div className="card">
+                    <div className="table-wrapper">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Folder</th>
+                            <th>Region</th>
+                            <th>Size</th>
+                            <th>Uploaded By</th>
+                            <th>Upload Date</th>
+                            <th>Downloads</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.map(d => (
+                            <tr key={d.id} style={{ cursor: 'pointer' }} onClick={() => setSelected(d)}>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  <span style={{ fontSize: '1.4rem' }}>{TYPE_ICONS[d.type] || '📄'}</span>
+                                  <div style={{ maxWidth: 220 }}>
+                                    <p style={{ fontWeight: 600, fontSize: '0.85rem' }} className="truncate" title={d.name}>{d.name}</p>
+                                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }} className="truncate">{d.description || 'No description.'}</p>
+                                    <div style={{ display: 'flex', gap: 3, marginTop: 3 }}>
+                                      {getTagsArray(d.tags).slice(0, 2).map(t => (
+                                        <span key={t} className="badge badge-primary" style={{ fontSize: '0.6rem', padding: '1px 4px' }}>{t}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td style={{ fontSize: '0.78rem' }}>{d.category}</td>
+                              <td style={{ fontSize: '0.78rem' }}>{d.uploaded_by?.region || 'All Regions'}</td>
+                              <td style={{ fontSize: '0.78rem' }}>{formatSize(d.size)}</td>
+                              <td style={{ fontSize: '0.78rem' }}>{d.uploaded_by?.name || 'Unknown'}</td>
+                              <td style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>{d.created_at ? d.created_at.split('T')[0] : ''}</td>
+                              <td style={{ fontSize: '0.82rem', fontWeight: 600 }}>{d.downloads}</td>
+                              <td>
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); window.open(getAbsoluteUrl(d.url, d.id), '_blank'); }} title="View Document"><Eye size={13} /></button>
+                                  <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); handleDownloadFile(d.id); }} title="Download"><Download size={13} /></button>
+                                  {canModify(d) && (
+                                    <>
+                                      <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); handleOpenEdit(d); }} title="Edit"><Edit2 size={13} /></button>
+                                      <button className="btn btn-ghost btn-icon btn-sm" style={{ color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleDelete(d.id); }} title="Delete"><Trash2 size={13} /></button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+
+              {/* Dedicated Mobile Document Cards (<768px) */}
+              <div className="mobile-docs-list">
+                {filtered.map(d => (
+                  <div key={d.id} className="card mobile-doc-item" onClick={() => setSelected(d)}>
+                    <div 
+                      className="mobile-doc-icon-badge" 
+                      style={{ 
+                        background: `${TYPE_COLORS[d.type] || '#6b7280'}18`, 
+                        color: TYPE_COLORS[d.type] || '#6b7280'
+                      }}
+                    >
+                      <span style={{ fontSize: '1.4rem' }}>{TYPE_ICONS[d.type] || '📄'}</span>
+                      <span className="mobile-doc-ext">.{d.type}</span>
+                    </div>
+
+                    <div className="mobile-doc-details">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                        <h4 className="mobile-doc-name truncate">{d.name}</h4>
+                        {d.shared && <span className="badge badge-info" style={{ fontSize: '0.62rem', padding: '1px 5px' }}>Global</span>}
+                      </div>
+                      <p className="mobile-doc-subline truncate">
+                        {formatSize(d.size)} • {d.category}
+                      </p>
+                      <div className="mobile-doc-bottom-meta">
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>
+                          By {d.uploaded_by?.name || 'Unknown'} • {d.created_at ? d.created_at.split('T')[0] : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mobile-doc-actions" onClick={e => e.stopPropagation()}>
+                      <button 
+                        className="btn btn-ghost btn-icon btn-sm"
+                        onClick={() => handleDownloadFile(d.id)}
+                        title="Download Document"
+                      >
+                        <Download size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

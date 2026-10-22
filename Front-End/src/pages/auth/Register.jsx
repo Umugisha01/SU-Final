@@ -6,9 +6,9 @@ import { REGIONS, DEPARTMENTS } from '../../data/mockData';
 import './Auth.css';
 
 const ROLES = [
-  { value: 'field_officer', label: 'Field Coordinator', desc: 'Submit reports, support tickets, and prayer requests', icon: '👤' },
-  { value: 'field_officer_staff', label: 'Staff Member', desc: 'Coordinator permissions + document uploads and comments', icon: '👥' },
-  { value: 'regional_coordinator', label: 'Regional Manager', desc: 'Approve reports, assign support requests, view analytics', icon: '🌍' },
+  { value: 'field_officer', label: 'Field Officer', desc: 'Submit reports, support tickets, and prayer requests', icon: '👤' },
+  { value: 'regional_coordinator', label: 'Regional Coordinator', desc: 'Approve reports, assign support requests, view analytics', icon: '🌍' },
+  { value: 'national_manager', label: 'National Manager', desc: 'Approve/review escalated reports, view nationwide analytics', icon: '💼' },
 ];
 
 const getPwStrength = (pw) => {
@@ -51,15 +51,15 @@ export default function Register() {
     setForm(f => {
       let role = val;
       let pos = f.position;
-      if (val === 'field_officer_staff') {
+      if (val === 'field_officer') {
         role = 'field_officer';
-        pos = 'Staff Member';
-      } else if (val === 'field_officer') {
-        role = 'field_officer';
-        pos = 'Field Coordinator';
+        pos = 'Field Officer';
       } else if (val === 'regional_coordinator') {
         role = 'regional_coordinator';
-        pos = 'Regional Manager';
+        pos = 'Regional Coordinator';
+      } else if (val === 'national_manager') {
+        role = 'national_manager';
+        pos = 'National Manager';
       }
       return { ...f, selectedRole: val, role, position: pos };
     });
@@ -240,7 +240,7 @@ export default function Register() {
                     </div>
                     <div className="form-group">
                       <label className="form-label">Position / Job Title <span>*</span></label>
-                      <input className="form-control" placeholder="e.g. Field Coordinator" value={form.position}
+                      <input className="form-control" placeholder="e.g. Field Officer" value={form.position}
                         onChange={e => set('position', e.target.value)} disabled={true} />
                       {errors.position && <span style={{ color: 'var(--danger)', fontSize: '0.75rem' }}>{errors.position}</span>}
                     </div>

@@ -3,17 +3,13 @@ import sys
 
 DEBUG = True
 
-# Use SQLite for unit tests, otherwise use PostgreSQL configured in .env
+# Use SQLite for unit tests, otherwise inherit optimized PostgreSQL config from base.py
 if 'pytest' in sys.modules or 'test' in sys.argv:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
-    }
-else:
-    DATABASES = {
-        'default': env.db('DATABASE_URL', default='sqlite:///db.sqlite3')
     }
 
 # Use local memory cache for development & testing to avoid external Redis dependency

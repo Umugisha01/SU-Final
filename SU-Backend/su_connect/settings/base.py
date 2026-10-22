@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -85,10 +86,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'su_connect.wsgi.application'
 ASGI_APPLICATION = 'su_connect.asgi.application'
 
-# Database Setup
+# Database Setup with PgBouncer Optimization
+_db_config = env.db('DATABASE_URL', default='sqlite:///db.sqlite3')
+if 'postgresql' in _db_config.get('ENGINE', ''):
+    _db_config['CONN_MAX_AGE'] = int(env('DB_CONN_MAX_AGE', default=0))
+    # Top-level Django setting required for PgBouncer transaction pooling
+    _db_config['DISABLE_SERVER_SIDE_CURSORS'] = True
+
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='sqlite:///db.sqlite3')
+    'default': _db_config
 }
+
+# Optional direct connection alias for running migrations or direct administrative tasks
+if env('DIRECT_DATABASE_URL', default=''):
+    DATABASES['direct'] = env.db('DIRECT_DATABASE_URL')
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

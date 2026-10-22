@@ -224,34 +224,39 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 24 }}>
-        {/* Tabs sidebar */}
-        <div style={{ width: 200, flexShrink: 0 }}>
-          <div className="card" style={{ padding: '8px 0' }}>
-            {[
-              { id: 'profile', icon: User, label: 'Profile' },
-              { id: 'security', icon: Lock, label: 'Password' },
-              { id: 'mfa', icon: Shield, label: 'MFA' },
-              { id: 'sessions', icon: Clock, label: 'Sessions' },
-              { id: 'appearance', icon: Moon, label: 'Appearance' },
-            ].map(({ id, icon: Icon, label }) => (
-              <button key={id} onClick={() => setActiveTab(id)}
-                style={{ width: '100%', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, background: activeTab === id ? 'var(--primary-50)' : 'transparent', color: activeTab === id ? 'var(--primary)' : 'var(--text-primary)', fontWeight: activeTab === id ? 600 : 400, fontSize: '0.875rem', border: 'none', cursor: 'pointer', fontFamily: 'inherit', borderLeft: activeTab === id ? '3px solid var(--primary)' : '3px solid transparent', transition: 'all var(--transition)', textAlign: 'left' }}>
-                <Icon size={16} />{label}
-              </button>
-            ))}
+      <div className="settings-layout">
+        {/* Tabs sidebar / mobile horizontal bar */}
+        <div className="settings-sidebar">
+          <div className="card settings-sidebar-card" style={{ padding: '8px 0' }}>
+            <div className="settings-tab-list">
+              {[
+                { id: 'profile', icon: User, label: 'Profile' },
+                { id: 'security', icon: Lock, label: 'Password' },
+                { id: 'mfa', icon: Shield, label: 'MFA' },
+                { id: 'sessions', icon: Clock, label: 'Sessions' },
+                { id: 'appearance', icon: Moon, label: 'Appearance' },
+              ].map(({ id, icon: Icon, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  className={`settings-tab-btn ${activeTab === id ? 'active' : ''}`}
+                >
+                  <Icon size={16} /><span>{label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className="settings-content">
           {/* Profile */}
           {activeTab === 'profile' && (
             <div className="card">
               <div className="card-header"><h3 style={{ fontSize: '1rem' }}>Profile Information</h3></div>
               <div className="card-body">
                 {/* Avatar */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 28, paddingBottom: 24, borderBottom: '1px solid var(--border-light)' }}>
-                  <div className="avatar avatar-xl" style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 28, paddingBottom: 24, borderBottom: '1px solid var(--border-light)', flexWrap: 'wrap' }}>
+                  <div className="avatar avatar-xl" style={{ position: 'relative', flexShrink: 0 }}>
                     {user?.avatar}
                     <button style={{ position: 'absolute', bottom: -4, right: -4, width: 28, height: 28, borderRadius: '50%', background: 'var(--primary)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                       <Camera size={13} color="#fff" />
@@ -295,18 +300,18 @@ export default function SettingsPage() {
 
                 <div style={{ marginTop: 28, padding: 20, background: 'var(--bg-input)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
                   <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: 16 }}>Account History & Metadata</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14 }}>
                     <div>
                       <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Join Date</p>
-                      <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user?.join_date ? new Date(user.join_date).toLocaleDateString('en-RW', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.join_date ? new Date(user.join_date).toLocaleDateString('en-RW', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</p>
                     </div>
                     <div>
                       <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Last Login</p>
-                      <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user?.last_login ? new Date(user.last_login).toLocaleString('en-RW') : 'N/A'}</p>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.last_login ? new Date(user.last_login).toLocaleString('en-RW') : 'N/A'}</p>
                     </div>
                     <div>
                       <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Email Verification</p>
-                      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--success)' }}>✓ Verified</p>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--success)' }}>✓ Verified</p>
                     </div>
                   </div>
                 </div>
@@ -318,7 +323,7 @@ export default function SettingsPage() {
           {activeTab === 'security' && (
             <div className="card">
               <div className="card-header"><h3 style={{ fontSize: '1rem' }}>Change Password</h3></div>
-              <form onSubmit={handlePasswordUpdate} className="card-body" style={{ maxWidth: 440 }}>
+              <form onSubmit={handlePasswordUpdate} className="card-body" style={{ maxWidth: 440, width: '100%' }}>
                 {[
                   { label: 'Current Password', key: 'current' },
                   { label: 'New Password', key: 'newPw' },
@@ -356,7 +361,7 @@ export default function SettingsPage() {
               <div className="card-body">
                 {mfaEnabled ? (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-input)', borderRadius: 'var(--radius-lg)', marginBottom: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-input)', borderRadius: 'var(--radius-lg)', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                       <div>
                         <p style={{ fontWeight: 700, color: 'var(--success)' }}>✓ Two-Factor Authentication Active</p>
                         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Your account is secured with 2FA.</p>
@@ -370,7 +375,7 @@ export default function SettingsPage() {
                       <div style={{ padding: 20, background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
                         <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: 12, color: 'var(--success)' }}>Backup Recovery Codes</h4>
                         <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 16 }}>Save these backup codes in a safe place. They can be used to log in if you lose access to your authenticator app. Each code can only be used once.</p>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, fontFamily: 'monospace', fontSize: '0.9rem', fontWeight: 700 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, fontFamily: 'monospace', fontSize: '0.9rem', fontWeight: 700 }}>
                           {backupCodes.map(c => <div key={c} style={{ background: 'var(--bg-card)', padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', textAlign: 'center' }}>{c}</div>)}
                         </div>
                       </div>
@@ -394,11 +399,11 @@ export default function SettingsPage() {
                         </div>
                         <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
                           <div style={{ background: '#fff', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
-                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(mfaQrUri)}`} alt="MFA QR Code" style={{ display: 'block' }} />
+                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(mfaQrUri)}`} alt="MFA QR Code" style={{ display: 'block', maxWidth: '100%', height: 'auto' }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 200 }}>
                             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 8 }}>Or enter this secret key manually:</p>
-                            <p style={{ fontFamily: 'monospace', fontSize: '1.1rem', fontWeight: 700, letterSpacing: 1.5, background: 'var(--bg-input)', padding: '10px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', userSelect: 'all', width: 'fit-content' }}>
+                            <p style={{ fontFamily: 'monospace', fontSize: '1rem', fontWeight: 700, letterSpacing: 1.2, background: 'var(--bg-input)', padding: '10px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', userSelect: 'all', width: 'fit-content', maxWidth: '100%', wordBreak: 'break-all' }}>
                               {mfaSecret}
                             </p>
                           </div>
@@ -463,7 +468,8 @@ export default function SettingsPage() {
                   </button>
                 )}
               </div>
-              <div className="table-wrapper">
+              {/* Desktop Sessions Table (>=768px) */}
+              <div className="table-wrapper desktop-sessions-table">
                 <table className="table">
                   <thead>
                     <tr>
@@ -500,6 +506,31 @@ export default function SettingsPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Sessions Cards (<768px) */}
+              <div className="mobile-sessions-list">
+                {sessions.map(s => (
+                  <div key={s.id} className="mobile-session-card card">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div className="avatar" style={{ width: 28, height: 28, fontSize: '0.75rem', background: s.isCurrent ? 'var(--primary)' : 'var(--bg-input)' }}>
+                          <Clock size={14} />
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{s.browser}</span>
+                      </div>
+                      {s.isCurrent ? (
+                        <span className="badge badge-success" style={{ fontSize: '0.65rem' }}>Current</span>
+                      ) : (
+                        <span className="badge badge-gray" style={{ fontSize: '0.65rem' }}>Active</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      <span>IP: <code style={{ fontSize: '0.74rem' }}>{s.ip}</code></span>
+                      <span>{s.lastActivity ? new Date(s.lastActivity).toLocaleDateString('en-RW') : 'N/A'}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

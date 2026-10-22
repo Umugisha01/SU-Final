@@ -1,5 +1,6 @@
 Role	Name	Email Address	Password
 Admin	Emmanuel Habimana	admin@su.rw	Admin@123
+Admin	BUMUGISHA Neema	umugishaone@gmail.com	Admin@123
 Manager	Grace Uwimana	manager@su.rw	Manager@123
 Staff	Patrick Nkurunziza	staff@su.rw	Staff@123
 Staff	David Niyonzima	david@su.rw	Staff@123

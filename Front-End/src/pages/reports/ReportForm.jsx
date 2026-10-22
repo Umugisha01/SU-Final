@@ -432,7 +432,7 @@ export default function ReportForm() {
           )}
 
           {/* Navigation */}
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between' }}>
+          <div className="form-nav-bar" style={{ display: 'flex', gap: 12, justifyContent: 'space-between', flexWrap: 'wrap' }}>
             <button className="btn btn-secondary" onClick={() => step > 1 ? setStep(s => s - 1) : navigate('/reports')}>
               {step > 1 ? '← Back' : '← Cancel'}
             </button>

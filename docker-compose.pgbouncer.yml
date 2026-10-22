@@ -1,0 +1,19 @@
+services:
+  pgbouncer:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+    container_name: su_connect_pgbouncer
+    restart: unless-stopped
+    ports:
+      - "6432:6432"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./docker/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./docker/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 6432 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

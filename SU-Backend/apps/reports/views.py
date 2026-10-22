@@ -30,7 +30,11 @@ class ReportListCreateView(generics.ListCreateAPIView):
             
         # Role-based status filtering
         if self.request.user.role == 'national_manager':
-            queryset = queryset.filter(status__in=['submitted_to_manager', 'approved', 'returned_by_manager', 'submitted'])
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(status__in=['submitted_to_manager', 'approved', 'returned_by_manager', 'submitted']) |
+                Q(recipients=self.request.user)
+            ).distinct()
         elif self.request.user.role == 'regional_coordinator':
             queryset = queryset.filter(status__in=['submitted_to_coordinator', 'submitted_to_manager', 'approved', 'returned_by_coordinator', 'returned_by_manager', 'submitted', 'returned'])
         
@@ -553,3 +557,44 @@ class ConsolidatedReportView(APIView):
             "success": True,
             "data": draft_data
         }, status=status.HTTP_200_OK)
+
+
+class ReportShareView(APIView):
+    permission_classes = [IsCoordinatorOrManagerOrAdmin]
+
+    def post(self, request):
+        report_ids = request.data.get('reportIds', [])
+        if not report_ids:
+            return Response({"success": False, "error": "reportIds is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        reports = Report.objects.filter(id__in=report_ids)
+        if not reports.exists():
+            return Response({"success": False, "error": "No matching reports found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        if request.user.role == 'regional_coordinator':
+            for r in reports:
+                if r.region != request.user.region:
+                    return Response({"success": False, "error": f"Cannot share report '{r.title}' outside your region."}, status=status.HTTP_403_FORBIDDEN)
+                    
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        managers = User._base_manager.filter(role='national_manager', status='active')
+        
+        if not managers.exists():
+            return Response({"success": False, "error": "No National Managers found to share with."}, status=status.HTTP_404_NOT_FOUND)
+            
+        for r in reports:
+            for m in managers:
+                r.recipients.add(m)
+            r.save()
+            
+            from services.notification_service import NotificationService
+            for m in managers:
+                NotificationService.create_notification(
+                    user=m,
+                    type_name='report',
+                    title='Report Shared',
+                    message=f"Report '{r.title}' has been shared with you by Coordinator {request.user.name}.",
+                    icon='check'
+                )
+        return Response({"success": True, "message": f"Shared {reports.count()} reports with {managers.count()} National Managers."}, status=status.HTTP_200_OK)

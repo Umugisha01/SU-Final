@@ -22,7 +22,11 @@ class SupportRequestListCreateView(generics.ListCreateAPIView):
         
         # Role-based status filtering for support requests
         if self.request.user.role == 'national_manager':
-            queryset = queryset.filter(status__in=['submitted_to_manager', 'approved', 'under review', 'fulfilled', 'closed', 'returned_by_manager', 'submitted'])
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(status__in=['submitted_to_manager', 'approved', 'under review', 'fulfilled', 'closed', 'returned_by_manager', 'submitted']) |
+                Q(recipients=self.request.user)
+            ).distinct()
         elif self.request.user.role == 'regional_coordinator':
             queryset = queryset.filter(status__in=['submitted_to_coordinator', 'submitted_to_manager', 'under review', 'approved', 'fulfilled', 'closed', 'returned_by_coordinator', 'returned_by_manager', 'submitted'])
             
@@ -362,8 +366,48 @@ class SupportRequestConsolidateView(APIView):
             "urgency": urgencies[highest_urgency_idx],
             "status": "submitted_to_coordinator"
         }
-        
         return Response({
             "success": True,
             "data": draft_data
         }, status=status.HTTP_200_OK)
+
+
+class SupportRequestShareView(APIView):
+    permission_classes = [IsCoordinatorOrManagerOrAdmin]
+
+    def post(self, request):
+        request_ids = request.data.get('requestIds', [])
+        if not request_ids:
+            return Response({"success": False, "error": "requestIds is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        requests = SupportRequest.objects.filter(id__in=request_ids)
+        if not requests.exists():
+            return Response({"success": False, "error": "No matching support requests found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        if request.user.role == 'regional_coordinator':
+            for r in requests:
+                if r.region != request.user.region:
+                    return Response({"success": False, "error": f"Cannot share support request '{r.title}' outside your region."}, status=status.HTTP_403_FORBIDDEN)
+                    
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        managers = User._base_manager.filter(role='national_manager', status='active')
+        
+        if not managers.exists():
+            return Response({"success": False, "error": "No National Managers found to share with."}, status=status.HTTP_404_NOT_FOUND)
+            
+        for r in requests:
+            for m in managers:
+                r.recipients.add(m)
+            r.save()
+            
+            from services.notification_service import NotificationService
+            for m in managers:
+                NotificationService.create_notification(
+                    user=m,
+                    type_name='support',
+                    title='Support Request Shared',
+                    message=f"Support request '{r.title}' has been shared with you by Coordinator {request.user.name}.",
+                    icon='package'
+                )
+        return Response({"success": True, "message": f"Shared {requests.count()} support requests with {managers.count()} National Managers."}, status=status.HTTP_200_OK)

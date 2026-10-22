@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -409,6 +409,10 @@ export const reportService = {
     const res = await api.delete(`/reports/${id}`);
     return res.data;
   },
+  share: async (reportIds) => {
+    const res = await api.post('/reports/share', { reportIds });
+    return res.data;
+  },
 };
 
 export const supportService = {
@@ -473,6 +477,10 @@ export const supportService = {
   suggestPriority: async (title, description, category) => {
     const backendCategory = category === 'Material' ? 'Equipment' : (category === 'Prayer' ? 'Spiritual' : (category === 'Personnel' ? 'Technical' : category));
     const res = await api.post('/support/ai-suggest', { title, description, category: backendCategory });
+    return res.data;
+  },
+  share: async (requestIds) => {
+    const res = await api.post('/support/share', { requestIds });
     return res.data;
   },
 };

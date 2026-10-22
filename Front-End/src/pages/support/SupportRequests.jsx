@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, LifeBuoy, Clock, CheckCircle, Package, DollarSign, Users, BookOpen, Heart, MoreHorizontal, MessageSquare, Eye, Trash2, Edit3 } from 'lucide-react';
+import { 
+  Plus, LifeBuoy, Clock, CheckCircle, Package, DollarSign, Users, 
+  BookOpen, Heart, MoreHorizontal, MessageSquare, Eye, Trash2, Edit3,
+  ChevronDown, ChevronUp, MapPin, Calendar 
+} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { supportService, userService } from '../../services/api';
@@ -14,14 +18,14 @@ const PRIORITY_CONFIG = {
 
 const STATUS_CONFIG = { 
   submitted: { cls: 'badge-info', label: 'Submitted' }, 
-  submitted_to_coordinator: { cls: 'badge-info', label: 'Submitted to Coordinator' }, 
-  submitted_to_manager: { cls: 'badge-info', label: 'Submitted to Manager' }, 
+  submitted_to_coordinator: { cls: 'badge-info', label: 'Submitted' }, 
+  submitted_to_manager: { cls: 'badge-info', label: 'Submitted ★' }, 
   'under review': { cls: 'badge-warning', label: 'Under Review' }, 
-  approved: { cls: 'badge-success', label: 'Approved' }, 
-  fulfilled: { cls: 'badge-primary', label: 'Fulfilled' }, 
-  closed: { cls: 'badge-gray', label: 'Closed' },
+  approved: { cls: 'badge-success', label: 'Approved ★' }, 
+  fulfilled: { cls: 'badge-primary', label: 'Fulfilled ★' }, 
+  closed: { cls: 'badge-gray', label: 'Closed ★' },
   returned_by_coordinator: { cls: 'badge-danger', label: 'Returned by Coordinator' },
-  returned_by_manager: { cls: 'badge-danger', label: 'Returned by Manager' }
+  returned_by_manager: { cls: 'badge-danger', label: 'Returned by Manager ★' }
 };
 
 const TYPE_ICONS = { 
@@ -44,6 +48,7 @@ export default function SupportRequests() {
   const [filterPriority, setFilterPriority] = useState('all');
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState('list');
+  const [mobileKanbanCol, setMobileKanbanCol] = useState('submitted');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const handleBatchAIAnalysis = async () => {
@@ -164,13 +169,17 @@ export default function SupportRequests() {
   }, [user]);
 
   const filtered = requests.filter(r => {
-    if (filterStatus !== 'all' && r.status !== filterStatus) return false;
+    if (filterStatus !== 'all') {
+      const filterLabel = STATUS_CONFIG[filterStatus]?.label;
+      const requestLabel = STATUS_CONFIG[r.status]?.label || r.status;
+      if (filterLabel !== requestLabel) return false;
+    }
     if (filterPriority !== 'all' && r.priority !== filterPriority) return false;
     if (user?.role === 'field_officer' && r.requester !== user.name) return false;
     return true;
   });
 
-  const KANBAN_COLS = ['submitted', 'under review', 'approved', 'fulfilled'];
+  const KANBAN_COLS = ['submitted', 'submitted_to_manager', 'under review', 'approved', 'fulfilled'];
 
   if (loading) {
     return <div style={{ padding: 40, textAlign: 'center' }}>Loading support requests...</div>;
@@ -183,7 +192,7 @@ export default function SupportRequests() {
           <h1 className="page-title"><LifeBuoy size={24} style={{ verticalAlign: 'middle', marginRight: 10 }} />Support Requests</h1>
           <p className="page-subtitle">{filtered.length} requests · {requests.filter(r => r.status === 'submitted' || r.status === 'under review').length} active</p>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div className="support-header-actions">
           <div className="tabs" style={{ width: 'auto' }}>
             {['list', 'kanban'].map(v => <button key={v} className={`tab ${view === v ? 'active' : ''}`} style={{ flex: 'none', padding: '6px 14px' }} onClick={() => setView(v)}>{v.charAt(0).toUpperCase() + v.slice(1)}</button>)}
           </div>
@@ -202,18 +211,19 @@ export default function SupportRequests() {
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', alignSelf: 'center' }}>Status:</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+        <div className="support-chip-bar">
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', alignSelf: 'center', whiteSpace: 'nowrap' }}>Status:</span>
           {['all', ...KANBAN_COLS, 'closed'].map(s => (
-            <button key={s} className={`chip ${filterStatus === s ? 'active' : ''}`} onClick={() => setFilterStatus(s)}>
+            <button key={s} className={`chip ${filterStatus === s ? 'active' : ''}`} style={{ flexShrink: 0, whiteSpace: 'nowrap' }} onClick={() => setFilterStatus(s)}>
               {s === 'all' ? 'All' : STATUS_CONFIG[s]?.label || s}
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+        <div className="support-chip-bar">
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', alignSelf: 'center', whiteSpace: 'nowrap' }}>Priority:</span>
           {['all', 'urgent', 'high', 'medium', 'low'].map(p => (
-            <button key={p} className={`chip ${filterPriority === p ? 'active' : ''}`} onClick={() => setFilterPriority(p)}>
+            <button key={p} className={`chip ${filterPriority === p ? 'active' : ''}`} style={{ flexShrink: 0, whiteSpace: 'nowrap' }} onClick={() => setFilterPriority(p)}>
               {p.charAt(0).toUpperCase() + p.slice(1)}
             </button>
           ))}
@@ -225,23 +235,47 @@ export default function SupportRequests() {
           {filtered.map(req => {
             const TypeIcon = TYPE_ICONS[req.type] || MoreHorizontal;
             const isSelected = selected?.id === req.id;
+            const priorityBorderColor = req.priority === 'urgent' ? '#ef4444' : req.priority === 'high' ? '#f59e0b' : req.priority === 'medium' ? '#3b82f6' : '#94a3b8';
+
             return (
-              <div key={req.id} className="card" style={{ cursor: 'pointer' }} onClick={() => setSelected(isSelected ? null : req)}>
-                <div style={{ padding: '16px 20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{ display: 'flex', gap: 12, flex: 1 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 'var(--radius)', background: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div 
+                key={req.id} 
+                className="card mobile-support-card" 
+                style={{ 
+                  cursor: 'pointer',
+                  borderLeft: `4px solid ${priorityBorderColor}`,
+                  transition: 'all var(--transition)'
+                }} 
+                onClick={() => setSelected(isSelected ? null : req)}
+              >
+                <div style={{ padding: '16px' }}>
+                  <div className="support-card-main">
+                    <div className="support-card-content">
+                      <div style={{ width: 38, height: 38, borderRadius: 'var(--radius)', background: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <TypeIcon size={18} color="var(--primary)" />
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontWeight: 700, fontSize: '0.9rem' }}>{req.title}</p>
-                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>{req.type} · {req.region} · Submitted {req.submittedDate}</p>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                          <p style={{ fontWeight: 700, fontSize: '0.92rem', lineHeight: 1.35 }}>{req.title}</p>
+                          <span className="mobile-chevron-icon" style={{ color: 'var(--text-muted)', flexShrink: 0, marginTop: 2 }}>
+                            {isSelected ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                          <span>{req.type}</span>
+                          <span>•</span>
+                          <span><MapPin size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 2 }} />{req.region}</span>
+                          <span>•</span>
+                          <span>Submitted {req.submittedDate}</span>
+                        </div>
                         {isSelected && (
-                          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6 }}>{req.description}</p>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 10, lineHeight: 1.6, background: 'var(--bg-input)', padding: '10px 12px', borderRadius: 'var(--radius-sm)' }}>
+                            {req.description}
+                          </p>
                         )}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                    <div className="support-card-badges">
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                         <span className={`badge ${PRIORITY_CONFIG[req.priority]?.cls || 'badge-gray'}`}>{PRIORITY_CONFIG[req.priority]?.label || req.priority}</span>
                         {req.aiPriority && !req.manualPriorityOverride && (
@@ -446,39 +480,100 @@ export default function SupportRequests() {
       )}
 
       {view === 'kanban' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(280px, 1fr))', gap: 16, overflowX: 'auto', paddingBottom: 10 }}>
-          {KANBAN_COLS.map(col => (
-            <div key={col}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>{STATUS_CONFIG[col].label}</span>
-                <span className={`badge ${STATUS_CONFIG[col].cls}`}>{requests.filter(r => r.status === col).length}</span>
+        <>
+          {/* Desktop Kanban View (>=768px) */}
+          <div className="support-kanban-desktop" style={{ display: 'grid', gridTemplateColumns: `repeat(${KANBAN_COLS.length}, minmax(240px, 1fr))`, gap: 16, overflowX: 'auto', paddingBottom: 10 }}>
+            {KANBAN_COLS.map(col => (
+              <div key={col}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>{STATUS_CONFIG[col].label}</span>
+                  <span className={`badge ${STATUS_CONFIG[col].cls}`}>{requests.filter(r => (STATUS_CONFIG[r.status]?.label || r.status) === STATUS_CONFIG[col]?.label).length}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {requests.filter(r => (STATUS_CONFIG[r.status]?.label || r.status) === STATUS_CONFIG[col]?.label).map(req => {
+                    const TypeIcon = TYPE_ICONS[req.type] || MoreHorizontal;
+                    return (
+                      <div key={req.id} className="card" style={{ padding: '14px', cursor: 'pointer' }} onClick={() => { setSelected(req); setView('list'); }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
+                          <TypeIcon size={16} color="var(--primary)" />
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <span className={`badge ${PRIORITY_CONFIG[req.priority]?.cls || 'badge-gray'}`} style={{ fontSize: '0.65rem' }}>{PRIORITY_CONFIG[req.priority]?.label || req.priority}</span>
+                            {req.aiPriority && !req.manualPriorityOverride && (
+                              <span className="ai-priority-badge" style={{ fontSize: '0.6rem', padding: '1px 3px' }} title={`AI: ${req.aiPriorityReason}`}>
+                                🤖
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <p style={{ fontSize: '0.82rem', fontWeight: 600, lineHeight: 1.4, marginBottom: 6 }}>{req.title}</p>
+                        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{req.requester}</p>
+                        <p style={{ fontSize: '0.72rem', color: 'var(--text-light)', marginTop: 4 }}>Due: {req.deadline}</p>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {requests.filter(r => r.status === col).map(req => {
-                  const TypeIcon = TYPE_ICONS[req.type] || MoreHorizontal;
-                  return (
-                    <div key={req.id} className="card" style={{ padding: '14px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
-                        <TypeIcon size={16} color="var(--primary)" />
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                          <span className={`badge ${PRIORITY_CONFIG[req.priority]?.cls || 'badge-gray'}`} style={{ fontSize: '0.65rem' }}>{PRIORITY_CONFIG[req.priority]?.label || req.priority}</span>
-                          {req.aiPriority && !req.manualPriorityOverride && (
-                            <span className="ai-priority-badge" style={{ fontSize: '0.6', padding: '1px 3px' }} title={`AI: ${req.aiPriorityReason}`}>
-                              🤖
-                            </span>
-                          )}
+            ))}
+          </div>
+
+          {/* Mobile Kanban View (<768px): Swipeable Column Tabs */}
+          <div className="support-kanban-mobile">
+            <div className="mobile-kanban-column-tabs">
+              {KANBAN_COLS.map(col => {
+                const count = requests.filter(r => (STATUS_CONFIG[r.status]?.label || r.status) === STATUS_CONFIG[col]?.label).length;
+                return (
+                  <button
+                    key={col}
+                    type="button"
+                    className={`mobile-kanban-col-pill ${mobileKanbanCol === col ? 'active' : ''}`}
+                    onClick={() => setMobileKanbanCol(col)}
+                  >
+                    <span>{STATUS_CONFIG[col].label}</span>
+                    <span className="pill-badge">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mobile-kanban-cards-list">
+              {requests.filter(r => (STATUS_CONFIG[r.status]?.label || r.status) === STATUS_CONFIG[mobileKanbanCol]?.label).length === 0 ? (
+                <div className="card" style={{ padding: '30px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <p style={{ fontSize: '0.85rem' }}>No requests in <strong>{STATUS_CONFIG[mobileKanbanCol].label}</strong></p>
+                </div>
+              ) : (
+                requests
+                  .filter(r => (STATUS_CONFIG[r.status]?.label || r.status) === STATUS_CONFIG[mobileKanbanCol]?.label)
+                  .map(req => {
+                    const TypeIcon = TYPE_ICONS[req.type] || MoreHorizontal;
+                    const priorityBorderColor = req.priority === 'urgent' ? '#ef4444' : req.priority === 'high' ? '#f59e0b' : req.priority === 'medium' ? '#3b82f6' : '#94a3b8';
+                    return (
+                      <div 
+                        key={req.id} 
+                        className="card" 
+                        style={{ padding: '14px', borderLeft: `4px solid ${priorityBorderColor}`, cursor: 'pointer' }}
+                        onClick={() => { setSelected(req); setView('list'); }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <TypeIcon size={16} color="var(--primary)" />
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{req.type}</span>
+                          </div>
+                          <span className={`badge ${PRIORITY_CONFIG[req.priority]?.cls || 'badge-gray'}`} style={{ fontSize: '0.68rem' }}>
+                            {PRIORITY_CONFIG[req.priority]?.label || req.priority}
+                          </span>
+                        </div>
+                        <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 6, lineHeight: 1.35 }}>{req.title}</h4>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 8 }}>
+                          <span>👤 {req.requester}</span>
+                          <span>📅 Due {req.deadline}</span>
                         </div>
                       </div>
-                      <p style={{ fontSize: '0.82rem', fontWeight: 600, lineHeight: 1.4, marginBottom: 6 }}>{req.title}</p>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{req.requester}</p>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--text-light)', marginTop: 4 }}>Due: {req.deadline}</p>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })
+              )}
             </div>
-          ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

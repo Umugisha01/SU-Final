@@ -25,3 +25,6 @@ if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
     AWS_S3_SIGNATURE_VERSION = 's3v4'
 else:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+# WhiteNoise storage for static assets on Vercel Serverless
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
