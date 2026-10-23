@@ -18,17 +18,22 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'su_connect.settings.production'
 from su_connect.wsgi import application
 
 def app(environ, start_response):
-    # In Vercel serverless rewrites (e.g. source: "/(.*)" -> destination: "/api/index"),
-    # Vercel passes the original requested path in HTTP_X_MATCHED_PATH, HTTP_X_VERCEL_PATH,
-    # or HTTP_X_FORWARDED_URI, while setting PATH_INFO to "/api/index".
-    matched_path = (
+    if environ.get('QUERY_STRING') == 'debug_env=1':
+        import json
+        headers_dump = {k: v for k, v in environ.items() if isinstance(v, (str, int, bool))}
+        body = json.dumps(headers_dump, indent=2).encode('utf-8')
+        start_response('200 OK', [('Content-Type', 'application/json')])
+        return [body]
+
+    raw_path = (
         environ.get('HTTP_X_MATCHED_PATH') or
-        environ.get('HTTP_X_VERCEL_PATH') or
-        environ.get('HTTP_X_FORWARDED_URI')
+        environ.get('RAW_URI') or
+        environ.get('REQUEST_URI') or
+        environ.get('HTTP_X_FORWARDED_URI') or
+        environ.get('HTTP_X_VERCEL_PATH')
     )
-    if matched_path and environ.get('PATH_INFO', '').startswith('/api/index'):
-        # Strip query string from matched_path if present
-        environ['PATH_INFO'] = matched_path.split('?')[0]
+    if raw_path and environ.get('PATH_INFO', '').startswith('/api/index'):
+        environ['PATH_INFO'] = raw_path.split('?')[0]
     elif environ.get('PATH_INFO') in ('/api/index', '/api/index/'):
         environ['PATH_INFO'] = '/'
 
