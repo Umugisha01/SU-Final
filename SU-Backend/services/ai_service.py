@@ -8,9 +8,15 @@ from django.db.models import Q
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import warnings
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=FutureWarning)
-    import google.generativeai as genai
+try:
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        import google.generativeai as genai
+except ImportError:
+    try:
+        from google import genai
+    except ImportError:
+        genai = None
 
 # Pydantic schema for structured output validation
 class ReportAnalysisResult(BaseModel):
