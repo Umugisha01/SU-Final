@@ -15,25 +15,18 @@ except ImportError:
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'su_connect.settings.production')
 
+from urllib.parse import parse_qs, urlencode
 from su_connect.wsgi import application
 
 def app(environ, start_response):
-    if environ.get('QUERY_STRING') == 'debug_env=1':
-        import json
-        headers_dump = {k: v for k, v in environ.items() if isinstance(v, (str, int, bool))}
-        body = json.dumps(headers_dump, indent=2).encode('utf-8')
-        start_response('200 OK', [('Content-Type', 'application/json')])
-        return [body]
-
-    raw_path = (
-        environ.get('HTTP_X_MATCHED_PATH') or
-        environ.get('RAW_URI') or
-        environ.get('REQUEST_URI') or
-        environ.get('HTTP_X_FORWARDED_URI') or
-        environ.get('HTTP_X_VERCEL_PATH')
-    )
-    if raw_path and environ.get('PATH_INFO', '').startswith('/api/index'):
-        environ['PATH_INFO'] = raw_path.split('?')[0]
+    query_string = environ.get('QUERY_STRING', '')
+    if '__vercel_path=' in query_string:
+        parsed = parse_qs(query_string, keep_blank_values=True)
+        if '__vercel_path' in parsed:
+            dest_path = parsed.pop('__vercel_path')[0]
+            if dest_path:
+                environ['PATH_INFO'] = dest_path if dest_path.startswith('/') else '/' + dest_path
+            environ['QUERY_STRING'] = urlencode(parsed, doseq=True)
     elif environ.get('PATH_INFO') in ('/api/index', '/api/index/'):
         environ['PATH_INFO'] = '/'
 
