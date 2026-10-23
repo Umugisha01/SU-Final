@@ -41,6 +41,8 @@ handler500 = 'su_connect.urls.custom_500'
 
 urlpatterns = [
     path('', root_view, name='root'),
+    path('api/index', root_view, name='root_api_index'),
+    path('api/index/', root_view, name='root_api_index_slash'),
     path('favicon.ico', favicon_view, name='favicon'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('apps.accounts.urls_auth')),

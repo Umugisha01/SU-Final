@@ -17,5 +17,19 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'su_connect.settings.production'
 
 from su_connect.wsgi import application
 
-# Top-level WSGI callable required by Vercel
-app = application
+def app(environ, start_response):
+    # In Vercel serverless rewrites (e.g. source: "/(.*)" -> destination: "/api/index"),
+    # Vercel passes the original requested path in HTTP_X_MATCHED_PATH, HTTP_X_VERCEL_PATH,
+    # or HTTP_X_FORWARDED_URI, while setting PATH_INFO to "/api/index".
+    matched_path = (
+        environ.get('HTTP_X_MATCHED_PATH') or
+        environ.get('HTTP_X_VERCEL_PATH') or
+        environ.get('HTTP_X_FORWARDED_URI')
+    )
+    if matched_path and environ.get('PATH_INFO', '').startswith('/api/index'):
+        # Strip query string from matched_path if present
+        environ['PATH_INFO'] = matched_path.split('?')[0]
+    elif environ.get('PATH_INFO') in ('/api/index', '/api/index/'):
+        environ['PATH_INFO'] = '/'
+
+    return application(environ, start_response)
