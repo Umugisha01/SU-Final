@@ -1,4 +1,5 @@
 import os
+import socket
 from pathlib import Path
 from datetime import timedelta
 import environ
@@ -87,19 +88,38 @@ TEMPLATES = [
 WSGI_APPLICATION = 'su_connect.wsgi.application'
 ASGI_APPLICATION = 'su_connect.asgi.application'
 
-# Database Setup with PgBouncer Optimization
+def _is_port_open(host, port, timeout=0.3):
+    try:
+        with socket.create_connection((host, int(port)), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+# Database Setup with PgBouncer Optimization & Resilient Local Fallback
 _db_config = env.db('DATABASE_URL', default='sqlite:///db.sqlite3')
+_direct_url = env('DIRECT_DATABASE_URL', default='')
+
 if 'postgresql' in _db_config.get('ENGINE', ''):
+    _host = _db_config.get('HOST') or '127.0.0.1'
+    _port = _db_config.get('PORT') or 5432
+
+    # If configured for PgBouncer (port 6432) but PgBouncer is offline, fallback to direct port 5432
+    if str(_port) == '6432' and not _is_port_open(_host, 6432):
+        if _direct_url:
+            _db_config = env.db('DIRECT_DATABASE_URL')
+        else:
+            _db_config['PORT'] = 5432
+
     _db_config['CONN_MAX_AGE'] = int(env('DB_CONN_MAX_AGE', default=0))
-    # Top-level Django setting required for PgBouncer transaction pooling
-    _db_config['DISABLE_SERVER_SIDE_CURSORS'] = True
+    if str(_db_config.get('PORT', '')) == '6432':
+        _db_config['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 DATABASES = {
     'default': _db_config
 }
 
 # Optional direct connection alias for running migrations or direct administrative tasks
-if env('DIRECT_DATABASE_URL', default=''):
+if _direct_url:
     DATABASES['direct'] = env.db('DIRECT_DATABASE_URL')
 
 

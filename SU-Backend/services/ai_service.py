@@ -7,7 +7,10 @@ from django.db import models
 from django.db.models import Q
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-import google.generativeai as genai
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    import google.generativeai as genai
 
 # Pydantic schema for structured output validation
 class ReportAnalysisResult(BaseModel):
