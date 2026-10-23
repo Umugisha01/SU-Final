@@ -2,6 +2,15 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+import re
+
+# Compatibility shim for Django 6.1+ removal of cc_delim_re in django.utils.cache
+try:
+    import django.utils.cache
+    if not hasattr(django.utils.cache, 'cc_delim_re'):
+        django.utils.cache.cc_delim_re = re.compile(r'\s*,\s*')
+except ImportError:
+    pass
 
 
 def main():

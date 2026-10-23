@@ -1,8 +1,17 @@
 import os
+import re
 import socket
 from pathlib import Path
 from datetime import timedelta
 import environ
+
+# Compatibility shim for Django 6.1+ removal of cc_delim_re in django.utils.cache
+try:
+    import django.utils.cache
+    if not hasattr(django.utils.cache, 'cc_delim_re'):
+        django.utils.cache.cc_delim_re = re.compile(r'\s*,\s*')
+except ImportError:
+    pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
