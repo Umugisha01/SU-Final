@@ -251,6 +251,21 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",
 ]
 
+# CSRF Trusted Origins for Cross-Origin Frontend Deployments
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'https://su-connect.vercel.app',
+    'https://su-connect-api01.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+]
+if env('CSRF_TRUSTED_ORIGINS', default=''):
+    CSRF_TRUSTED_ORIGINS.extend([
+        orig.strip() for orig in env('CSRF_TRUSTED_ORIGINS').split(',') if orig.strip()
+    ])
+
+
 # Celery Configurations
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/1')

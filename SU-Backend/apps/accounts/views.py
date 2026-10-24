@@ -36,6 +36,7 @@ def set_refresh_cookie(response, refresh_token):
 
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -65,6 +66,7 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []
     throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
