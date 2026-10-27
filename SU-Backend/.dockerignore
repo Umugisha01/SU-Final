@@ -1,0 +1,37 @@
+# Version control
+.git
+.gitignore
+
+# Virtual environments
+.venv
+venv
+ENV/
+env/
+
+# Python cache and byte-code
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local configuration and secrets
+.env
+.env.local
+*.log
+error_log.html
+error.py
+error2.py
+
+# Media and static uploads (mount these via volumes)
+media/
+staticfiles/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
