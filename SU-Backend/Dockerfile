@@ -3,7 +3,7 @@
 # Base: Python 3.12 Slim (Debian)
 # ==============================================================================
 
-FROM python:3.12-slim
+FROM python:3.14
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
