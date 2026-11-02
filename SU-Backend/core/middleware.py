@@ -37,16 +37,23 @@ class ExceptionLoggingMiddleware:
             status=500
         )
 
+from django.utils.functional import empty
+
 # Thread-local storage for request user
 _thread_locals = threading.local()
 
 def get_current_user():
     """
-    Retrieve the current request user from thread-local storage.
+    Retrieve the current request user from thread-local storage safely without triggering
+    premature evaluation of SimpleLazyObject during authentication.
     """
     request = getattr(_thread_locals, 'request', None)
     if request:
-        return getattr(request, 'user', None)
+        raw_user = getattr(request, 'user', None)
+        # If it's an unresolved SimpleLazyObject, do NOT force-evaluate it here to avoid recursion
+        if hasattr(raw_user, '_wrapped') and raw_user._wrapped is empty:
+            return None
+        return raw_user
     return getattr(_thread_locals, 'user', None)
 
 
@@ -69,29 +76,56 @@ def clear_current_user():
 
 class RegionalQuerySet(models.QuerySet):
     def filter_by_region(self, user=None):
+        # Prevent recursion if already inside filter_by_region
+        if getattr(_thread_locals, '_in_filter_by_region', False):
+            return self
+
+        request = getattr(_thread_locals, 'request', None)
+        # Never apply regional filtering to Django Admin internal views
+        if request and getattr(request, 'path', '').startswith('/admin/'):
+            return self
+
         if not user:
             user = get_current_user()
-        
-        if user and user.is_authenticated:
+
+        if not user:
+            return self
+
+        try:
+            _thread_locals._in_filter_by_region = True
+            
+            if not getattr(user, 'is_authenticated', False):
+                return self
+
+            # Admins, managers, and staff see all regions
+            if (
+                getattr(user, 'role', None) in ['administrator', 'national_manager']
+                or getattr(user, 'is_superuser', False)
+                or getattr(user, 'is_staff', False)
+            ):
+                return self
+
             # Regional isolation applies only to field officers and regional coordinators
-            if user.role in ['field_officer', 'regional_coordinator']:
-                # If model is User, filter by region
+            if getattr(user, 'role', None) in ['field_officer', 'regional_coordinator']:
+                user_region = getattr(user, 'region', None)
+                if not user_region:
+                    return self
+
                 if self.model.__name__ == 'User':
-                    return self.filter(region=user.region)
-                # For other models, filter by region if field exists
+                    return self.filter(region=user_region)
                 elif hasattr(self.model, 'region'):
-                    # Documents can have 'All Regions' or specific region
                     if self.model.__name__ == 'Document':
-                        return self.filter(region__in=[user.region, 'All Regions'])
+                        return self.filter(region__in=[user_region, 'All Regions'])
                     if self.model.__name__ == 'Report':
-                        # Allow access if region matches OR user is a recipient OR user is the submitter
                         from django.db.models import Q
-                        return self.filter(Q(region=user.region) | Q(recipients=user) | Q(submitted_by=user)).distinct()
+                        return self.filter(Q(region=user_region) | Q(recipients=user) | Q(submitted_by=user)).distinct()
                     if self.model.__name__ == 'SupportRequest':
-                        # Allow access if region matches OR user is a recipient OR user is the requester OR user is assigned_to
                         from django.db.models import Q
-                        return self.filter(Q(region=user.region) | Q(recipients=user) | Q(requester=user) | Q(assigned_to=user)).distinct()
-                    return self.filter(region=user.region)
+                        return self.filter(Q(region=user_region) | Q(recipients=user) | Q(requester=user) | Q(assigned_to=user)).distinct()
+                    return self.filter(region=user_region)
+        finally:
+            _thread_locals._in_filter_by_region = False
+
         return self
 
 
@@ -144,6 +178,10 @@ class SessionTimeoutMiddleware(MiddlewareMixin):
     forces logout. Otherwise updates last activity.
     """
     def process_request(self, request):
+        # Allow admin and static/media routes to rely on standard Django session handling
+        if request.path.startswith('/admin/') or request.path.startswith('/static/') or request.path.startswith('/media/'):
+            return None
+
         user = getattr(request, 'user', None)
         if user and user.is_authenticated:
             now = timezone.now()

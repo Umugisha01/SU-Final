@@ -1,0 +1,521 @@
+{
+  "info": {
+    "name": "SU Connect Complete API Collection",
+    "description": "Pre-configured test collection for SU Connect backend including authentication, JWT tokens, users, reports, dashboards, support, prayer, documents, notifications, and audit logs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. System & Health",
+      "item": [
+        {
+          "name": "Root URL Direct to Admin (302)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          }
+        },
+        {
+          "name": "API Health & Inventory",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/status/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "status", ""]
+            }
+          }
+        },
+        {
+          "name": "OpenAPI 3.0 Schema",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/schema/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schema", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Login (Auto-Saves JWT Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.accessToken) {",
+                  "        pm.collectionVariables.set('token', data.accessToken);",
+                  "        console.log('Saved token to collection variable:', data.accessToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@su.rw\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register New User",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Kagabo Frank\",\n  \"email\": \"frank.kagabo@su.rw\",\n  \"password\": \"Password123!\",\n  \"role\": \"field_officer\",\n  \"region\": \"Eastern Province\",\n  \"department\": \"Youth\",\n  \"position\": \"Field Officer\",\n  \"phone\": \"+250788112233\",\n  \"location\": \"Rwamagana\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Heartbeat",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/heartbeat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "heartbeat"]
+            }
+          }
+        },
+        {
+          "name": "Active Sessions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sessions"]
+            }
+          }
+        },
+        {
+          "name": "Revoke All Sessions",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions/revoke",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sessions", "revoke"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Users",
+      "item": [
+        {
+          "name": "Current User Profile (/me)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "User Directory",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/directory",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "directory"]
+            }
+          }
+        },
+        {
+          "name": "Pending Users (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "pending"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Dashboards",
+      "item": [
+        {
+          "name": "System Infrastructure Health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/system-health/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "system-health", ""]
+            }
+          }
+        },
+        {
+          "name": "Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/admin/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "admin", ""]
+            }
+          }
+        },
+        {
+          "name": "Manager Dashboard",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/manager/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "manager", ""]
+            }
+          }
+        },
+        {
+          "name": "Coordinator Dashboard",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/coordinator/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "coordinator", ""]
+            }
+          }
+        },
+        {
+          "name": "Field Officer Dashboard",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/field-officer/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "field-officer", ""]
+            }
+          }
+        },
+        {
+          "name": "Recent Activity",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/recent-activity/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "recent-activity", ""]
+            }
+          }
+        },
+        {
+          "name": "AI Strategic Insights",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/ai-insights/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "ai-insights", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Reports",
+      "item": [
+        {
+          "name": "List Reports",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", ""]
+            }
+          }
+        },
+        {
+          "name": "Create Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Kigali Regional Outreach\",\n  \"activity_type\": \"Youth Fellowship\",\n  \"region\": \"Kigali City\",\n  \"department\": \"Youth\",\n  \"date\": \"2026-11-01\",\n  \"duration\": \"4 hours\",\n  \"location\": \"Kigali\",\n  \"attendance\": 150,\n  \"demographics\": {\n    \"male\": 70,\n    \"female\": 80,\n    \"youth\": 120,\n    \"adults\": 30\n  },\n  \"summary\": \"Outreach report for testing.\",\n  \"key_achievements\": \"Reached 150 students.\",\n  \"challenges\": \"Rain delays.\",\n  \"prayer_points\": \"Continued guidance.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", ""]
+            }
+          }
+        },
+        {
+          "name": "Reports Analytics Summary",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/analytics/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "analytics", "summary"]
+            }
+          }
+        },
+        {
+          "name": "AI Chat Assistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What are the priority achievements in youth ministries?\",\n  \"documentIds\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/ai-chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "ai-chat"]
+            }
+          }
+        },
+        {
+          "name": "AI Engine Health Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/ai-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "ai-status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Support Requests",
+      "item": [
+        {
+          "name": "List Support Requests",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/support/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "support", ""]
+            }
+          }
+        },
+        {
+          "name": "Create Support Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Urgent Bibles Request\",\n  \"description\": \"Need 100 youth bibles for regional outreach.\",\n  \"priority\": \"high\",\n  \"department\": \"Resource Center\",\n  \"region\": \"Northern Province\",\n  \"needed_by\": \"2026-11-20\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/support/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "support", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Prayer Requests",
+      "item": [
+        {
+          "name": "List Prayer Requests",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/prayer/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "prayer", ""]
+            }
+          }
+        },
+        {
+          "name": "Post Prayer Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Travel Safety & Mission Success\",\n  \"request\": \"Praying for staff traveling to Southern Province.\",\n  \"region\": \"Southern Province\",\n  \"is_anonymous\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/prayer/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "prayer", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Documents",
+      "item": [
+        {
+          "name": "List Documents",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", ""]
+            }
+          }
+        },
+        {
+          "name": "Mark Notifications Read",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/mark-read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "mark-read"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Audit Logs",
+      "item": [
+        {
+          "name": "List Audit Logs (Admin Only)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/audit/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audit", ""]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

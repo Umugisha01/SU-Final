@@ -3,10 +3,16 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse, HttpResponse
+from django.views.generic import RedirectView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
 
-def root_view(request):
+def status_view(request):
     """
-    Root endpoint confirming the SU Connect API is healthy and live.
+    Status / Health endpoint returning API endpoints inventory.
     """
     return JsonResponse({
         "status": "online",
@@ -15,6 +21,9 @@ def root_view(request):
         "message": "Scripture Union Rwanda Operations Platform Backend is running successfully.",
         "endpoints": {
             "admin": "/admin/",
+            "docs": "/api/docs/",
+            "schema": "/api/schema/",
+            "redoc": "/api/redoc/",
             "auth": "/api/auth/",
             "users": "/api/users/",
             "reports": "/api/reports/",
@@ -40,11 +49,24 @@ handler404 = 'su_connect.urls.custom_404'
 handler500 = 'su_connect.urls.custom_500'
 
 urlpatterns = [
-    path('', root_view, name='root'),
-    path('api/index', root_view, name='root_api_index'),
-    path('api/index/', root_view, name='root_api_index_slash'),
-    path('favicon.ico', favicon_view, name='favicon'),
+    # Direct redirect to Django Admin Dashboard
+    path('', RedirectView.as_view(url='/admin/', permanent=False), name='root_redirect'),
+    
+    # Django Admin Dashboard
     path('admin/', admin.site.urls),
+    
+    # Interactive OpenAPI / Swagger Documentation
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    
+    # API Health & Status
+    path('api/status/', status_view, name='root_api_status'),
+    path('api/index', status_view, name='root_api_index'),
+    path('api/index/', status_view, name='root_api_index_slash'),
+    path('favicon.ico', favicon_view, name='favicon'),
+
+    # Application APIs
     path('api/auth/', include('apps.accounts.urls_auth')),
     path('api/users/', include('apps.accounts.urls_users')),
     path('api/reports/', include('apps.reports.urls')),

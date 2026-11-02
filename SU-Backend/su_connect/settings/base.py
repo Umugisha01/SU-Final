@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     # Third-party apps
+    'drf_spectacular',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
@@ -171,6 +172,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST Framework settings
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -194,6 +196,20 @@ REST_FRAMEWORK = {
         'ai': '5/hour',
         'upload': '30/hour',
     }
+}
+
+# DRF Spectacular OpenAPI documentation settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'SU Connect API',
+    'DESCRIPTION': 'Scripture Union Rwanda Operations Platform - Complete Backend API schema & interactive testing suite.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+    },
 }
 
 # Simple JWT Settings
@@ -291,3 +307,7 @@ OLLAMA_URL = env('OLLAMA_URL', default='http://127.0.0.1:11434')
 OLLAMA_TEXT_MODEL = env('OLLAMA_TEXT_MODEL', default='mistral:7b-instruct-q4_K_M')
 OLLAMA_VISION_MODEL = env('OLLAMA_VISION_MODEL', default='qwen2.5vl:3b')
 OLLAMA_MODEL = OLLAMA_VISION_MODEL # Legacy alias compatibility
+
+# Authentication redirect defaults
+LOGIN_REDIRECT_URL = '/admin/'
+LOGIN_URL = '/admin/login/'

@@ -1,0 +1,2509 @@
+openapi: 3.0.3
+info:
+  title: SU Connect API
+  version: 1.0.0
+  description: Scripture Union Rwanda Operations Platform - Complete Backend API schema
+    & interactive testing suite.
+paths:
+  /api/audit/:
+    get:
+      operationId: api_audit_list
+      description: GET /api/audit - list all audit trails (Admin only)
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogList'
+          description: ''
+  /api/auth/forgot-password:
+    post:
+      operationId: api_auth_forgot_password_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/heartbeat:
+    post:
+      operationId: api_auth_heartbeat_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/login:
+    post:
+      operationId: api_auth_login_create
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/logout:
+    post:
+      operationId: api_auth_logout_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/mfa/send-email:
+    post:
+      operationId: api_auth_mfa_send_email_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/mfa/setup:
+    post:
+      operationId: api_auth_mfa_setup_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/mfa/verify:
+    post:
+      operationId: api_auth_mfa_verify_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/refresh:
+    post:
+      operationId: api_auth_refresh_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/register:
+    post:
+      operationId: api_auth_register_create
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/resend-verification:
+    post:
+      operationId: api_auth_resend_verification_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/reset-password:
+    post:
+      operationId: api_auth_reset_password_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/sessions:
+    get:
+      operationId: api_auth_sessions_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/sessions/revoke:
+    post:
+      operationId: api_auth_sessions_revoke_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/verify-email:
+    get:
+      operationId: api_auth_verify_email_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/dashboard/admin/:
+    get:
+      operationId: api_dashboard_admin_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/dashboard/ai-insights/:
+    get:
+      operationId: api_dashboard_ai_insights_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/dashboard/coordinator/:
+    get:
+      operationId: api_dashboard_coordinator_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/dashboard/field-officer/:
+    get:
+      operationId: api_dashboard_field_officer_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/dashboard/manager/:
+    get:
+      operationId: api_dashboard_manager_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/dashboard/recent-activity/:
+    get:
+      operationId: api_dashboard_recent_activity_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/dashboard/system-health/:
+    get:
+      operationId: api_dashboard_system_health_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/:
+    get:
+      operationId: api_documents_retrieve
+      description: |-
+        GET /api/documents - list visible documents with advanced filters & search
+        POST /api/documents - upload a new document with metadata
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: api_documents_create
+      description: |-
+        GET /api/documents - list visible documents with advanced filters & search
+        POST /api/documents - upload a new document with metadata
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{id}:
+    get:
+      operationId: api_documents_retrieve_2
+      description: |-
+        GET /api/documents/{id} - retrieve a specific document
+        PATCH /api/documents/{id} - update metadata (name, category, description, tags, shared)
+        DELETE /api/documents/{id} - delete a document from database & storage
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: api_documents_partial_update
+      description: |-
+        GET /api/documents/{id} - retrieve a specific document
+        PATCH /api/documents/{id} - update metadata (name, category, description, tags, shared)
+        DELETE /api/documents/{id} - delete a document from database & storage
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: api_documents_destroy
+      description: |-
+        GET /api/documents/{id} - retrieve a specific document
+        PATCH /api/documents/{id} - update metadata (name, category, description, tags, shared)
+        DELETE /api/documents/{id} - delete a document from database & storage
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/documents/{id}/download:
+    get:
+      operationId: api_documents_download_retrieve
+      description: GET /api/documents/{id}/download - increment downloads and redirect
+        to storage
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/documents/{id}/share:
+    patch:
+      operationId: api_documents_share_partial_update
+      description: PATCH /api/documents/{id}/share - toggle sharing vault status
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/:
+    get:
+      operationId: api_notifications_list
+      description: GET /api/notifications - retrieves list of target user's notifications
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/notifications/{id}/:
+    delete:
+      operationId: api_notifications_destroy
+      description: DELETE /api/notifications/{id} - deletes a notification
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/notifications/{id}/read:
+    put:
+      operationId: api_notifications_read_update
+      description: PUT /api/notifications/{id}/read - marks a single notification
+        as read
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/broadcast:
+    post:
+      operationId: api_notifications_broadcast_create
+      description: |-
+        POST /api/notifications/broadcast
+        Sends a notification to selected targeted under-level users.
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/broadcast-targets:
+    get:
+      operationId: api_notifications_broadcast_targets_retrieve
+      description: |-
+        GET /api/notifications/broadcast-targets
+        Returns simple directory of active users that the current user is allowed to send broadcasts to.
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/mark-read:
+    post:
+      operationId: api_notifications_mark_read_create
+      description: POST /api/notifications/mark-read - marks multiple or all notifications
+        as read
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/system-alerts:
+    post:
+      operationId: api_notifications_system_alerts_create
+      description: |-
+        POST /api/notifications/system-alerts
+        Admin-only endpoint to create system-wide/targeted alerts.
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/system-alerts/{id}/dismiss:
+    post:
+      operationId: api_notifications_system_alerts_dismiss_create
+      description: |-
+        POST /api/notifications/system-alerts/{id}/dismiss
+        Dismisses a system alert for the current user.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/system-alerts/active:
+    get:
+      operationId: api_notifications_system_alerts_active_retrieve
+      description: |-
+        GET /api/notifications/system-alerts/active
+        Retrieves unexpired system alerts targeted to the current user.
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/prayer/:
+    get:
+      operationId: api_prayer_list
+      description: |-
+        GET /api/prayer - list visible prayers
+        POST /api/prayer - create prayer
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPrayerRequestList'
+          description: ''
+    post:
+      operationId: api_prayer_create
+      description: |-
+        GET /api/prayer - list visible prayers
+        POST /api/prayer - create prayer
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrayerRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrayerRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrayerRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrayerRequest'
+          description: ''
+  /api/prayer/{id}/commit:
+    post:
+      operationId: api_prayer_commit_create
+      description: POST /api/prayer/{id}/commit - commit to pray
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/prayer/{id}/status:
+    patch:
+      operationId: api_prayer_status_partial_update
+      description: PATCH /api/prayer/{id}/status - transition state (answered/archived)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/prayer/{id}/uncommit:
+    post:
+      operationId: api_prayer_uncommit_create
+      description: POST /api/prayer/{id}/uncommit - cancel commitment to pray
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/prayer/{id}:
+    get:
+      operationId: api_prayer_retrieve
+      description: |-
+        GET /api/prayer/{id} - details of prayer
+        PUT /api/prayer/{id} - update prayer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrayerRequest'
+          description: ''
+    put:
+      operationId: api_prayer_update
+      description: |-
+        GET /api/prayer/{id} - details of prayer
+        PUT /api/prayer/{id} - update prayer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrayerRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrayerRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrayerRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrayerRequest'
+          description: ''
+    patch:
+      operationId: api_prayer_partial_update
+      description: |-
+        GET /api/prayer/{id} - details of prayer
+        PUT /api/prayer/{id} - update prayer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPrayerRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPrayerRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPrayerRequestRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrayerRequest'
+          description: ''
+  /api/reports/:
+    get:
+      operationId: api_reports_list
+      description: |-
+        GET /api/reports - paginated report list
+        POST /api/reports - create report
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedReportList'
+          description: ''
+    post:
+      operationId: api_reports_create
+      description: |-
+        GET /api/reports - paginated report list
+        POST /api/reports - create report
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+          description: ''
+  /api/reports/{id}/ai-override:
+    patch:
+      operationId: api_reports_ai_override_partial_update
+      description: PATCH /api/reports/{id}/ai-override - override category classification
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/reports/{id}/status:
+    patch:
+      operationId: api_reports_status_partial_update
+      description: PATCH /api/reports/{id}/status - approve or return (Manager/Admin
+        only)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/reports/{id}:
+    get:
+      operationId: api_reports_retrieve
+      description: |-
+        GET /api/reports/{id} - details of report
+        PUT /api/reports/{id} - update draft only
+        DELETE /api/reports/{id} - soft delete report
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+          description: ''
+    put:
+      operationId: api_reports_update
+      description: |-
+        GET /api/reports/{id} - details of report
+        PUT /api/reports/{id} - update draft only
+        DELETE /api/reports/{id} - soft delete report
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+          description: ''
+    patch:
+      operationId: api_reports_partial_update
+      description: |-
+        GET /api/reports/{id} - details of report
+        PUT /api/reports/{id} - update draft only
+        DELETE /api/reports/{id} - soft delete report
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReportRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+          description: ''
+    delete:
+      operationId: api_reports_destroy
+      description: |-
+        GET /api/reports/{id} - details of report
+        PUT /api/reports/{id} - update draft only
+        DELETE /api/reports/{id} - soft delete report
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/reports/ai-analyze:
+    post:
+      operationId: api_reports_ai_analyze_create
+      description: POST /api/reports/ai-analyze - queue report classification
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/reports/ai-chat:
+    post:
+      operationId: api_reports_ai_chat_create
+      description: POST /api/reports/ai-chat - query local Ollama model using RAG
+        context with optional streaming
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/reports/ai-status:
+    get:
+      operationId: api_reports_ai_status_retrieve
+      description: GET /api/reports/ai-status - check if local Ollama is reachable
+        and which models are available
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/reports/analytics/summary:
+    get:
+      operationId: api_reports_analytics_summary_retrieve
+      description: GET /api/reports/analytics/summary
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/reports/consolidated:
+    get:
+      operationId: api_reports_consolidated_retrieve
+      description: |-
+        GET /api/reports/consolidated - get summaries and metrics of approved reports
+        POST /api/reports/consolidated - consolidate selected reports into an editable draft
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: api_reports_consolidated_create
+      description: |-
+        GET /api/reports/consolidated - get summaries and metrics of approved reports
+        POST /api/reports/consolidated - consolidate selected reports into an editable draft
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/reports/share:
+    post:
+      operationId: api_reports_share_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/support/:
+    get:
+      operationId: api_support_list
+      description: |-
+        GET /api/support - list support requests
+        POST /api/support - create support request
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSupportRequestList'
+          description: ''
+    post:
+      operationId: api_support_create
+      description: |-
+        GET /api/support - list support requests
+        POST /api/support - create support request
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupportRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SupportRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupportRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportRequest'
+          description: ''
+  /api/support/{id}/assign:
+    patch:
+      operationId: api_support_assign_partial_update
+      description: PATCH /api/support/{id}/assign - assign to support staff (Manager/Admin
+        only)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/support/{id}/comments:
+    post:
+      operationId: api_support_comments_create
+      description: POST /api/support/{id}/comments - post comment to thread
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/support/{id}/status:
+    patch:
+      operationId: api_support_status_partial_update
+      description: PATCH /api/support/{id}/status - transition status of ticket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/support/{id}:
+    get:
+      operationId: api_support_retrieve
+      description: |-
+        GET /api/support/{id} - retrieve request details
+        PUT /api/support/{id} - update request properties
+        DELETE /api/support/{id} - delete support request
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportRequest'
+          description: ''
+    put:
+      operationId: api_support_update
+      description: |-
+        GET /api/support/{id} - retrieve request details
+        PUT /api/support/{id} - update request properties
+        DELETE /api/support/{id} - delete support request
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupportRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SupportRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SupportRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportRequest'
+          description: ''
+    patch:
+      operationId: api_support_partial_update
+      description: |-
+        GET /api/support/{id} - retrieve request details
+        PUT /api/support/{id} - update request properties
+        DELETE /api/support/{id} - delete support request
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSupportRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSupportRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSupportRequestRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportRequest'
+          description: ''
+    delete:
+      operationId: api_support_destroy
+      description: |-
+        GET /api/support/{id} - retrieve request details
+        PUT /api/support/{id} - update request properties
+        DELETE /api/support/{id} - delete support request
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/support/{id}/ai-analyze:
+    post:
+      operationId: api_support_ai_analyze_create
+      description: Manually trigger AI analysis for a request
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/support/ai-batch:
+    post:
+      operationId: api_support_ai_batch_create
+      description: Batch analyze all pending requests
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/support/ai-status/{task_id}:
+    get:
+      operationId: api_support_ai_status_retrieve
+      description: Check status of AI analysis task
+      parameters:
+      - in: path
+        name: task_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/support/ai-suggest:
+    post:
+      operationId: api_support_ai_suggest_create
+      description: Get AI suggestion for a draft request (real-time)
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/support/consolidate:
+    post:
+      operationId: api_support_consolidate_create
+      description: POST /api/support/consolidate - consolidate multiple support requests
+        into one editable draft.
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/support/share:
+    post:
+      operationId: api_support_share_create
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/:
+    get:
+      operationId: api_users_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+  /api/users/{id}:
+    put:
+      operationId: api_users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/{id}/approve:
+    post:
+      operationId: api_users_approve_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/{id}/reject:
+    post:
+      operationId: api_users_reject_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/{id}/status:
+    patch:
+      operationId: api_users_status_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/directory:
+    get:
+      operationId: api_users_directory_retrieve
+      description: Returns a lightweight directory of active users for dropdowns and
+        selectors.
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/me:
+    get:
+      operationId: api_users_me_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: api_users_me_update
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/me/mfa:
+    put:
+      operationId: api_users_me_mfa_update
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/me/password:
+    put:
+      operationId: api_users_me_password_update
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/pending:
+    get:
+      operationId: api_users_pending_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/users/sessions/{sessionId}:
+    delete:
+      operationId: api_users_sessions_destroy
+      parameters:
+      - in: path
+        name: sessionId
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    AiPriorityEnum:
+      enum:
+      - urgent
+      - high
+      - medium
+      - low
+      type: string
+      description: |-
+        * `urgent` - Urgent
+        * `high` - High
+        * `medium` - Medium
+        * `low` - Low
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        user_snapshot:
+          type: string
+          maxLength: 255
+        action:
+          type: string
+          maxLength: 255
+        resource:
+          type: string
+          maxLength: 255
+        ip:
+          type: string
+          maxLength: 45
+        severity:
+          $ref: '#/components/schemas/SeverityEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action
+      - created_at
+      - id
+      - ip
+      - resource
+      - user
+      - user_snapshot
+    CategoryEnum:
+      enum:
+      - Financial
+      - Equipment
+      - Spiritual
+      - Technical
+      - Training
+      type: string
+      description: |-
+        * `Financial` - Financial
+        * `Equipment` - Equipment
+        * `Spiritual` - Spiritual
+        * `Technical` - Technical
+        * `Training` - Training
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        type:
+          $ref: '#/components/schemas/NotificationTypeEnum'
+        title:
+          type: string
+          maxLength: 255
+        message:
+          type: string
+        icon:
+          type: string
+          nullable: true
+          maxLength: 50
+        read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - message
+      - title
+      - type
+    NotificationTypeEnum:
+      enum:
+      - report
+      - support
+      - prayer
+      - deadline
+      - system
+      - other
+      type: string
+      description: |-
+        * `report` - Report Update
+        * `support` - Support Request
+        * `prayer` - Prayer Commitment
+        * `deadline` - Deadline Reminder
+        * `system` - System Alert
+        * `other` - Other Notification
+    NullEnum:
+      enum:
+      - null
+    PaginatedAuditLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+    PaginatedNotificationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedPrayerRequestList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrayerRequest'
+    PaginatedReportList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+    PaginatedSupportRequestList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupportRequest'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PatchedPrayerRequestRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        request:
+          type: string
+          minLength: 1
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+    PatchedReportRequest:
+      type: object
+      description: Serializer for creating, retrieving, and updating activity reports.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        type:
+          $ref: '#/components/schemas/ReportTypeEnum'
+        region:
+          type: string
+          minLength: 1
+          maxLength: 100
+        department:
+          type: string
+          minLength: 1
+          maxLength: 100
+        date:
+          type: string
+          format: date
+        duration:
+          type: string
+          nullable: true
+          maxLength: 100
+        location:
+          type: string
+          nullable: true
+          maxLength: 255
+        participants:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        demographics: {}
+        description:
+          type: string
+          minLength: 1
+        outcomes:
+          type: string
+          nullable: true
+        challenges:
+          type: string
+          nullable: true
+        prayer_requests:
+          type: string
+          nullable: true
+        attachmentIds:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
+        recipientIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          writeOnly: true
+    PatchedSupportRequestRequest:
+      type: object
+      description: Serializer for creating, retrieving, and updating support tickets.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        description:
+          type: string
+          minLength: 1
+        urgency:
+          $ref: '#/components/schemas/UrgencyEnum'
+        recipientIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          writeOnly: true
+        manual_priority_override:
+          type: boolean
+    PrayerRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        request:
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PrayerStatusEnum'
+          readOnly: true
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+        requester:
+          type: string
+          readOnly: true
+        region:
+          type: string
+          readOnly: true
+        commitments_count:
+          type: integer
+          readOnly: true
+        hasCommitted:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - commitments_count
+      - created_at
+      - hasCommitted
+      - id
+      - region
+      - request
+      - requester
+      - status
+      - title
+      - updated_at
+    PrayerRequestRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        request:
+          type: string
+          minLength: 1
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+      required:
+      - request
+      - title
+    PrayerStatusEnum:
+      enum:
+      - active
+      - answered
+      - archived
+      type: string
+      description: |-
+        * `active` - Active
+        * `answered` - Answered
+        * `archived` - Archived
+    Report:
+      type: object
+      description: Serializer for creating, retrieving, and updating activity reports.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        type:
+          $ref: '#/components/schemas/ReportTypeEnum'
+        region:
+          type: string
+          maxLength: 100
+        department:
+          type: string
+          maxLength: 100
+        date:
+          type: string
+          format: date
+        duration:
+          type: string
+          nullable: true
+          maxLength: 100
+        location:
+          type: string
+          nullable: true
+          maxLength: 255
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ReportStatusEnum'
+          readOnly: true
+        submitted_by:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        participants:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        demographics: {}
+        description:
+          type: string
+        outcomes:
+          type: string
+          nullable: true
+        challenges:
+          type: string
+          nullable: true
+        prayer_requests:
+          type: string
+          nullable: true
+        ai_category:
+          type: string
+          readOnly: true
+          nullable: true
+        confidence:
+          type: integer
+          readOnly: true
+          nullable: true
+        keywords:
+          readOnly: true
+        ai_summary:
+          type: string
+          readOnly: true
+          nullable: true
+        overridden:
+          type: boolean
+          readOnly: true
+        attachments:
+          type: string
+          readOnly: true
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        returned_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - ai_category
+      - ai_summary
+      - approved_at
+      - attachments
+      - confidence
+      - created_at
+      - date
+      - department
+      - description
+      - id
+      - keywords
+      - overridden
+      - recipients
+      - region
+      - returned_at
+      - status
+      - submitted_at
+      - submitted_by
+      - title
+      - type
+      - updated_at
+    ReportRequest:
+      type: object
+      description: Serializer for creating, retrieving, and updating activity reports.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        type:
+          $ref: '#/components/schemas/ReportTypeEnum'
+        region:
+          type: string
+          minLength: 1
+          maxLength: 100
+        department:
+          type: string
+          minLength: 1
+          maxLength: 100
+        date:
+          type: string
+          format: date
+        duration:
+          type: string
+          nullable: true
+          maxLength: 100
+        location:
+          type: string
+          nullable: true
+          maxLength: 255
+        participants:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        demographics: {}
+        description:
+          type: string
+          minLength: 1
+        outcomes:
+          type: string
+          nullable: true
+        challenges:
+          type: string
+          nullable: true
+        prayer_requests:
+          type: string
+          nullable: true
+        attachmentIds:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
+        recipientIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          writeOnly: true
+      required:
+      - date
+      - department
+      - description
+      - region
+      - title
+      - type
+    ReportStatusEnum:
+      enum:
+      - draft
+      - submitted
+      - submitted_to_coordinator
+      - submitted_to_manager
+      - approved
+      - returned
+      - returned_by_coordinator
+      - returned_by_manager
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `submitted` - Submitted
+        * `submitted_to_coordinator` - Submitted to Coordinator
+        * `submitted_to_manager` - Submitted to Manager
+        * `approved` - Approved
+        * `returned` - Returned
+        * `returned_by_coordinator` - Returned by Coordinator
+        * `returned_by_manager` - Returned by Manager
+    ReportTypeEnum:
+      enum:
+      - Outreach
+      - Bible Study
+      - Training
+      - Meeting
+      - Community Event
+      - Prayer Meeting
+      - Youth Program
+      type: string
+      description: |-
+        * `Outreach` - Outreach
+        * `Bible Study` - Bible Study
+        * `Training` - Training
+        * `Meeting` - Meeting
+        * `Community Event` - Community Event
+        * `Prayer Meeting` - Prayer Meeting
+        * `Youth Program` - Youth Program
+    RoleEnum:
+      enum:
+      - administrator
+      - national_manager
+      - regional_coordinator
+      - field_officer
+      type: string
+      description: |-
+        * `administrator` - Administrator
+        * `national_manager` - National Manager
+        * `regional_coordinator` - Regional Coordinator
+        * `field_officer` - Field Officer
+    SeverityEnum:
+      enum:
+      - info
+      - warning
+      - danger
+      type: string
+      description: |-
+        * `info` - Info
+        * `warning` - Warning
+        * `danger` - Danger
+    SupportComment:
+      type: object
+      description: Serializer for support request message threads.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        request:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - comment
+      - created_at
+      - id
+      - request
+      - user
+    SupportCommentRequest:
+      type: object
+      description: Serializer for support request message threads.
+      properties:
+        comment:
+          type: string
+          minLength: 1
+      required:
+      - comment
+    SupportRequest:
+      type: object
+      description: Serializer for creating, retrieving, and updating support tickets.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        description:
+          type: string
+        urgency:
+          $ref: '#/components/schemas/UrgencyEnum'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/SupportStatusEnum'
+          readOnly: true
+        requester:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        assigned_to:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        deadline:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        region:
+          type: string
+          readOnly: true
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupportComment'
+          readOnly: true
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ai_priority:
+          readOnly: true
+          nullable: true
+          description: |-
+            AI-assigned priority based on content analysis
+
+            * `urgent` - Urgent
+            * `high` - High
+            * `medium` - Medium
+            * `low` - Low
+          oneOf:
+          - $ref: '#/components/schemas/AiPriorityEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        ai_priority_confidence:
+          type: integer
+          readOnly: true
+          nullable: true
+          description: Confidence score 0-100
+        ai_priority_reason:
+          type: string
+          readOnly: true
+          nullable: true
+          description: Why AI assigned this priority
+        ai_analyzed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        manual_priority_override:
+          type: boolean
+      required:
+      - ai_analyzed_at
+      - ai_priority
+      - ai_priority_confidence
+      - ai_priority_reason
+      - assigned_to
+      - category
+      - comments
+      - created_at
+      - deadline
+      - description
+      - id
+      - recipients
+      - region
+      - requester
+      - status
+      - title
+      - updated_at
+    SupportRequestRequest:
+      type: object
+      description: Serializer for creating, retrieving, and updating support tickets.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        description:
+          type: string
+          minLength: 1
+        urgency:
+          $ref: '#/components/schemas/UrgencyEnum'
+        recipientIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          writeOnly: true
+        manual_priority_override:
+          type: boolean
+      required:
+      - category
+      - description
+      - title
+    SupportStatusEnum:
+      enum:
+      - submitted
+      - submitted_to_coordinator
+      - submitted_to_manager
+      - under review
+      - approved
+      - fulfilled
+      - closed
+      - returned_by_coordinator
+      - returned_by_manager
+      type: string
+      description: |-
+        * `submitted` - Submitted
+        * `submitted_to_coordinator` - Submitted to Coordinator
+        * `submitted_to_manager` - Submitted to Manager
+        * `under review` - Under Review
+        * `approved` - Approved
+        * `fulfilled` - Fulfilled
+        * `closed` - Closed
+        * `returned_by_coordinator` - Returned by Coordinator
+        * `returned_by_manager` - Returned by Manager
+    UrgencyEnum:
+      enum:
+      - low
+      - medium
+      - high
+      - critical
+      type: string
+      description: |-
+        * `low` - Low
+        * `medium` - Medium
+        * `high` - High
+        * `critical` - Critical
+    User:
+      type: object
+      description: Serializer for retrieving and updating user profile information.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+        region:
+          type: string
+          maxLength: 100
+        department:
+          type: string
+          maxLength: 100
+        position:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          nullable: true
+          maxLength: 30
+        avatar:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/UserStatusEnum'
+          readOnly: true
+        mfa_enabled:
+          type: boolean
+          readOnly: true
+        join_date:
+          type: string
+          format: date
+          readOnly: true
+        notif_prefs: {}
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        location:
+          type: string
+          nullable: true
+          maxLength: 255
+        email_verified:
+          type: boolean
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - avatar
+      - created_at
+      - department
+      - email
+      - email_verified
+      - id
+      - join_date
+      - last_login
+      - mfa_enabled
+      - name
+      - position
+      - region
+      - role
+      - status
+    UserRequest:
+      type: object
+      description: Serializer for retrieving and updating user profile information.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        region:
+          type: string
+          minLength: 1
+          maxLength: 100
+        department:
+          type: string
+          minLength: 1
+          maxLength: 100
+        position:
+          type: string
+          minLength: 1
+          maxLength: 100
+        phone:
+          type: string
+          nullable: true
+          maxLength: 30
+        notif_prefs: {}
+        location:
+          type: string
+          nullable: true
+          maxLength: 255
+      required:
+      - department
+      - email
+      - name
+      - position
+      - region
+    UserStatusEnum:
+      enum:
+      - active
+      - inactive
+      type: string
+      description: |-
+        * `active` - Active
+        * `inactive` - Inactive
+    VisibilityEnum:
+      enum:
+      - public
+      - regional
+      - anonymous
+      type: string
+      description: |-
+        * `public` - Public
+        * `regional` - Regional
+        * `anonymous` - Anonymous
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
