@@ -62,8 +62,6 @@ urlpatterns = [
     
     # API Health & Status
     path('api/status/', status_view, name='root_api_status'),
-    path('api/index', status_view, name='root_api_index'),
-    path('api/index/', status_view, name='root_api_index_slash'),
     path('favicon.ico', favicon_view, name='favicon'),
 
     # Application APIs

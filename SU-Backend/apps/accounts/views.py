@@ -16,24 +16,29 @@ from apps.accounts.serializers import (
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
 User = get_user_model()
 
 import os
 
 def set_refresh_cookie(response, refresh_token):
-    # In development (HTTP), secure must be False and samesite Lax for cookie to be sent
+    # In development (HTTP), secure must be False and samesite Lax for cookie to be sent.
+    # In production (cross-origin between frontend & backend Vercel domains), SameSite must be None with Secure.
     is_production = os.environ.get('DJANGO_SETTINGS_MODULE', '').endswith('production')
     response.set_cookie(
         key='su_refresh_token',
         value=refresh_token,
         httponly=True,
         secure=is_production,
-        samesite='Strict' if is_production else 'Lax',
+        samesite='None' if is_production else 'Lax',
         path='/api/',
         max_age=7 * 24 * 3600,  # 7 days, matching REFRESH_TOKEN_LIFETIME
     )
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
@@ -64,6 +69,7 @@ class RegisterView(APIView):
         return Response({"success": False, "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []

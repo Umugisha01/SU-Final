@@ -1,8 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/:match*",
-      "destination": "/api/index?__vercel_path=/:match*"
+      "source": "/api/(.*)",
+      "destination": "/api/index?__vercel_path=/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/index?__vercel_path=/$1"
     }
   ]
 }
