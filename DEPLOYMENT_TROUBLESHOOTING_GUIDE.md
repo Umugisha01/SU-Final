@@ -375,3 +375,4 @@ curl -X POST https://su-connect-api01.vercel.app/api/auth/register/ \
     "location": "Kigali"
   }'
 ```
+
