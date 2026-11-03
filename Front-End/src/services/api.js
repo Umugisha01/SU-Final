@@ -47,7 +47,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         // Backend refresh endpoint is /api/auth/refresh (not SimpleJWT default)
-        const res = await api.post('/auth/refresh');
+        const res = await api.post('/auth/refresh/');
         const newAccessToken = res.data.accessToken;
         if (newAccessToken) {
           localStorage.setItem('su-access-token', newAccessToken);
@@ -159,55 +159,55 @@ export const mapPrayerToFrontend = (p) => {
 
 export const authService = {
   login: async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
+    const res = await api.post('/auth/login/', { email, password });
     return res.data;
   },
   verifyMfa: async (code) => {
-    const res = await api.post('/auth/mfa/verify', { code });
+    const res = await api.post('/auth/mfa/verify/', { code });
     return res.data;
   },
   sendMfaEmail: async () => {
-    const res = await api.post('/auth/mfa/send-email');
+    const res = await api.post('/auth/mfa/send-email/');
     return res.data;
   },
   enableMfa: async () => {
-    const res = await api.post('/auth/mfa/enable');
+    const res = await api.post('/auth/mfa/enable/');
     return res.data;
   },
   register: async (data) => {
-    const res = await api.post('/auth/register', data);
+    const res = await api.post('/auth/register/', data);
     return res.data;
   },
   verifyEmail: async (token) => {
-    const res = await api.get('/auth/verify-email', { params: { token } });
+    const res = await api.get('/auth/verify-email/', { params: { token } });
     return res.data;
   },
   resendVerification: async (email) => {
-    const res = await api.post('/auth/resend-verification', { email });
+    const res = await api.post('/auth/resend-verification/', { email });
     return res.data;
   },
   heartbeat: async () => {
-    const res = await api.post('/auth/heartbeat');
+    const res = await api.post('/auth/heartbeat/');
     return res.data;
   },
   getSessions: async () => {
-    const res = await api.get('/auth/sessions');
+    const res = await api.get('/auth/sessions/');
     return res.data;
   },
   revokeSessions: async () => {
-    const res = await api.post('/auth/sessions/revoke');
+    const res = await api.post('/auth/sessions/revoke/');
     return res.data;
   },
   forgotPassword: async (email) => {
-    const res = await api.post('/auth/forgot-password', { email });
+    const res = await api.post('/auth/forgot-password/', { email });
     return res.data;
   },
   resetPassword: async (token, password) => {
-    const res = await api.post('/auth/reset-password', { token, password });
+    const res = await api.post('/auth/reset-password/', { token, password });
     return res.data;
   },
   setupMfa: async () => {
-    const res = await api.post('/auth/mfa/setup');
+    const res = await api.post('/auth/mfa/setup/');
     return res.data;
   },
   toggleMfa: async (mfaEnabled) => {
@@ -228,15 +228,15 @@ export const userService = {
     return data;
   },
   getProfile: async () => {
-    const res = await api.get('/users/me');
+    const res = await api.get('/users/me/');
     return res.data;
   },
   updateProfile: async (profileData) => {
-    const res = await api.put('/users/me', profileData);
+    const res = await api.put('/users/me/', profileData);
     return res.data;
   },
   changePassword: async (currentPassword, newPassword) => {
-    const res = await api.put('/users/me/password', { currentPassword, newPassword });
+    const res = await api.put('/users/me/password/', { currentPassword, newPassword });
     return res.data;
   },
   getPending: async () => {
