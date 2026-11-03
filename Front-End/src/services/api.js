@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+let apiBaseURL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://su-connect-api01.vercel.app/api' : 'http://localhost:8000/api');
+apiBaseURL = apiBaseURL.replace(/\/+$/, '');
+if (!apiBaseURL.endsWith('/api')) {
+  apiBaseURL += '/api';
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://su-connect-api01.vercel.app/api' : 'http://localhost:8000/api'),
+  baseURL: apiBaseURL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

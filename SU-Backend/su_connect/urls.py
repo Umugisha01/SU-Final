@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, re_path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse, HttpResponse
@@ -40,7 +40,11 @@ def favicon_view(request):
     return HttpResponse(status=204)
 
 def custom_404(request, exception=None):
-    return JsonResponse({"detail": "Endpoint not found.", "status": 404}, status=404)
+    return JsonResponse({
+        "detail": "Endpoint not found.",
+        "status": 404,
+        "path": request.path
+    }, status=404)
 
 def custom_500(request):
     return JsonResponse({"detail": "Internal server error.", "status": 500}, status=500)
@@ -68,16 +72,27 @@ urlpatterns = [
     path('api/status/', status_view, name='root_api_status'),
     path('favicon.ico', favicon_view, name='favicon'),
 
-    # Application APIs
-    path('api/auth/', include('apps.accounts.urls_auth')),
-    path('api/users/', include('apps.accounts.urls_users')),
-    path('api/reports/', include('apps.reports.urls')),
-    path('api/support/', include('apps.support.urls')),
-    path('api/prayer/', include('apps.prayer.urls')),
-    path('api/documents/', include('apps.documents.urls')),
-    path('api/audit/', include('apps.audit.urls')),
-    path('api/notifications/', include('apps.notifications.urls')),
-    path('api/dashboard/', include('apps.reports.urls_dashboard')),
+    # Application APIs (with standard /api/ prefix)
+    re_path(r'^api/auth/', include('apps.accounts.urls_auth')),
+    re_path(r'^api/users/', include('apps.accounts.urls_users')),
+    re_path(r'^api/reports/', include('apps.reports.urls')),
+    re_path(r'^api/support/', include('apps.support.urls')),
+    re_path(r'^api/prayer/', include('apps.prayer.urls')),
+    re_path(r'^api/documents/', include('apps.documents.urls')),
+    re_path(r'^api/audit/', include('apps.audit.urls')),
+    re_path(r'^api/notifications/', include('apps.notifications.urls')),
+    re_path(r'^api/dashboard/', include('apps.reports.urls_dashboard')),
+
+    # Application APIs (direct aliases without /api/ prefix for direct frontend requests)
+    re_path(r'^auth/', include('apps.accounts.urls_auth')),
+    re_path(r'^users/', include('apps.accounts.urls_users')),
+    re_path(r'^reports/', include('apps.reports.urls')),
+    re_path(r'^support/', include('apps.support.urls')),
+    re_path(r'^prayer/', include('apps.prayer.urls')),
+    re_path(r'^documents/', include('apps.documents.urls')),
+    re_path(r'^audit/', include('apps.audit.urls')),
+    re_path(r'^notifications/', include('apps.notifications.urls')),
+    re_path(r'^dashboard/', include('apps.reports.urls_dashboard')),
 ]
 
 if settings.DEBUG:

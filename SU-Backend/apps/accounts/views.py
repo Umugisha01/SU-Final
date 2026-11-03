@@ -75,6 +75,13 @@ class LoginView(APIView):
     authentication_classes = []
     throttle_classes = [AuthRateThrottle]
 
+    def get(self, request):
+        return Response({
+            "success": True,
+            "service": "SU Connect Authentication API",
+            "message": "Login endpoint is operational. Submit credentials using POST with JSON payload containing 'email' and 'password'."
+        })
+
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
