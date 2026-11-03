@@ -1,7 +1,15 @@
 import axios from 'axios';
 
-let apiBaseURL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://su-connect-api01.vercel.app/api' : 'http://localhost:8000/api');
+let apiBaseURL = (import.meta.env.VITE_API_URL || '').trim();
+if (!apiBaseURL) {
+  apiBaseURL = import.meta.env.PROD ? 'https://su-connect-api01.vercel.app/api' : 'http://localhost:8000/api';
+}
 apiBaseURL = apiBaseURL.replace(/\/+$/, '');
+// Guarantee protocol is present so Axios never treats it as a relative path
+if (!apiBaseURL.startsWith('http://') && !apiBaseURL.startsWith('https://')) {
+  apiBaseURL = 'https://' + apiBaseURL;
+}
+// Guarantee /api suffix is present
 if (!apiBaseURL.endsWith('/api')) {
   apiBaseURL += '/api';
 }
