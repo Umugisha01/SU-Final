@@ -1,7 +1,7 @@
 import os
 import sys
 import re
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import parse_qs, urlencode, unquote
 
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,27 +16,33 @@ except ImportError:
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'su_connect.settings.production')
 
-from su_connect.wsgi import application
+from su_connect.wsgi import application as django_app
 
 def app(environ, start_response):
-    # Ensure SCRIPT_NAME is empty so Django handles all routing directly from the root domain
-    # and does not generate double prefixes (e.g. /api/api/...) or corrupted redirect locations.
+    # Ensure SCRIPT_NAME is always empty so Django resolves URLs from the domain root
     environ['SCRIPT_NAME'] = ''
 
     real_path = None
     query_string = environ.get('QUERY_STRING', '')
 
-    # 1. Check __vercel_path from vercel.json rewrite
-    if '__vercel_path=' in query_string:
+    # 1. Check __vercel_path or path from vercel.json rewrite
+    if query_string:
         parsed = parse_qs(query_string, keep_blank_values=True)
         if '__vercel_path' in parsed:
             val = parsed.pop('__vercel_path')[0]
-            # Ensure val is a valid path string and not an unexpanded regex / placeholder
+            val = unquote(val)
             if val and not any(ch in val for ch in ('$', ':', '{', '}')):
                 real_path = val
-            environ['QUERY_STRING'] = urlencode(parsed, doseq=True)
+        if not real_path and 'path' in parsed:
+            val = parsed.get('path')[0]
+            val = unquote(val)
+            if val and not any(ch in val for ch in ('$', ':', '{', '}')):
+                real_path = val if val.startswith('/') else '/' + val
+        # Clean internal routing params from query string so Django views receive clean query params
+        parsed.pop('path', None)
+        environ['QUERY_STRING'] = urlencode(parsed, doseq=True)
 
-    # 2. Check Vercel serverless forwarding headers if rewrite was bypassed or __vercel_path was invalid
+    # 2. Check Vercel serverless forwarding headers if rewrite was bypassed
     if not real_path or real_path in ('/api/index', '/api/index/', '/api/index.py'):
         for header_key in [
             'HTTP_X_VERCEL_FORWARDED_PATH',
@@ -47,7 +53,7 @@ def app(environ, start_response):
         ]:
             val = environ.get(header_key)
             if val and val not in ('/api/index', '/api/index/', '/api/index.py'):
-                clean = val.split('?')[0]
+                clean = unquote(val.split('?')[0])
                 if clean and not any(ch in clean for ch in ('$', ':', '{', '}')):
                     real_path = clean
                     break
@@ -64,4 +70,7 @@ def app(environ, start_response):
     else:
         environ['PATH_INFO'] = '/'
 
-    return application(environ, start_response)
+    return django_app(environ, start_response)
+
+# Point both app and application to our path-normalizing wrapper
+application = app

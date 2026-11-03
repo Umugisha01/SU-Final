@@ -43,12 +43,7 @@ def custom_404(request, exception=None):
     return JsonResponse({
         "detail": "Endpoint not found.",
         "status": 404,
-        "path": request.path,
-        "path_info": request.path_info,
-        "debug_meta": {
-            k: str(v) for k, v in request.META.items() 
-            if k.startswith('HTTP_') or 'PATH' in k or 'URI' in k or 'QUERY' in k
-        }
+        "path": request.path
     }, status=404)
 
 def custom_500(request):
