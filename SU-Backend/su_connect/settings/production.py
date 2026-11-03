@@ -32,3 +32,6 @@ else:
 # WhiteNoise storage for static assets on Vercel Serverless
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
+# Celery in Serverless environment: execute tasks immediately without Redis daemon
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = False

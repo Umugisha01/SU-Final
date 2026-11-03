@@ -95,4 +95,5 @@ class NotificationService:
     def send_email(email_address, title, message):
         # Execute via celery worker
         from su_connect.tasks import send_notification_email_task
-        send_notification_email_task.delay(email_address, title, message)
+        from su_connect.tasks import safe_send_email
+        safe_send_email(email_address, title, message)

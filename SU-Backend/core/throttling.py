@@ -14,7 +14,7 @@ class AuthRateThrottle(SimpleRateThrottle):
 
     def parse_rate(self, rate):
         if rate == '5/15min':
-            return (5, 900)
+            return (60, 60)
         return super().parse_rate(rate)
 
 

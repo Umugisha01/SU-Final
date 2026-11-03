@@ -138,14 +138,14 @@ export default function Register() {
               }}>
                 <CheckCircle size={36} color="var(--success)" />
               </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 12 }}>Verify Your Email</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 12 }}>Account Created Successfully!</h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: 24 }}>
                 We have sent a verification link to <strong>{form.email}</strong>. Please check your inbox and verify your email address to proceed.
               </p>
               <p style={{ color: 'var(--text-light)', fontSize: '0.8rem', lineHeight: '1.5', marginBottom: 24 }}>
-                Once verified, an administrator will review and activate your account. You will receive an email confirmation when your account is active.
+                Your account is active and verified. You can sign in immediately with your email and password.
               </p>
-              <Link to="/login" className="btn btn-primary w-full">Return to Login</Link>
+              <Link to="/login" className="btn btn-primary w-full">Return to Login / Sign In Now</Link>
             </div>
           ) : (
             <>
