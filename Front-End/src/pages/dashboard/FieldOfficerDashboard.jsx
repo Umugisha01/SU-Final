@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, Users, Clock, CheckCircle, 
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { dashboardService } from '../../services/api';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useAuth } from '../../contexts/AuthContext';
 import MetricCard from './components/MetricCard';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import EmptyState from './components/EmptyState';
@@ -39,6 +40,10 @@ const TYPE_CONFIG = {
 
 export default function FieldOfficerDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const today = new Date().toLocaleDateString('en-RW', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [activities, setActivities] = useState([]);
