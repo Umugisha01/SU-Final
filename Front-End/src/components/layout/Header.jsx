@@ -52,7 +52,7 @@ export default function Header({ onMenuToggle, collapsed }) {
           <Menu size={20} />
         </button>
 
-        <div className="search-wrapper" style={{ flex: 1, maxWidth: 440 }}>
+        <div className="search-wrapper header-search-hide-xs" style={{ flex: 1, maxWidth: 440 }}>
           <Search size={16} className="search-icon" />
           <input
             className="form-control"

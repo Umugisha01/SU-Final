@@ -356,7 +356,7 @@ export default function SupportRequests() {
                             style={{ fontSize: '0.8rem' }}
                           />
                           <button
-                            className="btn btn-primary btn-sm"
+                            className="btn btn-primary btn-sm btn-touch"
                             disabled={!newComment.trim() || commentSubmitting}
                             onClick={async () => {
                               setCommentSubmitting(true);

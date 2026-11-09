@@ -5,14 +5,14 @@ export default function LoadingSkeleton({ type = 'card', count = 1 }) {
     switch (type) {
       case 'card':
         return (
-          <div key={index} className="stat-card" style={{ minHeight: '135px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div className="skeleton" style={{ width: '48px', height: '48px', borderRadius: 'var(--radius)' }} />
-              <div className="skeleton" style={{ width: '60px', height: '16px' }} />
+          <div key={index} className="stat-card md3-metric-card" style={{ minHeight: '115px' }}>
+            <div className="md3-metric-top-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="skeleton" style={{ width: '36px', height: '36px', borderRadius: '10px' }} />
+              <div className="skeleton" style={{ width: '56px', height: '18px', borderRadius: '12px' }} />
             </div>
-            <div style={{ marginTop: '16px' }}>
-              <div className="skeleton" style={{ width: '100px', height: '32px', marginBottom: '8px' }} />
-              <div className="skeleton" style={{ width: '150px', height: '14px' }} />
+            <div style={{ marginTop: '12px' }}>
+              <div className="skeleton" style={{ width: '60px', height: '24px', marginBottom: '6px' }} />
+              <div className="skeleton" style={{ width: '90px', height: '12px' }} />
             </div>
           </div>
         );
@@ -72,7 +72,7 @@ export default function LoadingSkeleton({ type = 'card', count = 1 }) {
   const skeletons = Array.from({ length: count }, (_, i) => renderSkeleton(i));
 
   if (type === 'card') {
-    return <div className="grid grid-4">{skeletons}</div>;
+    return <div className="grid grid-4 grid-4-mobile-2">{skeletons}</div>;
   }
   return <div style={{ width: '100%' }}>{skeletons}</div>;
 }

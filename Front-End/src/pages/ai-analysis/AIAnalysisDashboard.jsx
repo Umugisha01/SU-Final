@@ -1947,7 +1947,7 @@ Data: ${officerSummary}`;
                 </div>
               )}
 
-              <div className="grid grid-4" style={{ marginBottom: 20 }}>
+              <div className="grid grid-4 grid-4-mobile-2" style={{ marginBottom: 20 }}>
                 {[
                   { label: 'Reports Analyzed', val: analyses.filter(a => a.ai_category).length, icon: Brain, color: 'green' },
                   { label: 'Avg Confidence', val: `${analyses.filter(a => a.ai_category && a.confidence !== null).length > 0 ? Math.round(analyses.filter(a => a.ai_category && a.confidence !== null).reduce((sum, r) => sum + (r.confidence || 0), 0) / analyses.filter(a => a.ai_category && a.confidence !== null).length) : 89}%`, icon: CheckCircle, color: 'blue' },
@@ -2486,7 +2486,7 @@ Data: ${officerSummary}`;
           </div>
 
           {/* Consolidation Overview KPIs — computed by database math, no AI */}
-          <div className="grid grid-4" style={{ marginBottom: 20 }}>
+          <div className="grid grid-4 grid-4-mobile-2" style={{ marginBottom: 20 }}>
             {[
               { icon: FileText, label: 'Approved Reports', val: approvedCount, color: 'green', sub: 'Counted by database' },
               { icon: Users, label: 'Cumulative Reach', val: totalParticipants.toLocaleString(), color: 'purple', sub: 'Summed from report data' },
@@ -2777,7 +2777,7 @@ Data: ${officerSummary}`;
           {analyticsSubTab === 'overview' && (
             <>
               {/* Real-data KPI Cards */}
-              <div className="grid grid-4" style={{ marginBottom: 24 }}>
+              <div className="grid grid-4 grid-4-mobile-2" style={{ marginBottom: 24 }}>
                 {[
                   { icon: FileText, label: user?.role === 'regional_coordinator' ? 'My Region Reports' : 'Total Reports', val: myTotalReports, sub: user?.role === 'regional_coordinator' ? user.region : 'All regions — database count', color: 'green' },
                   { icon: Users, label: 'Participants Reached', val: myTotalParticipants.toLocaleString(), sub: 'From approved reports · real sum', color: 'blue' },

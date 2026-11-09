@@ -124,7 +124,7 @@ export default function Dashboard() {
         user_ids: alertTargetUsers.size === 0 ? [] : Array.from(alertTargetUsers)
       };
 
-      const res = await api.post('/notifications/system-alerts', payload);
+      const res = await api.post('/notifications/system-alerts/', payload);
       if (res.data && res.data.success) {
         toast.success(res.data.message || 'System alert created successfully');
         setShowAlertModal(false);

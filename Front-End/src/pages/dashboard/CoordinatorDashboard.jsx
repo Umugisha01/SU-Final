@@ -120,10 +120,10 @@ export default function CoordinatorDashboard() {
     : 0;
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Aggregates Grid */}
-      <div className="grid grid-4">
+      {/* Aggregates Grid — 2-col on small phones */}
+      <div className="grid grid-4 grid-4-mobile-2">
         <MetricCard 
           value={metrics.pending_my_approval}
           label="PENDING REVIEWS"
@@ -163,7 +163,7 @@ export default function CoordinatorDashboard() {
         />
       </div>
 
-      <div className="grid grid-3" style={{ gridTemplateColumns: '2fr 1fr' }}>
+      <div className="coord-grid-split">
         {/* Pending approvals queue */}
         <div className="card">
           <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
@@ -199,14 +199,14 @@ export default function CoordinatorDashboard() {
                     </span>
                   </div>
                   
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                     <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       Reach: <strong>{report.participants} participants</strong>
                     </span>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button 
                         className="btn btn-secondary" 
-                        style={{ padding: '6px 12px', borderRadius: 'var(--radius)', background: 'rgba(239,68,68,0.08)', border: 'none', color: 'var(--danger)', fontSize: '0.75rem', fontWeight: 600 }}
+                        style={{ padding: '8px 14px', minHeight: 38, borderRadius: 'var(--radius)', background: 'rgba(239,68,68,0.08)', border: 'none', color: 'var(--danger)', fontSize: '0.78rem', fontWeight: 600 }}
                         disabled={actionLoadingId === report.id}
                         onClick={() => handleRejectReport(report.id)}
                       >
@@ -214,84 +214,90 @@ export default function CoordinatorDashboard() {
                       </button>
                       <button 
                         className="btn btn-primary" 
-                        style={{ padding: '6px 12px', borderRadius: 'var(--radius)', boxShadow: 'none', fontSize: '0.75rem', fontWeight: 600 }}
+                        style={{ padding: '8px 14px', minHeight: 38, borderRadius: 'var(--radius)', boxShadow: 'none', fontSize: '0.78rem', fontWeight: 600 }}
                         disabled={actionLoadingId === report.id}
                         onClick={() => handleApproveReport(report.id)}
                       >
-                        APPROVE
+                        {actionLoadingId === report.id ? 'Approving...' : 'APPROVE'}
                       </button>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <CheckCircle size={36} color="var(--success)" style={{ opacity: 0.6, marginBottom: '12px' }} />
+              <div style={{ padding: '40px 10px', textAlign: 'center' }}>
+                <CheckCircle size={32} color="var(--primary)" style={{ opacity: 0.8, marginBottom: '8px' }} />
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Excellent! No reports pending approval in {user?.region || 'your region'}.
+                  You are all caught up! No reports pending approval.
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Team Performance progress bars */}
+        {/* Team Performance Mini-List */}
         <div className="card">
           <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>👥 TEAM PERFORMANCE</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>👥 TEAM SUMMARY</h3>
           </div>
-          <div className="card-body" style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {team_performance && team_performance.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 16px' }}>
-                {team_performance.map((fo) => {
-                  const rate = parseInt(fo.approvalRate) || 0;
-                  return (
-                    <div key={fo.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem' }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{fo.name}</span>
-                        <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{fo.approvalRate}</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ flex: 1, height: '8px', background: 'var(--border-light)', borderRadius: '4px', overflow: 'hidden' }}>
-                          <div style={{ width: `${rate}%`, height: '100%', background: 'var(--primary)', borderRadius: '4px' }} />
-                        </div>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', minWidth: '85px', textAlign: 'right' }}>
-                          {fo.reportsSubmitted} files ({fo.pendingApproval} pend)
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+          <div className="card-body" style={{ paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-input)', borderRadius: 'var(--radius)' }}>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>AVG APPROVAL RATE</p>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 0 0', color: 'var(--primary)' }}>
+                  {avgRate}%
+                </h4>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>ACTIVE MEMBERS</p>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 0 0' }}>
+                  {field_officers_count}
+                </h4>
+              </div>
+            </div>
 
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--border-light)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Team Average</span>
-                    <span style={{ fontWeight: 800, color: 'var(--primary)' }}>{avgRate}%</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ flex: 1, height: '8px', background: 'var(--border-light)', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${avgRate}%`, height: '100%', background: 'var(--primary-dark)', borderRadius: '4px' }} />
+            <div>
+              <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                Field Officer Activity Status
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {team_performance && team_performance.map((member) => (
+                  <div 
+                    key={member.id} 
+                    style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      padding: '10px 12px', 
+                      background: 'var(--bg-input)', 
+                      borderRadius: 'var(--radius)', 
+                      border: '1px solid var(--border-light)' 
+                    }}
+                  >
+                    <div>
+                      <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)', display: 'block' }}>{member.name}</strong>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{member.reports} reports submitted</span>
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', minWidth: '85px', textAlign: 'right' }}>
-                      Overall Compliance
+                    <span 
+                      className={`badge ${member.approvalRate > 80 ? 'badge-success' : member.approvalRate > 50 ? 'badge-warning' : 'badge-danger'}`}
+                      style={{ fontSize: '0.7rem' }}
+                    >
+                      {member.approvalRate}% rate
                     </span>
                   </div>
-                </div>
+                ))}
               </div>
-            ) : (
-              <div style={{ padding: '30px', textAlign: 'center' }}>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>No active field officers in your region.</p>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-3" style={{ gridTemplateColumns: '2fr 1fr' }}>
-        {/* Recent Team Activity */}
+      {/* Team Activity and Support Requests */}
+      <div className="grid grid-2">
+        {/* Team Activity Timeline */}
         <div className="card">
           <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>📢 RECENT TEAM ACTIVITY</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>🕒 TEAM RECENT ACTIVITY</h3>
           </div>
           <div className="card-body" style={{ paddingTop: '16px' }}>
             {activities && activities.length > 0 ? (
@@ -306,10 +312,7 @@ export default function CoordinatorDashboard() {
                         </div>
                         <div className="timeline-content">
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <p style={{ fontSize: '0.82rem', fontWeight: 600, margin: 0 }}>
-                              {a.action}
-                              {a.user && <span style={{ fontSize: '0.72rem', color: 'var(--primary)', marginLeft: '8px', fontWeight: 500 }}>by {a.user}</span>}
-                            </p>
+                            <p style={{ fontSize: '0.82rem', fontWeight: 600, margin: 0 }}>{a.action}</p>
                             <span style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>{a.time}</span>
                           </div>
                           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px', margin: 0 }}>{a.detail}</p>
@@ -334,17 +337,7 @@ export default function CoordinatorDashboard() {
                       <button
                         onClick={() => setActivityPage(prev => Math.max(prev - 1, 1))}
                         disabled={activityPage === 1}
-                        className="btn btn-secondary"
-                        style={{
-                          borderRadius: '50%',
-                          padding: 0,
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          minWidth: '28px'
-                        }}
+                        className="btn btn-secondary btn-icon btn-sm"
                         title="Previous Page"
                       >
                         <ChevronLeft size={14} />
@@ -352,17 +345,7 @@ export default function CoordinatorDashboard() {
                       <button
                         onClick={() => setActivityPage(prev => Math.min(prev + 1, Math.ceil(activities.length / 3)))}
                         disabled={activityPage === Math.ceil(activities.length / 3)}
-                        className="btn btn-secondary"
-                        style={{
-                          borderRadius: '50%',
-                          padding: 0,
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          minWidth: '28px'
-                        }}
+                        className="btn btn-secondary btn-icon btn-sm"
                         title="Next Page"
                       >
                         <ChevronRight size={14} />
@@ -391,7 +374,7 @@ export default function CoordinatorDashboard() {
                   key={sr.id} 
                   className={`deadline-item-box ${sr.urgency === 'critical' ? 'urgent' : sr.urgency === 'high' ? 'high' : 'primary'}`}
                   style={{ cursor: 'pointer' }}
-                  onClick={() => navigate('/support-requests')}
+                  onClick={() => navigate('/support')}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>

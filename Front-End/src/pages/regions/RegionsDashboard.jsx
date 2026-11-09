@@ -45,7 +45,7 @@ export default function RegionsDashboard() {
       {activeTab === 'overview' && (
         <>
           {/* Summary row */}
-          <div className="grid grid-4" style={{ marginBottom: 20 }}>
+          <div className="grid grid-4 grid-4-mobile-2" style={{ marginBottom: 20 }}>
             {[
               { label: 'Total Regions', val: REGIONS_DATA.length },
               { label: 'Total Staff', val: REGIONS_DATA.reduce((a, r) => a + r.staff, 0) },
@@ -160,7 +160,7 @@ export default function RegionsDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-4">
+          <div className="grid grid-4 grid-4-mobile-2">
             {[
               { label: 'Staff Members', val: region.staff, color: 'blue' },
               { label: 'Activity Reports', val: region.reports, color: 'green' },

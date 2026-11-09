@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, Users, Clock, CheckCircle, 
@@ -44,6 +44,7 @@ export default function FieldOfficerDashboard() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const today = new Date().toLocaleDateString('en-RW', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const firstName = user?.name?.split(' ')[0] || 'Officer';
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [activities, setActivities] = useState([]);
@@ -113,61 +114,67 @@ export default function FieldOfficerDashboard() {
   };
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
-      {/* Date Filter Container */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '16px',
-          padding: '16px 20px',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-light)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-sm)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Filter by Activity Date:</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-muted)' }}>From:</label>
-            <input 
-              type="date" 
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="form-control"
-              style={{ padding: '6px 10px', fontSize: '0.82rem', width: '140px', height: '34px' }}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-muted)' }}>To:</label>
-            <input 
-              type="date" 
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="form-control"
-              style={{ padding: '6px 10px', fontSize: '0.82rem', width: '140px', height: '34px' }}
-            />
-          </div>
-          {(fromDate || toDate) && (
-            <button 
-              className="btn btn-secondary" 
-              onClick={() => { setFromDate(''); setToDate(''); }}
-              style={{ padding: '6px 12px', height: '34px', fontSize: '0.82rem' }}
-            >
-              Clear
-            </button>
-          )}
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* ── MD3 Hero Greeting Card ───────────────────────────────── */}
+      <div className="fo-hero-card">
+        <p className="fo-hero-greeting">📍 {greeting}</p>
+        <h2 className="fo-hero-name">{firstName}! 👋</h2>
+        <p className="fo-hero-date">{today}</p>
+        <div className="fo-hero-actions">
+          <button className="fo-hero-btn-primary" onClick={() => navigate('/reports/new')}>
+            <Plus size={16} />
+            Submit Report
+          </button>
+          <button className="fo-hero-btn-outline" onClick={() => navigate('/reports')}>
+            <Eye size={16} />
+            My Reports
+          </button>
         </div>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-4">
+      {/* ── Date Filter Card ─────────────────────────────────────── */}
+      <div className="fo-filter-card">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <span className="fo-filter-label" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+            📅 Filter by Activity Date
+          </span>
+          <div className="fo-date-inputs" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>From:</label>
+              <input 
+                type="date" 
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="form-control"
+                style={{ padding: '8px 10px', width: '145px', height: '40px' }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>To:</label>
+              <input 
+                type="date" 
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="form-control"
+                style={{ padding: '8px 10px', width: '145px', height: '40px' }}
+              />
+            </div>
+            {(fromDate || toDate) && (
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => { setFromDate(''); setToDate(''); }}
+                style={{ padding: '8px 14px', height: '40px' }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Metrics Grid — 2-col on small phones via grid-4-mobile-2 */}
+      <div className="grid grid-4 grid-4-mobile-2">
         <MetricCard 
           value={metrics.reports_submitted}
           label="MY REPORTS"
@@ -275,17 +282,7 @@ export default function FieldOfficerDashboard() {
                       <button
                         onClick={() => setNotifPage(prev => Math.max(prev - 1, 1))}
                         disabled={notifPage === 1}
-                        className="btn btn-secondary"
-                        style={{
-                          borderRadius: '50%',
-                          padding: 0,
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          minWidth: '28px'
-                        }}
+                        className="btn btn-secondary btn-icon btn-sm"
                         title="Previous Page"
                       >
                         <ChevronLeft size={14} />
@@ -293,17 +290,7 @@ export default function FieldOfficerDashboard() {
                       <button
                         onClick={() => setNotifPage(prev => Math.min(prev + 1, Math.ceil(notifications.length / 2)))}
                         disabled={notifPage === Math.ceil(notifications.length / 2)}
-                        className="btn btn-secondary"
-                        style={{
-                          borderRadius: '50%',
-                          padding: 0,
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          minWidth: '28px'
-                        }}
+                        className="btn btn-secondary btn-icon btn-sm"
                         title="Next Page"
                       >
                         <ChevronRight size={14} />
@@ -363,17 +350,7 @@ export default function FieldOfficerDashboard() {
                       <button
                         onClick={() => setActivityPage(prev => Math.max(prev - 1, 1))}
                         disabled={activityPage === 1}
-                        className="btn btn-secondary"
-                        style={{
-                          borderRadius: '50%',
-                          padding: 0,
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          minWidth: '28px'
-                        }}
+                        className="btn btn-secondary btn-icon btn-sm"
                         title="Previous Page"
                       >
                         <ChevronLeft size={14} />
@@ -381,17 +358,7 @@ export default function FieldOfficerDashboard() {
                       <button
                         onClick={() => setActivityPage(prev => Math.min(prev + 1, Math.ceil(activities.length / 3)))}
                         disabled={activityPage === Math.ceil(activities.length / 3)}
-                        className="btn btn-secondary"
-                        style={{
-                          borderRadius: '50%',
-                          padding: 0,
-                          width: '28px',
-                          height: '28px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          minWidth: '28px'
-                        }}
+                        className="btn btn-secondary btn-icon btn-sm"
                         title="Next Page"
                       >
                         <ChevronRight size={14} />
@@ -413,19 +380,20 @@ export default function FieldOfficerDashboard() {
           <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>📢 Announcements</h3>
           </div>
-          <div className="card-body" style={{ paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="card-body" style={{ paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {systemAlerts && systemAlerts.length > 0 ? (
               systemAlerts.map((alert) => (
                 <div 
-                  key={alert.id} 
+                  key={alert.id}
+                  className="announcement-card"
                   style={{ 
                     padding: '12px', 
                     background: alert.is_announcement ? 'rgba(76,175,80,0.06)' : 'var(--bg-input)', 
-                    borderRadius: 'var(--radius)', 
+                    borderRadius: 'var(--md3-shape-md, 12px)', 
                     border: alert.is_announcement ? '1.5px solid rgba(76,175,80,0.2)' : '1px solid var(--border-light)'
                   }}
                 >
-                  <p style={{ fontSize: '0.82rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>{alert.title}</p>
+                  <p style={{ fontSize: '0.82rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>{alert.title}</p>
                   <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>{alert.message}</p>
                   <span style={{ fontSize: '0.68rem', color: 'var(--text-light)', marginTop: '8px', display: 'block' }}>
                     Posted: {new Date(alert.created_at || alert.createdAt).toLocaleDateString('en-RW', { month: 'short', day: 'numeric' })}
@@ -454,8 +422,8 @@ export default function FieldOfficerDashboard() {
                 onClick={() => navigate('/reports/new')}
                 className="btn-quick-action q-green"
               >
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(46,125,50,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Plus size={18} color="var(--primary)" />
+                <div className="md3-icon-container green">
+                  <Plus size={18} />
                 </div>
                 <div>
                   <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>Submit Report</span>
@@ -467,8 +435,8 @@ export default function FieldOfficerDashboard() {
                 onClick={() => navigate('/reports')}
                 className="btn-quick-action q-blue"
               >
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(21,101,192,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Eye size={18} color="#1565c0" />
+                <div className="md3-icon-container blue">
+                  <Eye size={18} />
                 </div>
                 <div>
                   <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>View My Reports</span>
@@ -480,8 +448,8 @@ export default function FieldOfficerDashboard() {
                 onClick={() => navigate('/support/new')}
                 className="btn-quick-action q-purple"
               >
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(106,27,154,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <LifeBuoy size={18} color="#6a1b9a" />
+                <div className="md3-icon-container purple">
+                  <LifeBuoy size={18} />
                 </div>
                 <div>
                   <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>Request Support</span>
@@ -493,8 +461,8 @@ export default function FieldOfficerDashboard() {
                 onClick={() => navigate('/prayer')}
                 className="btn-quick-action q-red"
               >
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(198,40,40,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Heart size={18} color="#c62828" />
+                <div className="md3-icon-container red">
+                  <Heart size={18} />
                 </div>
                 <div>
                   <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>Prayer Requests</span>
@@ -507,28 +475,24 @@ export default function FieldOfficerDashboard() {
 
         {/* Sync / Summary block */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="card" style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '24px' }}>
+          <div className="card last-submit-banner" style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '24px' }}>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--primary-50)', display: 'flex', alignItems: 'center', justifyCenter: 'center', flexShrink: 0, justifyContent: 'center' }}>
+              <div className="last-submit-icon">
                 <CheckCircle size={28} color="var(--primary)" />
               </div>
               <div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em', margin: 0 }}>
-                  Last Active Submission
-                </p>
-                <h4 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '2px 0 4px 0', color: 'var(--text-primary)' }}>
-                  {last_report_submitted}
-                </h4>
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-light)', margin: 0 }}>
+                <p className="last-submit-title">Last Active Submission</p>
+                <h4 className="last-submit-value">{last_report_submitted}</h4>
+                <p className="last-submit-hint">
                   Ensure your weekly outreach activities are submitted before Friday 5:00 PM.
                 </p>
               </div>
             </div>
           </div>
 
-          <div style={{ padding: '16px 20px', borderRadius: 'var(--radius)', background: 'rgba(46,125,50,0.06)', border: '1px solid rgba(46,125,50,0.12)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <AlertCircle size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: '0.78rem', color: 'var(--primary-dark)', fontWeight: 500 }}>
+          <div className="info-hint-banner">
+            <AlertCircle size={16} color="var(--primary)" style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>
               Need assistance with report guidelines? Click <strong>Request Support</strong> above to contact your coordinator.
             </span>
           </div>

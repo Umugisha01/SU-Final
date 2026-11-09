@@ -219,7 +219,7 @@ export const authService = {
     return res.data;
   },
   toggleMfa: async (mfaEnabled) => {
-    const res = await api.put('/users/me/mfa', { mfaEnabled });
+    const res = await api.put('/users/me/mfa/', { mfaEnabled });
     return res.data;
   },
 };
@@ -231,7 +231,7 @@ export const userService = {
     return data;
   },
   getDirectory: async () => {
-    const res = await api.get('/users/directory');
+    const res = await api.get('/users/directory/');
     const data = res.data.success ? res.data.data : res.data;
     return data;
   },
@@ -248,23 +248,23 @@ export const userService = {
     return res.data;
   },
   getPending: async () => {
-    const res = await api.get('/users/pending');
+    const res = await api.get('/users/pending/');
     return res.data;
   },
   approve: async (id) => {
-    const res = await api.post(`/users/${id}/approve`);
+    const res = await api.post(`/users/${id}/approve/`);
     return res.data;
   },
   reject: async (id, reason) => {
-    const res = await api.post(`/users/${id}/reject`, { reason });
+    const res = await api.post(`/users/${id}/reject/`, { reason });
     return res.data;
   },
   toggleStatus: async (id, status) => {
-    const res = await api.patch(`/users/${id}/status`, { status });
+    const res = await api.patch(`/users/${id}/status/`, { status });
     return res.data;
   },
   updateUser: async (id, userData) => {
-    const res = await api.put(`/users/${id}`, userData);
+    const res = await api.put(`/users/${id}/`, userData);
     return res.data;
   },
 };
@@ -276,7 +276,7 @@ export const reportService = {
     return (Array.isArray(reportsList) ? reportsList : []).map(mapReportToFrontend);
   },
   get: async (id) => {
-    const res = await api.get(`/reports/${id}`);
+    const res = await api.get(`/reports/${id}/`);
     return mapReportToFrontend(res.data);
   },
   create: async (data) => {
@@ -330,30 +330,30 @@ export const reportService = {
       recipientIds: data.recipientIds || [],
       attachmentIds: data.attachmentIds || [],
     };
-    const res = await api.patch(`/reports/${id}`, backendData);
+    const res = await api.patch(`/reports/${id}/`, backendData);
     return mapReportToFrontend(res.data);
   },
   analyze: async (id) => {
-    const res = await api.post('/reports/ai-analyze', { reportId: id });
+    const res = await api.post('/reports/ai-analyze/', { reportId: id });
     return res.data;
   },
   updateStatus: async (id, status, comments = '') => {
-    const res = await api.patch(`/reports/${id}/status`, { status, comments });
+    const res = await api.patch(`/reports/${id}/status/`, { status, comments });
     return res.data;
   },
   aiOverride: async (id, aiCategory) => {
-    const res = await api.patch(`/reports/${id}/ai-override`, { aiCategory });
+    const res = await api.patch(`/reports/${id}/ai-override/`, { aiCategory });
     return res.data;
   },
   chat: async (message, documentIds = [], reportIds = []) => {
-    const res = await api.post('/reports/ai-chat', { message, documentIds, reportIds });
+    const res = await api.post('/reports/ai-chat/', { message, documentIds, reportIds });
     return res.data;
   },
   chatStream: async (message, documentIds = [], reportIds = [], model = null, onChunk, onError) => {
     try {
       const token = localStorage.getItem('su-access-token');
       const baseURL = api.defaults.baseURL || 'http://localhost:8000/api';
-      const response = await fetch(`${baseURL}/reports/ai-chat`, {
+      const response = await fetch(`${baseURL}/reports/ai-chat/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -408,23 +408,23 @@ export const reportService = {
     }
   },
   aiStatus: async () => {
-    const res = await api.get('/reports/ai-status');
+    const res = await api.get('/reports/ai-status/');
     return res.data;
   },
   consolidated: async (filters = {}) => {
-    const res = await api.get('/reports/consolidated', { params: filters });
+    const res = await api.get('/reports/consolidated/', { params: filters });
     return res.data;
   },
   analyticsSummary: async (filters = {}) => {
-    const res = await api.get('/reports/analytics/summary', { params: filters });
+    const res = await api.get('/reports/analytics/summary/', { params: filters });
     return res.data;
   },
   delete: async (id) => {
-    const res = await api.delete(`/reports/${id}`);
+    const res = await api.delete(`/reports/${id}/`);
     return res.data;
   },
   share: async (reportIds) => {
-    const res = await api.post('/reports/share', { reportIds });
+    const res = await api.post('/reports/share/', { reportIds });
     return res.data;
   },
 };
@@ -436,7 +436,7 @@ export const supportService = {
     return (Array.isArray(dataList) ? dataList : []).map(mapSupportToFrontend);
   },
   get: async (id) => {
-    const res = await api.get(`/support/${id}`);
+    const res = await api.get(`/support/${id}/`);
     return mapSupportToFrontend(res.data);
   },
   create: async (data) => {
@@ -457,44 +457,44 @@ export const supportService = {
     if (data.type !== undefined) frontendToBackend.category = data.type === 'Material' ? 'Equipment' : (data.type === 'Prayer' ? 'Spiritual' : (data.type === 'Personnel' ? 'Technical' : data.type));
     if (data.priority !== undefined) frontendToBackend.urgency = data.priority === 'urgent' ? 'critical' : data.priority;
     if (data.recipientIds !== undefined) frontendToBackend.recipientIds = data.recipientIds;
-    const res = await api.put(`/support/${id}`, frontendToBackend);
+    const res = await api.put(`/support/${id}/`, frontendToBackend);
     return mapSupportToFrontend(res.data);
   },
   delete: async (id) => {
-    const res = await api.delete(`/support/${id}`);
+    const res = await api.delete(`/support/${id}/`);
     return res.data;
   },
   addComment: async (id, text) => {
-    const res = await api.post(`/support/${id}/comments`, { comment: text });
+    const res = await api.post(`/support/${id}/comments/`, { comment: text });
     return res.data;
   },
   assign: async (id, userId) => {
-    const res = await api.patch(`/support/${id}/assign`, { userId });
+    const res = await api.patch(`/support/${id}/assign/`, { userId });
     return res.data;
   },
   updateStatus: async (id, status) => {
-    const res = await api.patch(`/support/${id}/status`, { status });
+    const res = await api.patch(`/support/${id}/status/`, { status });
     return res.data;
   },
   triggerAIAnalysis: async (requestId) => {
-    const res = await api.post(`/support/${requestId}/ai-analyze`);
+    const res = await api.post(`/support/${requestId}/ai-analyze/`);
     return res.data;
   },
   batchAIAnalysis: async (limit = 50) => {
-    const res = await api.post('/support/ai-batch', { limit });
+    const res = await api.post('/support/ai-batch/', { limit });
     return res.data;
   },
   getAITaskStatus: async (taskId) => {
-    const res = await api.get(`/support/ai-status/${taskId}`);
+    const res = await api.get(`/support/ai-status/${taskId}/`);
     return res.data;
   },
   suggestPriority: async (title, description, category) => {
     const backendCategory = category === 'Material' ? 'Equipment' : (category === 'Prayer' ? 'Spiritual' : (category === 'Personnel' ? 'Technical' : category));
-    const res = await api.post('/support/ai-suggest', { title, description, category: backendCategory });
+    const res = await api.post('/support/ai-suggest/', { title, description, category: backendCategory });
     return res.data;
   },
   share: async (requestIds) => {
-    const res = await api.post('/support/share', { requestIds });
+    const res = await api.post('/support/share/', { requestIds });
     return res.data;
   },
 };
@@ -515,15 +515,15 @@ export const prayerService = {
     return mapPrayerToFrontend(res.data);
   },
   commit: async (id) => {
-    const res = await api.post(`/prayer/${id}/commit`);
+    const res = await api.post(`/prayer/${id}/commit/`);
     return res.data;
   },
   uncommit: async (id) => {
-    const res = await api.post(`/prayer/${id}/uncommit`);
+    const res = await api.post(`/prayer/${id}/uncommit/`);
     return res.data;
   },
   updateStatus: async (id, status) => {
-    const res = await api.patch(`/prayer/${id}/status`, { status });
+    const res = await api.patch(`/prayer/${id}/status/`, { status });
     return res.data;
   },
 };
@@ -542,15 +542,15 @@ export const documentService = {
     return res.data;
   },
   update: async (id, data) => {
-    const res = await api.patch(`/documents/${id}`, data);
+    const res = await api.patch(`/documents/${id}/`, data);
     return res.data;
   },
   delete: async (id) => {
-    const res = await api.delete(`/documents/${id}`);
+    const res = await api.delete(`/documents/${id}/`);
     return res.data;
   },
   share: async (id, shared) => {
-    const res = await api.patch(`/documents/${id}/share`, { shared });
+    const res = await api.patch(`/documents/${id}/share/`, { shared });
     return res.data;
   }
 };

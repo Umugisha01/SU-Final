@@ -12,7 +12,7 @@ const STATUS_CONFIG = {
 
 export default function PrayerRequests() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('pending'); // default to pending (backend: active)
+  const [activeTab, setActiveTab] = useState('pending');
   const [filterRegion, setFilterRegion] = useState('all');
   const [filterTheme, setFilterTheme] = useState('all');
   const [showForm, setShowForm] = useState(false);
@@ -24,8 +24,6 @@ export default function PrayerRequests() {
 
   const fetchRequests = async () => {
     try {
-      // Map activeTab to backend status:
-      // 'pending' -> 'active', 'prayed' -> 'archived', 'answered' -> 'answered'
       const statusMap = {
         all: 'active',
         pending: 'active',
@@ -99,14 +97,13 @@ export default function PrayerRequests() {
         description: newReq.description,
         anonymous: newReq.anonymous
       });
-      setShowForm(false);
       setNewReq({ title: '', description: '', anonymous: false });
+      setShowForm(false);
+      setSubmitting(false);
       fetchRequests();
     } catch (err) {
       console.error('Error creating prayer request:', err);
-      const detail = err.response?.data?.error || err.response?.data || err.message;
-      setErrors({ submit: typeof detail === 'object' ? JSON.stringify(detail) : detail });
-    } finally {
+      setErrors({ submit: 'Failed to create prayer request. Please try again.' });
       setSubmitting(false);
     }
   };
@@ -116,6 +113,7 @@ export default function PrayerRequests() {
       alert('No prayer requests available to export.');
       return;
     }
+
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const tabLabel = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
@@ -147,14 +145,6 @@ export default function PrayerRequests() {
             xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
         <title>SU Connect Prayer Requests</title>
-        <!--[if gte mso 9]>
-        <xml>
-          <w:WordDocument>
-            <w:View>Print</w:View>
-            <w:Zoom>100</w:Zoom>
-          </w:WordDocument>
-        </xml>
-        <![endif]-->
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -218,7 +208,6 @@ export default function PrayerRequests() {
     const dateStr = today.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const tabLabel = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
 
-    // Group prayers by region
     const byRegion = {};
     filtered.forEach(p => {
       const region = p.region || 'General';
@@ -280,7 +269,6 @@ export default function PrayerRequests() {
             background: #fff;
           }
 
-          /* ── Header ── */
           .doc-header {
             text-align: center;
             padding-bottom: 24px;
@@ -324,7 +312,6 @@ export default function PrayerRequests() {
             font-size: 0.82rem;
           }
 
-          /* ── Summary strip ── */
           .summary-strip {
             display: flex;
             gap: 16px;
@@ -351,7 +338,6 @@ export default function PrayerRequests() {
             margin-top: 2px;
           }
 
-          /* ── Region sections ── */
           .region-section {
             margin-bottom: 28px;
             break-inside: avoid;
@@ -375,7 +361,6 @@ export default function PrayerRequests() {
             opacity: 0.85;
           }
 
-          /* ── Prayer cards ── */
           .prayer-card {
             display: flex;
             gap: 14px;
@@ -439,7 +424,6 @@ export default function PrayerRequests() {
             font-weight: 600;
           }
 
-          /* ── Notes section ── */
           .notes-section {
             margin-top: 32px;
             padding: 20px 24px;
@@ -463,7 +447,6 @@ export default function PrayerRequests() {
             height: 1px;
           }
 
-          /* ── Footer ── */
           .doc-footer {
             margin-top: 32px;
             padding-top: 16px;
@@ -553,29 +536,31 @@ export default function PrayerRequests() {
           <h1 className="page-title"><Heart size={24} style={{ verticalAlign: 'middle', marginRight: 10 }} />Prayer Requests</h1>
           <p className="page-subtitle">{requests.length} requests in this tab</p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}><Download size={14} />Export for Prayer Meeting</button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn btn-secondary btn-sm" onClick={handleExportPDF}><Download size={14} />Export Meeting</button>
           {(user?.role === 'administrator' || user?.role === 'national_manager' || user?.role === 'regional_coordinator') && (
             <button className="btn btn-secondary btn-sm" onClick={handleExportWord}><Download size={14} />Export Word</button>
           )}
-          <button className="btn btn-primary" onClick={() => setShowForm(true)}><Plus size={16} />Add Request</button>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}><Plus size={16} />Add Request</button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <div className="tabs" style={{ width: 'auto' }}>
-          {['pending', 'prayed', 'answered'].map(t => (
-            <button key={t} className={`tab ${activeTab === t ? 'active' : ''}`} style={{ flex: 'none', padding: '6px 14px' }} onClick={() => setActiveTab(t)}>
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
-          ))}
-        </div>
-        <select className="form-control form-select" style={{ width: 180 }} value={filterRegion} onChange={e => setFilterRegion(e.target.value)}>
+      {/* Swipeable Tabs & Filters */}
+      <div className="md3-swipe-chips">
+        {['pending', 'prayed', 'answered'].map(t => (
+          <button key={t} className={`chip ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>
+            {t === 'pending' ? '⏳ Pending' : t === 'prayed' ? '🙏 Prayed' : '✅ Answered'}
+          </button>
+        ))}
+      </div>
+
+      {/* Responsive Filters */}
+      <div className="prayer-filter-row">
+        <select className="form-control form-select" style={{ flex: 1, minWidth: 150 }} value={filterRegion} onChange={e => setFilterRegion(e.target.value)}>
           <option value="all">All Regions</option>
           {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
-        <select className="form-control form-select" style={{ width: 160 }} value={filterTheme} onChange={e => setFilterTheme(e.target.value)}>
+        <select className="form-control form-select" style={{ flex: 1, minWidth: 150 }} value={filterTheme} onChange={e => setFilterTheme(e.target.value)}>
           <option value="all">All Themes</option>
           {allThemes.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
@@ -599,10 +584,10 @@ export default function PrayerRequests() {
             const cfg = STATUS_CONFIG[p.status] || { cls: 'badge-info', label: p.status, icon: Clock };
             const Icon = cfg.icon;
             return (
-              <div key={p.id} className="card" style={{ padding: '20px', borderLeft: `4px solid ${p.status === 'answered' ? '#22c55e' : p.status === 'prayed' ? '#2e7d32' : '#3b82f6'}` }}>
+              <div key={p.id} className="card card-touch" style={{ padding: '20px', borderLeft: `4px solid ${p.status === 'answered' ? '#22c55e' : p.status === 'prayed' ? '#2e7d32' : '#3b82f6'}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 4 }}>{p.title}</p>
+                    <p style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 4 }}>{p.title}</p>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 3 }}>
                         <MapPin size={11} />{p.region}
@@ -618,30 +603,30 @@ export default function PrayerRequests() {
 
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>{p.description}</p>
 
-                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 14 }}>
                   {p.themes.map(t => <span key={t} className="chip" style={{ fontSize: '0.72rem', cursor: 'default' }}><Tag size={10} />{t}</span>)}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                    ❤️ {p.responses} prayers committed
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, paddingTop: 10, borderTop: '1px solid var(--border-light)' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    ❤️ <strong>{p.responses}</strong> prayers committed
                   </span>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <button 
-                      className={`btn btn-sm ${p.hasCommitted ? 'btn-primary' : 'btn-secondary'}`} 
-                      style={{ fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                      className={`btn ${p.hasCommitted ? 'btn-primary' : 'btn-secondary'}`} 
+                      style={{ fontSize: '0.78rem', minHeight: 38, padding: '8px 14px', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', gap: 6 }}
                       onClick={() => handleCommitToggle(p)}
                     >
-                      <Heart size={11} fill={p.hasCommitted ? 'currentColor' : 'none'} />
+                      <Heart size={14} fill={p.hasCommitted ? 'currentColor' : 'none'} />
                       {p.hasCommitted ? 'Praying' : 'Pray'}
                     </button>
                     {p.status === 'pending' && (user?.role === 'administrator' || user?.role === 'national_manager' || p.submittedBy === user?.name) && (
                       <button 
-                        className="btn btn-sm btn-secondary" 
-                        style={{ fontSize: '0.72rem' }}
+                        className="btn btn-secondary" 
+                        style={{ fontSize: '0.78rem', minHeight: 38, padding: '8px 12px', borderRadius: 'var(--radius)' }}
                         onClick={() => handleMarkAnswered(p.id)}
                       >
-                        <CheckCircle size={11} /> Mark Answered
+                        <CheckCircle size={14} /> Answered
                       </button>
                     )}
                   </div>

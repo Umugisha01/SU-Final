@@ -569,7 +569,7 @@ export default function ReportDetail() {
       </div>
 
       {/* Meta cards */}
-      <div className="grid grid-4" style={{ marginBottom: 20 }}>
+      <div className="grid grid-4 grid-4-mobile-2" style={{ marginBottom: 20 }}>
         {[
           { icon: Calendar, label: 'Date', val: report.date },
           { icon: Clock, label: 'Duration', val: report.duration },

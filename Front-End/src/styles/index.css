@@ -1317,6 +1317,15 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   .responsive-grid-2, .responsive-grid-3, .responsive-grid-4 { grid-template-columns: 1fr; }
   .page-layout-grid { grid-template-columns: 1fr; }
 
+  /* 2-column metric cards / boxes on mobile */
+  .grid-4-mobile-2,
+  .grid.grid-4-mobile-2,
+  .grid-4:has(.stat-card),
+  .grid-4:has(.md3-metric-card) {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
   /* ═ Visibility utilities ═ */
   .hide-mobile { display: none !important; }
   .show-mobile { display: flex !important; }
@@ -2428,16 +2437,22 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   }
 }
 
-/* ── Stat Cards — Android Material Redesign ─────────────────────── */
+/* ── Stat Cards — Android Material Redesign (2-on-one-row mobile optimized) ── */
 @media (max-width: 768px) {
   .stat-card {
-    padding: 16px !important;
-    border-radius: 16px !important;
+    padding: 12px !important;
+    min-height: 115px !important;
+    height: 100% !important;
+    border-radius: 14px !important;
     border: 1.5px solid var(--border-light) !important;
     background: var(--bg-card) !important;
     gap: 0 !important;
     position: relative;
     overflow: hidden;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
   }
 
   /* Decorative color strip at top of stat card */
@@ -2446,39 +2461,91 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    border-radius: 16px 16px 0 0;
+    border-radius: 14px 14px 0 0;
     background: var(--primary);
     opacity: 0.6;
   }
 
   .stat-icon {
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 12px !important;
-    margin-bottom: 12px;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    margin-bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
   }
 
-  .stat-value {
-    font-size: 2rem !important;
+  .stat-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .stat-value,
+  .md3-metric-value {
+    font-size: 1.5rem !important;
     font-weight: 800 !important;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-    margin-bottom: 2px;
+    letter-spacing: -0.02em !important;
+    line-height: 1.1 !important;
+    margin-bottom: 2px !important;
   }
 
   .stat-label {
-    font-size: 0.7rem !important;
+    font-size: 0.68rem !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.08em !important;
+    letter-spacing: 0.04em !important;
+    color: var(--text-secondary) !important;
+    margin-bottom: 2px !important;
+    line-height: 1.25 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
+  }
+
+  .md3-metric-top-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .md3-metric-trend-pill {
+    padding: 2px 6px !important;
+    font-size: 0.65rem !important;
+    gap: 3px !important;
+    max-width: 96px !important;
+    border-radius: 20px !important;
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .md3-metric-trend-pill span {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .md3-metric-subtext {
+    font-size: 0.68rem !important;
     color: var(--text-muted) !important;
-    margin-bottom: 8px;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+    max-width: 100% !important;
+    line-height: 1.2 !important;
+    margin-top: 2px !important;
   }
 
   .stat-change {
-    font-size: 0.72rem !important;
+    font-size: 0.68rem !important;
     font-weight: 600 !important;
-    padding: 3px 8px;
+    padding: 2px 6px !important;
     border-radius: 20px;
     display: inline-flex;
     align-items: center;
@@ -2493,6 +2560,44 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   .stat-change.down {
     background: rgba(245,158,11,0.12) !important;
     color: #92400e !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .stat-card {
+    padding: 10px 8px !important;
+    min-height: 105px !important;
+    border-radius: 12px !important;
+  }
+  .stat-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+  }
+  .stat-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  .stat-value,
+  .md3-metric-value {
+    font-size: 1.35rem !important;
+  }
+  .stat-label {
+    font-size: 0.62rem !important;
+  }
+  .md3-metric-subtext {
+    font-size: 0.62rem !important;
+  }
+  .md3-metric-trend-pill {
+    max-width: 75px !important;
+    font-size: 0.6rem !important;
+    padding: 1px 4px !important;
+  }
+  .grid-4-mobile-2,
+  .grid.grid-4-mobile-2,
+  .grid-4:has(.stat-card),
+  .grid-4:has(.md3-metric-card) {
+    gap: 8px !important;
   }
 }
 
@@ -3133,4 +3238,1020 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 @media (min-width: 769px) {
   .hide-desktop { display: none !important; }
   .android-greeting-card { display: none !important; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   MATERIAL DESIGN 3 — ANDROID PREMIER UI/UX SYSTEM
+   Full Android 12/13/14 optimized experience for SU Connect
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── MD3 Design Tokens ───────────────────────────────────────────── */
+:root {
+  /* MD3 elevation surface tints */
+  --md3-surface-1: rgba(46,125,50,0.05);
+  --md3-surface-2: rgba(46,125,50,0.08);
+  --md3-surface-3: rgba(46,125,50,0.11);
+  --md3-surface-4: rgba(46,125,50,0.12);
+  --md3-surface-5: rgba(46,125,50,0.14);
+
+  /* MD3 State layers */
+  --md3-hover: rgba(46,125,50,0.08);
+  --md3-pressed: rgba(46,125,50,0.12);
+  --md3-focused: rgba(46,125,50,0.12);
+  --md3-dragged: rgba(46,125,50,0.16);
+
+  /* MD3 Shape system */
+  --md3-shape-xs: 4px;
+  --md3-shape-sm: 8px;
+  --md3-shape-md: 12px;
+  --md3-shape-lg: 16px;
+  --md3-shape-xl: 28px;
+  --md3-shape-full: 50px;
+
+  /* MD3 Motion */
+  --md3-motion-standard: cubic-bezier(0.2, 0, 0, 1);
+  --md3-motion-decelerate: cubic-bezier(0, 0, 0, 1);
+  --md3-motion-accelerate: cubic-bezier(0.3, 0, 1, 1);
+  --md3-motion-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --md3-duration-short1: 50ms;
+  --md3-duration-short2: 100ms;
+  --md3-duration-short3: 150ms;
+  --md3-duration-short4: 200ms;
+  --md3-duration-medium1: 250ms;
+  --md3-duration-medium2: 300ms;
+  --md3-duration-long1: 350ms;
+  --md3-duration-long2: 400ms;
+}
+
+[data-theme="dark"] {
+  --md3-surface-1: rgba(165,214,167,0.05);
+  --md3-surface-2: rgba(165,214,167,0.08);
+  --md3-surface-3: rgba(165,214,167,0.11);
+  --md3-hover: rgba(165,214,167,0.08);
+  --md3-pressed: rgba(165,214,167,0.12);
+}
+
+/* ── MD3 Hero/Greeting Card (Dashboard) ─────────────────────────── */
+.fo-hero-card {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, #43a047 100%);
+  border-radius: var(--md3-shape-xl);
+  padding: 24px 20px 20px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4px;
+  box-shadow: 0 4px 24px rgba(46,125,50,0.35);
+}
+
+.fo-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+}
+
+.fo-hero-card::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -20px;
+  width: 160px; height: 160px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 50%;
+}
+
+.fo-hero-greeting {
+  font-size: 0.78rem;
+  font-weight: 500;
+  opacity: 0.85;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.fo-hero-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 4px 0 2px;
+}
+
+.fo-hero-date {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  margin-bottom: 20px;
+}
+
+.fo-hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.fo-hero-btn-primary {
+  flex: 1;
+  min-width: 140px;
+  padding: 11px 18px;
+  background: #fff;
+  color: var(--primary-dark);
+  border: none;
+  border-radius: var(--md3-shape-full);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  transition: all var(--md3-duration-short4) var(--md3-motion-standard);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.fo-hero-btn-primary:hover {
+  background: rgba(255,255,255,0.92);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.fo-hero-btn-primary:active {
+  transform: scale(0.97);
+}
+
+.fo-hero-btn-outline {
+  flex: 1;
+  min-width: 120px;
+  padding: 11px 18px;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: var(--md3-shape-full);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  transition: all var(--md3-duration-short4) var(--md3-motion-standard);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.fo-hero-btn-outline:hover {
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.65);
+}
+
+.fo-hero-btn-outline:active {
+  transform: scale(0.97);
+}
+
+/* ── MD3 Enhanced Stat/Metric Cards ─────────────────────────────── */
+.md3-metric-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.md3-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+.md3-metric-card.mc-green::before { background: var(--primary); }
+.md3-metric-card.mc-amber::before { background: var(--warning); }
+.md3-metric-card.mc-purple::before { background: var(--purple); }
+.md3-metric-card.mc-blue::before { background: var(--info); }
+
+.md3-metric-value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.md3-metric-trend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--md3-shape-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.md3-metric-trend-pill.up {
+  background: rgba(34,197,94,0.12);
+  color: #15803d;
+}
+
+.md3-metric-trend-pill.down {
+  background: rgba(239,68,68,0.12);
+  color: #b91c1c;
+}
+
+.md3-metric-trend-pill.neutral {
+  background: var(--bg-input);
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .md3-metric-trend-pill.up { background: rgba(34,197,94,0.18); color: #86efac; }
+[data-theme="dark"] .md3-metric-trend-pill.down { background: rgba(239,68,68,0.18); color: #fca5a5; }
+
+/* ── MD3 Bottom Nav — Active Indicator Pill ─────────────────────── */
+@media (max-width: 768px) {
+  .mobile-nav-item {
+    padding: 4px 2px 6px;
+    gap: 2px;
+  }
+
+  /* Remove old top-line indicator */
+  .mobile-nav-item.active::before { display: none; }
+
+  /* MD3 filled tonal indicator pill behind icon */
+  .mobile-nav-item.active .md3-nav-indicator {
+    background: var(--md3-surface-5);
+    border-radius: var(--md3-shape-full);
+  }
+
+  /* MD3 nav pill indicator using wrapper */
+  .mobile-nav-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 32px;
+    border-radius: var(--md3-shape-full);
+    transition: background var(--md3-duration-medium1) var(--md3-motion-standard);
+  }
+
+  .mobile-nav-item.active .mobile-nav-icon-wrap {
+    background: var(--primary-100);
+  }
+
+  [data-theme="dark"] .mobile-nav-item.active .mobile-nav-icon-wrap {
+    background: rgba(46,125,50,0.25);
+  }
+
+  .mobile-nav-item span:last-child {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .mobile-nav-item.active span:last-child {
+    color: var(--primary);
+    font-weight: 800;
+  }
+}
+
+/* ── MD3 FAB (Floating Action Button) ───────────────────────────── */
+.md3-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(var(--mobile-nav-height) + var(--sab) + 16px);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--md3-shape-lg); /* MD3 FAB shape */
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  box-shadow: 0 3px 12px rgba(46,125,50,0.4), 0 1px 4px rgba(0,0,0,0.2);
+  display: none; /* Only shown on mobile */
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 90;
+  transition: all var(--md3-duration-medium1) var(--md3-motion-standard);
+  font-family: inherit;
+}
+
+.md3-fab:active {
+  transform: scale(0.94);
+  box-shadow: 0 1px 6px rgba(46,125,50,0.3);
+}
+
+.md3-fab:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 6px 20px rgba(46,125,50,0.5), 0 2px 6px rgba(0,0,0,0.25);
+}
+
+@media (max-width: 768px) {
+  .md3-fab { display: flex; }
+}
+
+/* Extended FAB (with label) */
+.md3-fab-extended {
+  width: auto;
+  padding: 0 20px;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* ── MD3 Form Controls — Android-optimized ──────────────────────── */
+@media (max-width: 768px) {
+  .form-control,
+  .form-select {
+    min-height: 52px;
+    padding: 14px 16px;
+    border-radius: var(--md3-shape-md);
+    border-width: 1.5px;
+    transition: border-color var(--md3-duration-short4) var(--md3-motion-standard),
+                box-shadow var(--md3-duration-short4) var(--md3-motion-standard);
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(46,125,50,0.1);
+    border-width: 2px;
+  }
+
+  textarea.form-control {
+    min-height: 100px;
+  }
+
+  .form-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+}
+
+/* ── MD3 Stepper — Mobile compact with ellipsis labels ──────────── */
+@media (max-width: 768px) {
+  .stepper {
+    padding: 4px 0;
+  }
+
+  .step {
+    min-width: 50px;
+  }
+
+  .step-label {
+    font-size: 0.65rem;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .step-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+}
+
+/* ── MD3 Quick Action Buttons — Enhanced Touch ──────────────────── */
+@media (max-width: 768px) {
+  .btn-quick-action {
+    min-height: 68px;
+    padding: 14px 12px;
+    border-radius: var(--md3-shape-lg);
+    gap: 12px;
+    align-items: center;
+    transition: all var(--md3-duration-short4) var(--md3-motion-standard);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .btn-quick-action:active {
+    transform: scale(0.97);
+    box-shadow: none;
+  }
+}
+
+/* ── MD3 Filter Card (Dashboard date filter) ────────────────────── */
+.fo-filter-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--md3-shape-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+  .fo-filter-card {
+    padding: 12px;
+  }
+
+  .fo-filter-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fo-filter-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+  }
+
+  .fo-date-inputs {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .fo-date-inputs input[type="date"] {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 16px !important; /* Prevent iOS zoom */
+    border-radius: var(--md3-shape-md);
+  }
+}
+
+/* ── MD3 Card List Items (Notifications, Activities) ────────────── */
+@media (max-width: 768px) {
+  .deadline-item-box {
+    padding: 12px 14px;
+    border-radius: var(--md3-shape-md);
+    min-height: 72px; /* MD3 list item minimum */
+  }
+
+  .timeline-item {
+    min-height: 56px;
+  }
+}
+
+/* ── MD3 Notification Dropdown ───────────────────────────────────── */
+.notif-item {
+  min-height: 72px; /* MD3 list 2-line height */
+}
+
+/* ── MD3 Upload Zone ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .upload-zone {
+    padding: 32px 16px;
+    border-radius: var(--md3-shape-lg);
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+/* ── MD3 Form Navigation Bar ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .form-nav-bar {
+    position: sticky;
+    bottom: calc(var(--mobile-nav-height) + var(--sab));
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-light);
+    padding: 10px 14px calc(10px + var(--sab));
+    margin: 0 -10px;
+    z-index: 10;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+  }
+}
+
+/* ── MD3 Report Form Summary Sidebar → Mobile Card ──────────────── */
+@media (max-width: 768px) {
+  .report-summary-row {
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.84rem;
+  }
+
+  .report-summary-row:last-child {
+    border-bottom: none;
+  }
+
+  .report-tips-card {
+    border-radius: var(--md3-shape-lg);
+    padding: 14px 16px;
+  }
+}
+
+/* ── MD3 AI Chat Panel Enhancements ─────────────────────────────── */
+@media (max-width: 768px) {
+  .su-ai-chip {
+    padding: 10px 14px;
+    min-height: 44px; /* MD3 touch target */
+    border-radius: var(--md3-shape-full);
+    display: flex;
+    align-items: center;
+    text-align: left;
+  }
+
+  .su-ai-input-form {
+    gap: 8px;
+  }
+
+  .su-ai-input-form input {
+    min-height: 44px;
+    border-radius: var(--md3-shape-md);
+    padding: 12px 14px;
+  }
+
+  .su-ai-submit {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--md3-shape-md);
+    flex-shrink: 0;
+  }
+
+  .su-ai-attach-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+}
+
+/* ── MD3 Ripple effect for touch feedback ───────────────────────── */
+@media (max-width: 768px) {
+  .btn,
+  .mobile-nav-item,
+  .btn-quick-action,
+  .nav-item,
+  .notif-item,
+  .deadline-item-box {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Active press state */
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+    transition: transform 0.1s var(--md3-motion-accelerate);
+  }
+
+  .mobile-nav-item:active svg {
+    transform: scale(0.88);
+  }
+}
+
+/* ── MD3 Bottom sheet animation ─────────────────────────────────── */
+@keyframes md3SlideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes md3FadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── MD3 Swipe-able card list items ─────────────────────────────── */
+@media (max-width: 768px) {
+  .mobile-report-card {
+    border-radius: var(--md3-shape-lg);
+    padding: 16px;
+    transition: transform var(--md3-duration-short4) var(--md3-motion-standard),
+                box-shadow var(--md3-duration-short4) var(--md3-motion-standard);
+  }
+
+  .mobile-report-card:active {
+    transform: scale(0.985);
+  }
+
+  .mobile-report-title {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+}
+
+/* ── Announcement and Deadline Cards ────────────────────────────── */
+@media (max-width: 768px) {
+  .announcement-card {
+    border-radius: var(--md3-shape-lg);
+    padding: 14px;
+    background: rgba(46,125,50,0.05);
+    border: 1px solid rgba(46,125,50,0.15);
+    margin-bottom: 10px;
+  }
+
+  .announcement-card-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .announcement-card-msg {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  .announcement-card-date {
+    font-size: 0.7rem;
+    color: var(--text-light);
+  }
+}
+
+/* ── MD3 Last Submission Banner ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .last-submit-banner {
+    padding: 16px;
+    border-radius: var(--md3-shape-lg);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .last-submit-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .last-submit-title {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    margin: 0 0 2px 0;
+  }
+
+  .last-submit-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 2px 0;
+  }
+
+  .last-submit-hint {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+
+/* ── MD3 Offline / Info Banner ──────────────────────────────────── */
+.info-hint-banner {
+  padding: 12px 16px;
+  border-radius: var(--md3-shape-md);
+  background: rgba(46,125,50,0.06);
+  border: 1px solid rgba(46,125,50,0.12);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--primary-dark);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ── Smooth Page Transitions ─────────────────────────────────────── */
+.page-enter {
+  animation: md3FadeIn var(--md3-duration-medium1) var(--md3-motion-decelerate) forwards;
+}
+
+/* ── MD3 Icon containers  ───────────────────────────────────────── */
+.md3-icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--md3-shape-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.md3-icon-container.green { background: rgba(46,125,50,0.1); color: var(--primary); }
+.md3-icon-container.blue  { background: rgba(21,101,192,0.1); color: #1565c0; }
+.md3-icon-container.purple { background: rgba(106,27,154,0.1); color: #6a1b9a; }
+.md3-icon-container.red   { background: rgba(198,40,40,0.1); color: #c62828; }
+.md3-icon-container.amber { background: rgba(245,158,11,0.1); color: #92400e; }
+
+/* ── Dashboard filter date input — Android native date picker ─── */
+@media (max-width: 768px) {
+  input[type="date"] {
+    min-height: 48px;
+    padding: 12px 14px;
+    border-radius: var(--md3-shape-md);
+    font-size: 16px !important; /* NO iOS ZOOM */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    width: 24px;
+    height: 24px;
+    padding: 2px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+}
+
+/* ── MD3 Selection Chip Group ───────────────────────────────────── */
+.md3-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.md3-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--md3-shape-full);
+  font-size: 0.82rem;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--md3-duration-short4) var(--md3-motion-standard);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-height: 36px;
+}
+
+.md3-chip:hover,
+.md3-chip.selected {
+  background: var(--primary-50);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+[data-theme="dark"] .md3-chip:hover,
+[data-theme="dark"] .md3-chip.selected {
+  background: rgba(46,125,50,0.15);
+  border-color: var(--primary-light);
+  color: var(--primary-light);
+}
+
+/* ── Grid special: 2 col metric cards on small phones ───────────── */
+@media (max-width: 768px) {
+  .grid-4-mobile-2,
+  .grid.grid-4-mobile-2,
+  .grid-4:has(.stat-card),
+  .grid-4:has(.md3-metric-card) {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+
+/* ── MD3 bottom nav border-radius top corners ───────────────────── */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -2px 20px rgba(0,0,0,0.08);
+  }
+
+  [data-theme="dark"] .mobile-bottom-nav {
+    box-shadow: 0 -2px 20px rgba(0,0,0,0.3);
+  }
+}
+
+/* ── Page body top margin correction for header height ──────────── */
+@media (max-width: 768px) {
+  .page-body {
+    margin-top: calc(var(--header-height) + var(--sat));
+  }
+}
+
+/* ── MD3 Card subtle active/selected state ───────────────────────── */
+.card.md3-selected {
+  border-color: var(--primary);
+  background: var(--primary-50);
+  box-shadow: 0 0 0 2px rgba(46,125,50,0.2);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   END OF MD3 ANDROID SYSTEM
+   ════════════════════════════════════════════════════════════════════ */
+
+
+/* ── Extra grid helpers ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .grid-4-mobile-2,
+  .grid.grid-4-mobile-2,
+  .grid-4:has(.stat-card),
+  .grid-4:has(.md3-metric-card) {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   MD3 ANDROID CROSS-PAGE COMPONENT ADAPTATIONS
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Coordinator & Admin Responsive Split Layouts ────────────────── */
+.coord-grid-split {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.admin-grid-triplet {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr 0.9fr;
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .coord-grid-split {
+    grid-template-columns: 1fr;
+  }
+  .admin-grid-triplet {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Android Form Action Bar (ReportForm & SupportForm) ─────────── */
+.android-form-action-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 14px 0 0;
+}
+
+@media (max-width: 768px) {
+  .android-form-action-bar {
+    position: sticky;
+    bottom: calc(var(--mobile-nav-height) + var(--sab));
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-light);
+    padding: 12px 16px calc(12px + var(--sab));
+    margin: 0 -12px -12px -12px;
+    z-index: 80;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    border-radius: 16px 16px 0 0;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  [data-theme="dark"] .android-form-action-bar {
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+  }
+
+  .android-form-action-bar .btn {
+    min-height: 48px;
+    border-radius: var(--md3-shape-full);
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  .android-form-action-bar .btn-secondary {
+    flex: 1;
+    max-width: 120px;
+  }
+
+  .android-form-action-bar .btn-primary {
+    flex: 2;
+    box-shadow: 0 4px 14px rgba(46, 125, 50, 0.35);
+  }
+}
+
+/* ── Report Summary Rows & Tips Card ────────────────────────────── */
+.report-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border-light);
+  font-size: 0.82rem;
+}
+
+.report-summary-row:last-child {
+  border-bottom: none;
+}
+
+.report-summary-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.report-summary-val {
+  font-weight: 600;
+  max-width: 180px;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.report-tips-card {
+  border-radius: var(--md3-shape-lg);
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.08) 0%, rgba(34, 197, 94, 0.04) 100%);
+  border: 1px solid rgba(46, 125, 50, 0.2);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+[data-theme="dark"] .report-tips-card {
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.16) 0%, rgba(34, 197, 94, 0.08) 100%);
+  border-color: rgba(46, 125, 50, 0.35);
+}
+
+.report-tips-card ul {
+  padding-left: 18px;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── MD3 Horizontal Swipe Chip Bar (Prayer, Notifications, Tags) ─── */
+.md3-swipe-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 0 8px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.md3-swipe-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.md3-swipe-chips .chip {
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-height: 38px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--md3-shape-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Prayer Filter & Action Controls ────────────────────────────── */
+.prayer-filter-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .prayer-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .prayer-filter-row select {
+    width: 100% !important;
+    min-height: 48px;
+    border-radius: var(--md3-shape-md);
+  }
+}
+
+/* ── Touch Target & Feedback Assurance ──────────────────────────── */
+@media (max-width: 768px) {
+  .btn-touch {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+
+  .card-touch {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
 }

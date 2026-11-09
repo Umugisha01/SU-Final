@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate, Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  LayoutDashboard, FileText, Heart, LifeBuoy, Bell, Menu, MoreHorizontal,
-  Brain, Settings
+  LayoutDashboard, FileText, Heart, LifeBuoy, Bell, Plus
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -37,6 +36,10 @@ export default function Layout() {
 
   const role = user?.role || 'field_officer';
   const bottomNavItems = BOTTOM_NAV_BASE.filter(n => n.roles.includes(role));
+
+  // Show FAB for field officers on reports page (quick submit)
+  const showFAB = (role === 'field_officer' || role === 'regional_coordinator') &&
+    location.pathname === '/dashboard';
 
   return (
     <div className="app-layout">
@@ -74,17 +77,27 @@ export default function Layout() {
               className={`mobile-nav-item ${isActive ? 'active' : ''}`}
               aria-label={label}
             >
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-              {showBadge && (
-                <span className="mobile-nav-badge">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
+              {/* MD3 indicator pill wrapping the icon */}
+              <span className="mobile-nav-icon-wrap">
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+                {showBadge && (
+                  <span className="mobile-nav-badge">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </span>
               <span>{label}</span>
             </NavLink>
           );
         })}
       </nav>
+
+      {/* MD3 FAB — Quick Submit Report (dashboard only, field officers) */}
+      {showFAB && (
+        <NavLink to="/reports/new" className="md3-fab" aria-label="Submit new report">
+          <Plus size={24} />
+        </NavLink>
+      )}
 
       <SUConnectAI />
       <IdleTimer />

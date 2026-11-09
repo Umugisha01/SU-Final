@@ -59,7 +59,6 @@ export default function AdminDashboard() {
       setActionLoadingId(userId);
       const res = await userService.approve(userId);
       toast.success(res.message || 'User approved successfully!');
-      // Reload admin dashboard data
       const adminRes = await dashboardService.getAdminData();
       if (adminRes.success) setData(adminRes);
     } catch (err) {
@@ -81,7 +80,6 @@ export default function AdminDashboard() {
       setRejectingUser(null);
       const res = await userService.reject(userId, reason);
       toast.success('User registration rejected and notification sent.');
-      // Reload admin dashboard data
       const adminRes = await dashboardService.getAdminData();
       if (adminRes.success) setData(adminRes);
     } catch (err) {
@@ -98,7 +96,7 @@ export default function AdminDashboard() {
         <LoadingSkeleton type="card" count={4} />
         <div className="grid grid-2">
           <LoadingSkeleton type="chart" count={1} />
-          <LoadingSkeleton type="list" count={4} />
+          <LoadingSkeleton type="table" count={4} />
         </div>
       </div>
     );
@@ -108,20 +106,20 @@ export default function AdminDashboard() {
     return (
       <EmptyState 
         title="Dashboard Error" 
-        description="Could not load Admin aggregates. Please check network logs." 
+        description="Could not load Admin metrics. Please check network logs." 
         actionText="Retry"
         onAction={loadAdminDashboardData}
       />
     );
   }
 
-  const { metrics, pending_users, system_activity, mfa_compliance, field_officers_per_region, recent_audits, uptime } = data;
+  const { metrics, pending_users, field_officers_per_region, mfa_compliance, recent_audits } = data;
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Admin metrics grid */}
-      <div className="grid grid-4">
+      {/* Admin metrics grid — 2-col on small phones */}
+      <div className="grid grid-4 grid-4-mobile-2">
         <MetricCard 
           value={metrics.total_users}
           label="TOTAL REGISTERED USERS"
@@ -169,14 +167,14 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* Pending approvals, Regional Staffing and MFA Compliance */}
-      <div className="grid grid-3" style={{ gridTemplateColumns: '1.2fr 0.9fr 0.9fr' }}>
+      {/* Pending approvals, Regional Staffing and MFA Compliance — collapses cleanly on mobile */}
+      <div className="admin-grid-triplet">
         
         {/* Pending approvals */}
         <div className="card">
           <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>👥 PENDING USER APPROVALS — Review new registrations</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>👥 PENDING USER APPROVALS</h3>
             </div>
           </div>
           <div className="card-body" style={{ padding: 0 }}>
@@ -215,7 +213,7 @@ export default function AdminDashboard() {
                           <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                             <button 
                               className="btn btn-secondary btn-sm"
-                              style={{ padding: '4px 8px', color: 'var(--danger)', background: '#fee2e2', border: 'none', fontSize: '0.75rem' }}
+                              style={{ padding: '6px 10px', minHeight: 34, color: 'var(--danger)', background: '#fee2e2', border: 'none', fontSize: '0.75rem', fontWeight: 600 }}
                               disabled={actionLoadingId === usr.id}
                               onClick={() => handleRejectUser(usr.id)}
                             >
@@ -223,7 +221,7 @@ export default function AdminDashboard() {
                             </button>
                             <button 
                               className="btn btn-primary btn-sm"
-                              style={{ padding: '4px 8px', boxShadow: 'none', fontSize: '0.75rem' }}
+                              style={{ padding: '6px 12px', minHeight: 34, boxShadow: 'none', fontSize: '0.75rem', fontWeight: 600 }}
                               disabled={actionLoadingId === usr.id}
                               onClick={() => handleApproveUser(usr.id)}
                             >

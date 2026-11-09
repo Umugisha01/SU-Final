@@ -83,7 +83,7 @@ export default function NotificationCenter() {
     if ((showBroadcast || showAlertModal) && (canBroadcast || userRole === 'administrator')) {
       const fetchTargets = async () => {
         try {
-          const res = await api.get('/notifications/broadcast-targets');
+          const res = await api.get('/notifications/broadcast-targets/');
           if (res.data && res.data.success) {
             setTargets(res.data.data);
           }
@@ -103,7 +103,7 @@ export default function NotificationCenter() {
 
   const handleSavePrefs = async () => {
     try {
-      const res = await api.put('/users/me', { notif_prefs: prefs });
+      const res = await api.put('/users/me/', { notif_prefs: prefs });
       if (res.data) {
         setUser({ ...user, notif_prefs: prefs });
         localStorage.setItem('su-user', JSON.stringify({ ...user, notif_prefs: prefs }));
@@ -150,7 +150,7 @@ export default function NotificationCenter() {
         title: broadcastTitle.trim() || 'Broadcast Announcement',
         message: broadcastMessage.trim()
       };
-      const res = await api.post('/notifications/broadcast', payload);
+      const res = await api.post('/notifications/broadcast/', payload);
       if (res.data && res.data.success) {
         toast.success(res.data.message || 'Broadcast message sent successfully');
         setShowBroadcast(false);
@@ -188,7 +188,7 @@ export default function NotificationCenter() {
         user_ids: alertTargetUsers.size === 0 ? [] : Array.from(alertTargetUsers)
       };
 
-      const res = await api.post('/notifications/system-alerts', payload);
+      const res = await api.post('/notifications/system-alerts/', payload);
       if (res.data && res.data.success) {
         toast.success(res.data.message || 'System alert created successfully');
         setShowAlertModal(false);
@@ -240,7 +240,7 @@ export default function NotificationCenter() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div className="md3-swipe-chips">
         {['all', 'unread', 'report', 'deadline', 'support', 'prayer', 'system', 'other'].map(t => (
           <button key={t} className={`chip ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>
             {t === 'all' ? `All (${notifications.length})` : t === 'unread' ? `Unread (${unreadCount})` : TYPE_CONFIG[t]?.label}

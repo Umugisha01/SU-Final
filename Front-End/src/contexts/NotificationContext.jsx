@@ -28,7 +28,7 @@ export function NotificationProvider({ children }) {
   const fetchSystemAlerts = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.get('/notifications/system-alerts/active');
+      const res = await api.get('/notifications/system-alerts/active/');
       if (res.data && res.data.success) {
         setSystemAlerts(res.data.data);
       } else if (Array.isArray(res.data)) {
@@ -55,7 +55,7 @@ export function NotificationProvider({ children }) {
     try {
       // Optimistic UI update
       setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
-      await api.put(`/notifications/${id}/read`);
+      await api.put(`/notifications/${id}/read/`);
     } catch (err) {
       console.error('Failed to mark notification read:', err);
     }
@@ -64,7 +64,7 @@ export function NotificationProvider({ children }) {
   const markAllRead = useCallback(async () => {
     try {
       setNotifications(ns => ns.map(n => ({ ...n, read: true })));
-      await api.post('/notifications/mark-read', { ids: [] });
+      await api.post('/notifications/mark-read/', { ids: [] });
       toast.success('All notifications marked as read');
     } catch (err) {
       console.error('Failed to mark all notifications read:', err);
@@ -84,7 +84,7 @@ export function NotificationProvider({ children }) {
   const dismissSystemAlert = useCallback(async (id) => {
     try {
       setSystemAlerts(alerts => alerts.filter(a => a.id !== id));
-      await api.post(`/notifications/system-alerts/${id}/dismiss`);
+      await api.post(`/notifications/system-alerts/${id}/dismiss/`);
       toast.success('System alert dismissed');
     } catch (err) {
       console.error('Failed to dismiss system alert:', err);

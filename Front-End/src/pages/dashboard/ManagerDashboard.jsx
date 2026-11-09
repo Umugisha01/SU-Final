@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  FileText, Users, Clock, CheckCircle, 
-  MapPin, Eye, FileSpreadsheet, PlusCircle, Heart, AlertTriangle
+  Users, Clock, CheckCircle, 
+  TrendingUp, MapPin, AlertCircle, Heart 
 } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { 
+  AreaChart, Area, XAxis, YAxis, 
+  CartesianGrid, Tooltip, ResponsiveContainer, Legend 
+} from 'recharts';
 import { dashboardService } from '../../services/api';
-import toast from 'react-hot-toast';
 import MetricCard from './components/MetricCard';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import EmptyState from './components/EmptyState';
-import RegionalMap from './components/RegionalMap';
-import AIInsightsPanel from './components/AIInsightsPanel';
+import toast from 'react-hot-toast';
 
 export default function ManagerDashboard() {
   const navigate = useNavigate();
@@ -22,12 +23,11 @@ export default function ManagerDashboard() {
   const loadManagerData = async () => {
     try {
       setLoading(true);
-      const [managerRes, aiRes] = await Promise.all([
-        dashboardService.getManagerData(),
-        dashboardService.getAIInsights()
-      ]);
-      if (managerRes.success) setData(managerRes);
-      if (aiRes.success) setInsightsData(aiRes.insights);
+      const res = await dashboardService.getManagerData();
+      if (res.success) {
+        setData(res);
+        setInsightsData(res.ai_insights || []);
+      }
     } catch (err) {
       console.error('Failed to load Manager dashboard:', err);
     } finally {
@@ -35,27 +35,31 @@ export default function ManagerDashboard() {
     }
   };
 
+  const handleRegenerateAI = async () => {
+    try {
+      toast.loading('Regenerating strategic AI insights...', { id: 'ai-regen' });
+      const res = await dashboardService.regenerateInsights();
+      if (res.success) {
+        setInsightsData(res.ai_insights);
+        toast.success('AI insights successfully refreshed!', { id: 'ai-regen' });
+      }
+    } catch (err) {
+      toast.error('Failed to generate insights', { id: 'ai-regen' });
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadManagerData();
   }, []);
-
-  const handleRegenerateAI = async () => {
-    try {
-      const aiRes = await dashboardService.getAIInsights();
-      if (aiRes.success) {
-        setInsightsData(aiRes.insights);
-      }
-    } catch (err) {
-      console.error('Failed to regenerate AI insights');
-    }
-  };
 
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <LoadingSkeleton type="card" count={4} />
+        <LoadingSkeleton type="chart" count={1} />
         <div className="grid grid-2">
-          <LoadingSkeleton type="chart" count={1} />
+          <LoadingSkeleton type="list" count={4} />
           <LoadingSkeleton type="list" count={4} />
         </div>
       </div>
@@ -76,10 +80,10 @@ export default function ManagerDashboard() {
   const { metrics, regional_performance, last_consolidated, trends } = data;
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Global metrics grid */}
-      <div className="grid grid-4">
+      {/* Global metrics grid — 2-col on small phones */}
+      <div className="grid grid-4 grid-4-mobile-2">
         <MetricCard 
           value={metrics.reports_submitted?.toLocaleString()}
           label="TOTAL REACH"
@@ -148,8 +152,8 @@ export default function ManagerDashboard() {
         </div>
       </div>
 
-      {/* Map, Regional breakdown & AI panel */}
-      <div className="grid grid-2" style={{ gridTemplateColumns: '1fr 1fr' }}>
+      {/* Map, Regional breakdown & AI panel — responsive 2 columns collapsing on mobile */}
+      <div className="grid grid-2">
         {/* Regional Breakdown progress list */}
         <div className="card">
           <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>

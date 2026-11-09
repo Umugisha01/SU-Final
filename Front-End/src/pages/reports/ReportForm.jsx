@@ -110,7 +110,6 @@ export default function ReportForm() {
   };
 
   const handleSubmit = async (asDraft = false) => {
-    // Prevent future date choice under all conditions (even drafts)
     if (form.date) {
       const selectedDate = new Date(form.date);
       const today = new Date();
@@ -134,7 +133,6 @@ export default function ReportForm() {
     }
     setSubmitting(true);
     try {
-      // Upload new files and compile all attachment IDs
       const attachmentIds = [];
       for (const file of files) {
         if (file.id) {
@@ -205,7 +203,7 @@ export default function ReportForm() {
 
       {/* Step indicator */}
       <div className="card" style={{ marginBottom: 20 }}>
-        <div className="card-body" style={{ padding: '16px 24px' }}>
+        <div className="card-body" style={{ padding: '16px 20px' }}>
           <div className="stepper">
             {STEPS.map((s, i) => (
               <div key={i} className={`step ${step > i + 1 ? 'done' : ''} ${step === i + 1 ? 'active' : ''}`}
@@ -407,18 +405,19 @@ export default function ReportForm() {
                         return nameMatch || roleMatch || regionMatch;
                       }).map(u => (
                         <div key={u.id} style={{ 
-                          padding: '8px 16px', 
+                          padding: '10px 16px', 
                           borderBottom: '1px solid var(--border)', 
                           display: 'flex', 
                           alignItems: 'center',
                           gap: 12,
                           cursor: 'pointer',
-                          backgroundColor: form.recipientIds.includes(u.id) ? 'rgba(46, 125, 50, 0.05)' : 'transparent'
+                          minHeight: '44px',
+                          backgroundColor: form.recipientIds.includes(u.id) ? 'rgba(46, 125, 50, 0.08)' : 'transparent'
                         }} onClick={() => toggleRecipient(u.id)}>
-                          <input type="checkbox" checked={form.recipientIds.includes(u.id)} readOnly style={{ cursor: 'pointer' }} />
+                          <input type="checkbox" checked={form.recipientIds.includes(u.id)} readOnly style={{ cursor: 'pointer', width: 16, height: 16 }} />
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 500, fontSize: '0.9rem', color: 'var(--text)' }}>{u.name}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', textTransform: 'capitalize' }}>{u.role} &bull; {u.region}</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{u.name}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{u.role?.replace('_', ' ')} &bull; {u.region}</div>
                           </div>
                         </div>
                       ))}
@@ -431,8 +430,8 @@ export default function ReportForm() {
             </div>
           )}
 
-          {/* Navigation */}
-          <div className="form-nav-bar" style={{ display: 'flex', gap: 12, justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          {/* Navigation — Sticky Android Action Bar */}
+          <div className="android-form-action-bar">
             <button className="btn btn-secondary" onClick={() => step > 1 ? setStep(s => s - 1) : navigate('/reports')}>
               {step > 1 ? '← Back' : '← Cancel'}
             </button>
@@ -464,22 +463,22 @@ export default function ReportForm() {
                 { label: 'Duration', val: form.duration || '—' },
                 { label: 'Files', val: `${files.length} attached` },
               ].map(({ label, val }) => (
-                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-light)', fontSize: '0.8rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>{label}</span>
-                  <span style={{ fontWeight: 500, maxWidth: 160, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{val}</span>
+                <div key={label} className="report-summary-row">
+                  <span className="report-summary-label">{label}</span>
+                  <span className="report-summary-val">{val}</span>
                 </div>
               ))}
             </div>
           </div>
-          <div className="alert alert-info">
-            <CheckCircle size={16} />
+          <div className="report-tips-card">
+            <CheckCircle size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
-              <strong>Tips:</strong>
-              <ul style={{ paddingLeft: 16, marginTop: 4, fontSize: '0.78rem' }}>
-                <li>Be specific about outcomes</li>
-                <li>Include actual attendance numbers</li>
-                <li>Attach photos as evidence</li>
-                <li>Share prayer requests</li>
+              <strong style={{ color: 'var(--primary-dark)', fontSize: '0.85rem' }}>Tips for Field Officers:</strong>
+              <ul>
+                <li>Be specific about outcomes and measurable spiritual growth</li>
+                <li>Include actual attendance numbers verified by event register</li>
+                <li>Attach photos or attendance sheets as supporting evidence</li>
+                <li>Share prayer requests to mobilize the national prayer network</li>
               </ul>
             </div>
           </div>

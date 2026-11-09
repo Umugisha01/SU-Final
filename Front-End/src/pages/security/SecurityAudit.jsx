@@ -76,7 +76,7 @@ export default function SecurityAudit() {
 
       {activeTab === 'overview' && (
         <>
-          <div className="grid grid-4" style={{ marginBottom: 20 }}>
+          <div className="grid grid-4 grid-4-mobile-2" style={{ marginBottom: 20 }}>
             {[
               { label: 'Security Status', val: 'Protected', color: 'green', icon: Shield },
               { label: 'Audit Events (24h)', val: logs.filter(l => l.severity !== 'danger').length, color: 'blue', icon: Eye },

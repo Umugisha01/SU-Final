@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import re_path
 from apps.reports.views_dashboard import (
     FieldOfficerDashboardView,
     CoordinatorDashboardView,
@@ -10,11 +10,11 @@ from apps.reports.views_dashboard import (
 )
 
 urlpatterns = [
-    path('field-officer/', FieldOfficerDashboardView.as_view(), name='dashboard-field-officer'),
-    path('coordinator/', CoordinatorDashboardView.as_view(), name='dashboard-coordinator'),
-    path('manager/', ManagerDashboardView.as_view(), name='dashboard-manager'),
-    path('admin/', AdminDashboardView.as_view(), name='dashboard-admin'),
-    path('recent-activity/', RecentActivityView.as_view(), name='dashboard-recent-activity'),
-    path('system-health/', SystemHealthView.as_view(), name='dashboard-system-health'),
-    path('ai-insights/', AIInsightsView.as_view(), name='dashboard-ai-insights'),
+    re_path(r'^field-officer/?$', FieldOfficerDashboardView.as_view(), name='dashboard-field-officer'),
+    re_path(r'^coordinator/?$', CoordinatorDashboardView.as_view(), name='dashboard-coordinator'),
+    re_path(r'^manager/?$', ManagerDashboardView.as_view(), name='dashboard-manager'),
+    re_path(r'^admin/?$', AdminDashboardView.as_view(), name='dashboard-admin'),
+    re_path(r'^recent-activity/?$', RecentActivityView.as_view(), name='dashboard-recent-activity'),
+    re_path(r'^system-health/?$', SystemHealthView.as_view(), name='dashboard-system-health'),
+    re_path(r'^ai-insights/?$', AIInsightsView.as_view(), name='dashboard-ai-insights'),
 ]

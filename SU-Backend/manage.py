@@ -4,6 +4,16 @@ import os
 import sys
 import re
 
+# Ensure immediate line-buffered and unbuffered console output in PowerShell / Windows terminals
+os.environ["PYTHONUNBUFFERED"] = "1"
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(line_buffering=True)
+except Exception:
+    pass
+
 # Compatibility shim for Django 6.1+ removal of cc_delim_re in django.utils.cache
 try:
     import django.utils.cache
